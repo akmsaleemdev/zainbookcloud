@@ -62,9 +62,17 @@ const App = () => (
       <BrowserRouter>
         <OrganizationProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/website" replace />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Public website */}
+            <Route path="/website" element={<HomePage />} />
+            <Route path="/website/features" element={<FeaturesPage />} />
+            <Route path="/website/pricing" element={<PricingPage />} />
+            <Route path="/website/solutions" element={<SolutionsPage />} />
+            <Route path="/website/about" element={<AboutPage />} />
+            <Route path="/website/contact" element={<ContactPage />} />
+            <Route path="/website/payment-gateways" element={<PaymentGatewaysPage />} />
             <Route path="/dashboard" element={<P><Dashboard /></P>} />
             <Route path="/organizations" element={<P><Organizations /></P>} />
             <Route path="/properties" element={<P><Properties /></P>} />
