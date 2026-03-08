@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import AuthPage from "./pages/AuthPage";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
 import Tenants from "./pages/Tenants";
@@ -48,40 +50,43 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/dashboard" element={<P><Dashboard /></P>} />
-          <Route path="/organizations" element={<P><Organizations /></P>} />
-          <Route path="/properties" element={<P><Properties /></P>} />
-          <Route path="/buildings" element={<P><Buildings /></P>} />
-          <Route path="/floors" element={<P><Floors /></P>} />
-          <Route path="/units" element={<P><Units /></P>} />
-          <Route path="/rooms" element={<P><Rooms /></P>} />
-          <Route path="/bed-spaces" element={<P><BedSpaces /></P>} />
-          <Route path="/tenants" element={<P><Tenants /></P>} />
-          <Route path="/leases" element={<P><Leases /></P>} />
-          <Route path="/ejari" element={<P><Ejari /></P>} />
-          <Route path="/invoices" element={<P><Invoices /></P>} />
-          <Route path="/payments" element={<P><Payments /></P>} />
-          <Route path="/maintenance" element={<P><Maintenance /></P>} />
-          <Route path="/amenities" element={<P><Amenities /></P>} />
-          <Route path="/utilities" element={<P><Utilities /></P>} />
-          <Route path="/documents" element={<P><Documents /></P>} />
-          <Route path="/messaging" element={<P><Messaging /></P>} />
-          <Route path="/notifications" element={<P><Notifications /></P>} />
-          <Route path="/reports" element={<P><Reports /></P>} />
-          <Route path="/analytics" element={<P><Analytics /></P>} />
-          <Route path="/ai-insights" element={<P><AIInsights /></P>} />
-          <Route path="/automation" element={<P><Automation /></P>} />
-          <Route path="/owner-portal" element={<P><OwnerPortal /></P>} />
-          <Route path="/tenant-portal" element={<P><TenantPortal /></P>} />
-          <Route path="/public-booking" element={<P><PublicBooking /></P>} />
-          <Route path="/subscriptions" element={<P><Subscriptions /></P>} />
-          <Route path="/user-management" element={<P><UserManagement /></P>} />
-          <Route path="/settings" element={<P><SettingsPage /></P>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <OrganizationProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/dashboard" element={<P><Dashboard /></P>} />
+            <Route path="/organizations" element={<P><Organizations /></P>} />
+            <Route path="/properties" element={<P><Properties /></P>} />
+            <Route path="/buildings" element={<P><Buildings /></P>} />
+            <Route path="/floors" element={<P><Floors /></P>} />
+            <Route path="/units" element={<P><Units /></P>} />
+            <Route path="/rooms" element={<P><Rooms /></P>} />
+            <Route path="/bed-spaces" element={<P><BedSpaces /></P>} />
+            <Route path="/tenants" element={<P><Tenants /></P>} />
+            <Route path="/leases" element={<P><Leases /></P>} />
+            <Route path="/ejari" element={<P><Ejari /></P>} />
+            <Route path="/invoices" element={<P><Invoices /></P>} />
+            <Route path="/payments" element={<P><Payments /></P>} />
+            <Route path="/maintenance" element={<P><Maintenance /></P>} />
+            <Route path="/amenities" element={<P><Amenities /></P>} />
+            <Route path="/utilities" element={<P><Utilities /></P>} />
+            <Route path="/documents" element={<P><Documents /></P>} />
+            <Route path="/messaging" element={<P><Messaging /></P>} />
+            <Route path="/notifications" element={<P><Notifications /></P>} />
+            <Route path="/reports" element={<P><Reports /></P>} />
+            <Route path="/analytics" element={<P><Analytics /></P>} />
+            <Route path="/ai-insights" element={<P><AIInsights /></P>} />
+            <Route path="/automation" element={<P><Automation /></P>} />
+            <Route path="/owner-portal" element={<P><OwnerPortal /></P>} />
+            <Route path="/tenant-portal" element={<P><TenantPortal /></P>} />
+            <Route path="/public-booking" element={<P><PublicBooking /></P>} />
+            <Route path="/subscriptions" element={<P><Subscriptions /></P>} />
+            <Route path="/user-management" element={<P><UserManagement /></P>} />
+            <Route path="/settings" element={<P><SettingsPage /></P>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </OrganizationProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
