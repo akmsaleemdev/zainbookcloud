@@ -165,6 +165,9 @@ const MasterAdmin = () => {
             <TabsTrigger value="logs" className="gap-1.5">
               <FileText className="w-3.5 h-3.5" /> Logs
             </TabsTrigger>
+            <TabsTrigger value="email-domains" className="gap-1.5">
+              <Mail className="w-3.5 h-3.5" /> Email Domains
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
