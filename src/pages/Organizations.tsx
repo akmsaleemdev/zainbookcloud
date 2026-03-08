@@ -204,12 +204,13 @@ const Organizations = () => {
                   {org.emirate && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="w-3 h-3" />{org.emirate}</div>}
                   {org.email && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Mail className="w-3 h-3" />{org.email}</div>}
                   {org.phone && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="w-3 h-3" />{org.phone}</div>}
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><DollarSign className="w-3 h-3" />{org.currency || "AED"}</div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Globe className="w-3 h-3" />{org.country || "UAE"} • {org.timezone || "Asia/Dubai"}</div>
                 </div>
-                {org.trade_license && (
-                  <div className="mt-3 pt-3 border-t border-border/30">
-                    <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>
-                  </div>
-                )}
+                <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
+                  {org.trade_license && <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>}
+                  <span className="text-xs text-muted-foreground">VAT: {org.vat_enabled !== false ? `${org.vat_rate || 5}%` : "Disabled"}</span>
+                </div>
               </div>
             ))}
           </div>
