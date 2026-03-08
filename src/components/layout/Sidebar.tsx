@@ -5,7 +5,7 @@ import {
   Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen,
   MessageSquare, BarChart3, Brain, Zap, UserCircle, Settings,
   ChevronLeft, ChevronRight, Building, Globe, BookOpen, Bell,
-  Landmark, ShieldCheck, Shield, Headphones, Link2, Crown
+  Landmark, ShieldCheck, Shield, Headphones, Link2, Crown, Car, Banknote
 } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
