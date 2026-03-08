@@ -6,42 +6,61 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { PaymentGatewaysTab } from "@/components/master-admin/PaymentGatewaysTab";
 import { PlanDialog, defaultPlanForm, type PlanFormData } from "@/components/master-admin/PlanDialog";
+import { TenantsTab } from "@/components/master-admin/TenantsTab";
+import { SubscriptionsTab } from "@/components/master-admin/SubscriptionsTab";
+import { TicketsTab } from "@/components/master-admin/TicketsTab";
+import { ModulesTab } from "@/components/master-admin/ModulesTab";
 import {
-  Shield, Building2, Search, Plus, Pencil, Trash2,
+  Shield, Building2, Plus, Pencil, Trash2,
   AlertTriangle, TrendingUp, Crown, CreditCard
 } from "lucide-react";
 
 const MasterAdmin = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
-  const [search, setSearch] = useState("");
   const [planDialog, setPlanDialog] = useState(false);
   const [editPlan, setEditPlan] = useState<any>(null);
   const [planForm, setPlanForm] = useState<PlanFormData>(defaultPlanForm);
 
-  // Queries
-  const { data: allOrgs = [] } = useQuery({
-    queryKey: ["master-orgs"],
+  // Overview stats queries
+  const { data: orgCount = 0 } = useQuery({
+    queryKey: ["master-org-count"],
     queryFn: async () => {
-      const { data } = await supabase.from("organizations").select("*").order("created_at", { ascending: false });
-      return data || [];
+      const { count } = await supabase.from("organizations").select("*", { count: "exact", head: true });
+      return count || 0;
     },
   });
 
-  const { data: allSubs = [] } = useQuery({
-    queryKey: ["master-subs"],
+  const { data: activeSubs = 0 } = useQuery({
+    queryKey: ["master-active-subs"],
     queryFn: async () => {
-      const { data } = await supabase.from("customer_subscriptions").select("*, subscription_plans(*), organizations(name)").order("created_at", { ascending: false });
-      return data || [];
+      const { count } = await supabase.from("customer_subscriptions").select("*", { count: "exact", head: true }).in("status", ["active", "trialing"]);
+      return count || 0;
     },
   });
 
+  const { data: openTickets = 0 } = useQuery({
+    queryKey: ["master-open-tickets"],
+    queryFn: async () => {
+      const { count } = await supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open");
+      return count || 0;
+    },
+  });
+
+  const { data: totalRevenue = 0 } = useQuery({
+    queryKey: ["master-revenue"],
+    queryFn: async () => {
+      const { data } = await supabase.from("customer_subscriptions").select("total_amount");
+      return (data || []).reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0);
+    },
+  });
+
+  // Plans (for plans tab)
   const { data: plans = [] } = useQuery({
     queryKey: ["master-plans"],
     queryFn: async () => {
@@ -50,23 +69,7 @@ const MasterAdmin = () => {
     },
   });
 
-  const { data: tickets = [] } = useQuery({
-    queryKey: ["master-tickets"],
-    queryFn: async () => {
-      const { data } = await supabase.from("support_tickets").select("*").order("created_at", { ascending: false }).limit(50);
-      return data || [];
-    },
-  });
-
-  const { data: modules = [] } = useQuery({
-    queryKey: ["master-modules"],
-    queryFn: async () => {
-      const { data } = await supabase.from("platform_modules").select("*").order("sort_order");
-      return data || [];
-    },
-  });
-
-  // Mutations
+  // Plan mutations
   const savePlanMutation = useMutation({
     mutationFn: async () => {
       if (editPlan) {
@@ -97,13 +100,11 @@ const MasterAdmin = () => {
   });
 
   const stats = [
-    { label: "Total Tenants", value: allOrgs.length, icon: Building2, color: "text-blue-400" },
-    { label: "Active Subscriptions", value: allSubs.filter((s: any) => s.status === "active").length, icon: Crown, color: "text-primary" },
-    { label: "Open Tickets", value: tickets.filter((t: any) => t.status === "open").length, icon: AlertTriangle, color: "text-amber-400" },
-    { label: "Revenue (AED)", value: allSubs.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0).toLocaleString(), icon: TrendingUp, color: "text-emerald-400" },
+    { label: "Total Organizations", value: orgCount, icon: Building2, color: "text-blue-400" },
+    { label: "Active Subscriptions", value: activeSubs, icon: Crown, color: "text-primary" },
+    { label: "Open Tickets", value: openTickets, icon: AlertTriangle, color: "text-amber-400" },
+    { label: "Revenue (AED)", value: Number(totalRevenue).toLocaleString(), icon: TrendingUp, color: "text-emerald-400" },
   ];
-
-  const filteredOrgs = allOrgs.filter((o: any) => o.name?.toLowerCase().includes(search.toLowerCase()));
 
   const openAddPlan = () => {
     setEditPlan(null);
@@ -161,38 +162,9 @@ const MasterAdmin = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Tenants Tab */}
+          {/* Tenants Tab - Enhanced */}
           <TabsContent value="overview" className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search tenants..." className="pl-10 bg-secondary/50 border-border/50" value={search} onChange={(e) => setSearch(e.target.value)} />
-              </div>
-            </div>
-            <div className="glass-card overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Organization</TableHead>
-                    <TableHead>Emirate</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrgs.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No tenants found</TableCell></TableRow>
-                  ) : filteredOrgs.map((org: any) => (
-                    <TableRow key={org.id}>
-                      <TableCell className="font-medium">{org.name}</TableCell>
-                      <TableCell>{org.emirate || "—"}</TableCell>
-                      <TableCell><Badge variant={org.is_active ? "default" : "secondary"}>{org.is_active ? "Active" : "Inactive"}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{new Date(org.created_at).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <TenantsTab />
           </TabsContent>
 
           {/* Plans Tab */}
@@ -237,94 +209,19 @@ const MasterAdmin = () => {
             </div>
           </TabsContent>
 
-          {/* Subscriptions Tab */}
+          {/* Subscriptions Tab - Enhanced */}
           <TabsContent value="subscriptions" className="space-y-4">
-            <div className="glass-card overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Organization</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Billing</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Expires</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allSubs.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No subscriptions yet</TableCell></TableRow>
-                  ) : allSubs.map((sub: any) => (
-                    <TableRow key={sub.id}>
-                      <TableCell className="font-medium">{sub.organizations?.name || "—"}</TableCell>
-                      <TableCell>{sub.subscription_plans?.name || "—"}</TableCell>
-                      <TableCell>
-                        <Badge variant={sub.status === "active" ? "default" : sub.status === "suspended" ? "destructive" : "secondary"}>
-                          {sub.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{sub.billing_cycle}</TableCell>
-                      <TableCell>AED {sub.total_amount || 0}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{sub.expires_at ? new Date(sub.expires_at).toLocaleDateString() : "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <SubscriptionsTab />
           </TabsContent>
 
-          {/* Tickets Tab */}
+          {/* Tickets Tab - Enhanced */}
           <TabsContent value="tickets" className="space-y-4">
-            <div className="glass-card overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ticket #</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tickets.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No tickets yet</TableCell></TableRow>
-                  ) : tickets.map((t: any) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-mono text-xs">{t.ticket_number}</TableCell>
-                      <TableCell className="font-medium">{t.subject}</TableCell>
-                      <TableCell><Badge variant="secondary">{t.category}</Badge></TableCell>
-                      <TableCell>
-                        <Badge className={t.priority === "critical" ? "bg-destructive/20 text-destructive" : t.priority === "high" ? "bg-amber-500/20 text-amber-400" : "bg-muted text-muted-foreground"}>
-                          {t.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell><Badge variant={t.status === "open" ? "default" : "secondary"}>{t.status}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <TicketsTab />
           </TabsContent>
 
-          {/* Modules Tab */}
+          {/* Modules Tab - Enhanced */}
           <TabsContent value="modules" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {modules.map((m: any) => (
-                <Card key={m.id} className="glass-card">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{m.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{m.description}</p>
-                      <Badge variant="secondary" className="mt-2 text-xs">{m.category}</Badge>
-                    </div>
-                    <Badge variant={m.is_active ? "default" : "secondary"}>{m.is_active ? "Active" : "Disabled"}</Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <ModulesTab />
           </TabsContent>
 
           {/* Payment Gateways Tab */}
