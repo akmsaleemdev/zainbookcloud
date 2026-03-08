@@ -168,6 +168,14 @@ const Leases = () => {
               <div className="space-y-2"><Label>Payment Frequency</Label><Select value={form.payment_frequency} onValueChange={(v) => setForm({ ...form, payment_frequency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="semi_annual">Semi-Annual</SelectItem><SelectItem value="annual">Annual</SelectItem></SelectContent></Select></div>
               <div className="space-y-2"><Label>Ejari Number</Label><Input value={form.ejari_number} onChange={(e) => setForm({ ...form, ejari_number: e.target.value })} /></div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Rent Due Day</Label><Input type="number" min="1" max="28" value={form.rent_due_day} onChange={(e) => setForm({ ...form, rent_due_day: e.target.value })} placeholder="1-28" /></div>
+              <div className="space-y-2"><Label>Late Fee Rate (%)</Label><Input type="number" step="0.5" value={form.late_fee_rate} onChange={(e) => setForm({ ...form, late_fee_rate: e.target.value })} placeholder="e.g. 5" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Grace Period (days)</Label><Input type="number" value={form.grace_period_days} onChange={(e) => setForm({ ...form, grace_period_days: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Renewal Reminder (days)</Label><Input type="number" value={form.renewal_reminder_days} onChange={(e) => setForm({ ...form, renewal_reminder_days: e.target.value })} /></div>
+            </div>
             <DialogFooter><Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button><Button type="submit">{editingId ? "Update" : "Create"}</Button></DialogFooter>
           </form>
         </DialogContent>
