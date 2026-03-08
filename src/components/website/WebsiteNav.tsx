@@ -79,4 +79,6 @@ export const WebsiteNav = forwardRef<HTMLElement>((_, ref) => {
       )}
     </nav>
   );
-};
+});
+
+WebsiteNav.displayName = "WebsiteNav";
