@@ -171,7 +171,7 @@ export const Sidebar = () => {
 
       {/* Collapse toggle */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={toggleCollapsed}
         className="flex items-center justify-center h-14 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
       >
         {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
