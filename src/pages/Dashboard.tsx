@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import {
   Building2, Home, BedDouble, Users, FileText, CreditCard,
-  Wrench, TrendingUp, TrendingDown, ArrowUpRight, Calendar,
+  Wrench, TrendingUp, TrendingDown, Calendar,
   Clock, Sparkles, ChevronRight
 } from "lucide-react";
 import {
@@ -23,7 +23,7 @@ const revenueData = [
 
 const occupancyData = [
   { name: "Occupied", value: 78, color: "hsl(153, 54%, 45%)" },
-  { name: "Vacant", value: 15, color: "hsl(220, 12%, 20%)" },
+  { name: "Vacant", value: 15, color: "hsl(0, 0%, 18%)" },
   { name: "Maintenance", value: 7, color: "hsl(38, 92%, 50%)" },
 ];
 
@@ -46,27 +46,20 @@ const recentActivity = [
 const stats = [
   { label: "Total Properties", value: "47", icon: Home, change: "+3", positive: true },
   { label: "Active Tenants", value: "312", icon: Users, change: "+18", positive: true },
-  { label: "Occupancy", value: "78%", icon: BedDouble, change: "+2.3%", positive: true },
-  { label: "Revenue", value: "AED 172K", icon: CreditCard, change: "+8.5%", positive: true },
+  { label: "Occupancy Rate", value: "78%", icon: BedDouble, change: "+2.3%", positive: true },
+  { label: "Monthly Revenue", value: "AED 172K", icon: CreditCard, change: "+8.5%", positive: true },
   { label: "Open Tickets", value: "23", icon: Wrench, change: "-5", positive: true },
   { label: "Active Leases", value: "289", icon: FileText, change: "+12", positive: true },
 ];
 
-const quickActions = [
-  { label: "Add Tenant", icon: Users },
-  { label: "New Invoice", icon: FileText },
-  { label: "Maintenance", icon: Wrench },
-  { label: "AI Insights", icon: Sparkles },
-];
-
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] } },
 };
 
 const Dashboard = () => {
@@ -79,108 +72,93 @@ const Dashboard = () => {
 
   return (
     <AppLayout>
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-[1400px]">
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 max-w-[1440px]">
         {/* Header */}
         <motion.div variants={item} className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-foreground tracking-tight">{greeting}</h1>
-            <p className="text-base text-muted-foreground mt-1">Here's your property portfolio overview</p>
+            <h1 className="text-4xl font-bold text-foreground tracking-tight">{greeting}</h1>
+            <p className="text-lg text-muted-foreground mt-2">Here's your property portfolio overview</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              {new Date().toLocaleDateString("en-AE", { month: "short", day: "numeric", year: "numeric" })}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-[15px] text-muted-foreground bg-secondary rounded-2xl px-5 py-2.5">
+              <Calendar className="w-5 h-5" />
+              {new Date().toLocaleDateString("en-AE", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
             </div>
           </div>
         </motion.div>
 
-        {/* Quick Actions Bar */}
-        <motion.div variants={item} className="flex items-center gap-2">
-          {quickActions.map((qa) => (
-            <Button
-              key={qa.label}
-              variant="outline"
-              size="sm"
-              className="h-9 text-sm border-border/40 bg-muted/30 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-200"
-            >
-              <qa.icon className="w-4 h-4 mr-1.5" />
-              {qa.label}
-            </Button>
-          ))}
-        </motion.div>
-
         {/* Stats Grid */}
-        <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="glass-card stat-glow p-4 group cursor-default">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="w-4.5 h-4.5 text-primary" />
+            <div key={stat.label} className="glass-card stat-glow p-5 group cursor-default">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <stat.icon className="w-5 h-5 text-primary" />
                 </div>
-                <span className={`text-xs font-semibold flex items-center gap-0.5 ${stat.positive ? "text-primary" : "text-destructive"}`}>
-                  {stat.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                <span className={`text-sm font-semibold flex items-center gap-1 ${stat.positive ? "text-primary" : "text-destructive"}`}>
+                  {stat.positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                   {stat.change}
                 </span>
               </div>
-              <div className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+              <div className="text-3xl font-bold text-foreground tracking-tight">{stat.value}</div>
+              <div className="text-sm text-muted-foreground mt-1 font-medium">{stat.label}</div>
             </div>
           ))}
         </motion.div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Revenue Chart */}
-          <motion.div variants={item} className="floating-card p-5 lg:col-span-2">
-            <div className="flex items-center justify-between mb-5">
+          <motion.div variants={item} className="floating-card p-6 lg:col-span-2">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="font-semibold text-foreground text-base">Revenue Analytics</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">Last 6 months performance</p>
+                <h3 className="font-bold text-foreground text-xl">Revenue Analytics</h3>
+                <p className="text-[15px] text-muted-foreground mt-1">Last 6 months performance</p>
               </div>
-              <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">
+              <Badge variant="outline" className="text-sm border-border/40 text-muted-foreground px-4 py-1.5 rounded-xl">
                 AED
               </Badge>
             </div>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(153, 54%, 45%)" stopOpacity={0.25} />
+                    <stop offset="5%" stopColor="hsl(153, 54%, 45%)" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="hsl(153, 54%, 45%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 12%, 14%)" />
-                <XAxis dataKey="month" stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 13%)" />
+                <XAxis dataKey="month" stroke="hsl(0, 0%, 30%)" fontSize={14} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(0, 0%, 30%)" fontSize={14} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(220, 16%, 12%)",
-                    border: "1px solid hsl(220, 12%, 20%)",
-                    borderRadius: "10px",
+                    backgroundColor: "hsl(0, 0%, 10%)",
+                    border: "1px solid hsl(0, 0%, 18%)",
+                    borderRadius: "16px",
                     color: "hsl(0, 0%, 95%)",
-                    fontSize: "13px",
-                    backdropFilter: "blur(12px)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                    fontSize: "14px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                    padding: "12px 16px",
                   }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(153, 54%, 45%)" fill="url(#revGrad)" strokeWidth={2} />
-                <Area type="monotone" dataKey="expenses" stroke="hsl(0, 72%, 51%)" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
+                <Area type="monotone" dataKey="revenue" stroke="hsl(153, 54%, 45%)" fill="url(#revGrad)" strokeWidth={2.5} />
+                <Area type="monotone" dataKey="expenses" stroke="hsl(0, 72%, 51%)" fill="transparent" strokeWidth={1.5} strokeDasharray="6 4" />
               </AreaChart>
             </ResponsiveContainer>
           </motion.div>
 
           {/* Occupancy Pie */}
-          <motion.div variants={item} className="floating-card p-5">
-            <h3 className="font-semibold text-foreground text-base mb-1">Occupancy Rate</h3>
-            <p className="text-sm text-muted-foreground mb-4">Current portfolio status</p>
-            <ResponsiveContainer width="100%" height={180}>
+          <motion.div variants={item} className="floating-card p-6">
+            <h3 className="font-bold text-foreground text-xl mb-1">Occupancy Rate</h3>
+            <p className="text-[15px] text-muted-foreground mb-5">Current portfolio status</p>
+            <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
                   data={occupancyData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={72}
+                  innerRadius={55}
+                  outerRadius={80}
                   dataKey="value"
                   paddingAngle={4}
                   strokeWidth={0}
@@ -191,14 +169,14 @@ const Dashboard = () => {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="space-y-2.5 mt-3">
+            <div className="space-y-3 mt-4">
               {occupancyData.map((d) => (
-                <div key={d.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                    <span className="text-muted-foreground">{d.name}</span>
+                <div key={d.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
+                    <span className="text-[15px] text-muted-foreground">{d.name}</span>
                   </div>
-                  <span className="font-semibold text-foreground">{d.value}%</span>
+                  <span className="text-[15px] font-bold text-foreground">{d.value}%</span>
                 </div>
               ))}
             </div>
@@ -206,68 +184,68 @@ const Dashboard = () => {
         </div>
 
         {/* Bottom Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Maintenance Bar */}
-          <motion.div variants={item} className="floating-card p-5">
-            <div className="flex items-center justify-between mb-4">
+          <motion.div variants={item} className="floating-card p-6">
+            <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-semibold text-foreground text-base">Maintenance</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">Active requests by category</p>
+                <h3 className="font-bold text-foreground text-xl">Maintenance</h3>
+                <p className="text-[15px] text-muted-foreground mt-1">Active requests by category</p>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={maintenanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 12%, 14%)" />
-                <XAxis dataKey="type" stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 13%)" />
+                <XAxis dataKey="type" stroke="hsl(0, 0%, 30%)" fontSize={14} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(0, 0%, 30%)" fontSize={14} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(220, 16%, 12%)",
-                    border: "1px solid hsl(220, 12%, 20%)",
-                    borderRadius: "10px",
+                    backgroundColor: "hsl(0, 0%, 10%)",
+                    border: "1px solid hsl(0, 0%, 18%)",
+                    borderRadius: "16px",
                     color: "hsl(0, 0%, 95%)",
-                    fontSize: "13px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                    fontSize: "14px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
                   }}
                 />
-                <Bar dataKey="count" fill="hsl(153, 54%, 45%)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="hsl(153, 54%, 45%)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
 
           {/* Recent Activity */}
-          <motion.div variants={item} className="floating-card p-5">
-            <div className="flex items-center justify-between mb-4">
+          <motion.div variants={item} className="floating-card p-6">
+            <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-semibold text-foreground text-base">Recent Activity</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">Latest updates</p>
+                <h3 className="font-bold text-foreground text-xl">Recent Activity</h3>
+                <p className="text-[15px] text-muted-foreground mt-1">Latest updates</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 text-sm text-muted-foreground hover:text-primary">
-                View All <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+              <Button variant="ghost" size="sm" className="h-10 text-[15px] text-muted-foreground hover:text-primary rounded-xl">
+                View All <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
             <div className="space-y-1">
               {recentActivity.map((a, i) => (
-                <div key={i} className="flex items-center justify-between py-3 border-b border-border/20 last:border-0 group cursor-default">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                <div key={i} className="flex items-center justify-between py-3.5 border-b border-border/20 last:border-0 group cursor-default">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${
                       a.type === "payment" ? "bg-primary/10 text-primary" :
                       a.type === "maintenance" ? "bg-warning/10 text-warning" :
-                      "bg-muted text-muted-foreground"
+                      "bg-secondary text-muted-foreground"
                     }`}>
-                      {a.type === "payment" ? <CreditCard className="w-4 h-4" /> :
-                       a.type === "maintenance" ? <Wrench className="w-4 h-4" /> :
-                       a.type === "tenant" ? <Users className="w-4 h-4" /> :
-                       a.type === "lease" ? <FileText className="w-4 h-4" /> :
-                       <Building2 className="w-4 h-4" />}
+                      {a.type === "payment" ? <CreditCard className="w-5 h-5" /> :
+                       a.type === "maintenance" ? <Wrench className="w-5 h-5" /> :
+                       a.type === "tenant" ? <Users className="w-5 h-5" /> :
+                       a.type === "lease" ? <FileText className="w-5 h-5" /> :
+                       <Building2 className="w-5 h-5" />}
                     </div>
                     <div>
-                      <p className="text-sm text-foreground font-medium">{a.action}</p>
-                      <p className="text-xs text-muted-foreground">{a.name}</p>
+                      <p className="text-[15px] text-foreground font-semibold">{a.action}</p>
+                      <p className="text-sm text-muted-foreground">{a.name}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-3.5 h-3.5" />
                     {a.time}
                   </div>
                 </div>

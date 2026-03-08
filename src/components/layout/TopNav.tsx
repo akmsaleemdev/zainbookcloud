@@ -14,33 +14,39 @@ export const TopNav = () => {
   };
 
   return (
-    <header className="h-16 border-b border-border/50 flex items-center justify-between px-6 bg-background/60 backdrop-blur-xl">
+    <header className="h-[72px] border-b border-border/40 flex items-center justify-between px-8 bg-background/80 backdrop-blur-xl">
       {/* Search */}
-      <div className="relative w-80">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div className="relative w-96">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
           placeholder="Search anything..."
-          className="pl-10 h-10 text-sm bg-muted/40 border-border/30 rounded-lg focus:border-primary/40 placeholder:text-muted-foreground/60"
+          className="pl-12 h-12 text-[15px] bg-secondary/60 border-border/30 rounded-2xl focus:border-primary/40 placeholder:text-muted-foreground/50"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-primary">
-          <Sparkles className="w-4.5 h-4.5" />
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" className="w-11 h-11 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
+          <Sparkles className="w-5 h-5" />
         </Button>
-        <Button variant="ghost" size="icon" className="relative w-9 h-9 text-muted-foreground hover:text-foreground">
-          <Bell className="w-4.5 h-4.5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
+        <Button variant="ghost" size="icon" className="relative w-11 h-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
         </Button>
-        <div className="w-px h-7 bg-border/40 mx-2" />
-        <Avatar className="w-8 h-8 cursor-pointer">
-          <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">
-            ZB
-          </AvatarFallback>
-        </Avatar>
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="w-9 h-9 text-muted-foreground hover:text-destructive">
-          <LogOut className="w-4 h-4" />
+        <div className="w-px h-8 bg-border/40 mx-1" />
+        <div className="flex items-center gap-3 cursor-pointer">
+          <Avatar className="w-10 h-10 rounded-xl">
+            <AvatarFallback className="bg-primary/15 text-primary text-sm font-bold rounded-xl">
+              ZB
+            </AvatarFallback>
+          </Avatar>
+          <div className="hidden md:block">
+            <p className="text-[15px] font-semibold text-foreground leading-tight">Admin</p>
+            <p className="text-xs text-muted-foreground">Super Admin</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="w-11 h-11 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+          <LogOut className="w-5 h-5" />
         </Button>
       </div>
     </header>
