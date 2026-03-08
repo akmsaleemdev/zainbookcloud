@@ -1143,15 +1143,21 @@ export type Database = {
       }
       leases: {
         Row: {
+          auto_generate_invoice: boolean | null
           bed_space_id: string | null
           created_at: string
+          deposit_status: string | null
           ejari_number: string | null
           end_date: string
+          grace_period_days: number | null
           id: string
+          late_fee_rate: number | null
           lease_type: string | null
           monthly_rent: number
           organization_id: string
           payment_frequency: string | null
+          renewal_reminder_days: number | null
+          rent_due_day: number | null
           room_id: string | null
           security_deposit: number | null
           start_date: string
@@ -1161,15 +1167,21 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_generate_invoice?: boolean | null
           bed_space_id?: string | null
           created_at?: string
+          deposit_status?: string | null
           ejari_number?: string | null
           end_date: string
+          grace_period_days?: number | null
           id?: string
+          late_fee_rate?: number | null
           lease_type?: string | null
           monthly_rent: number
           organization_id: string
           payment_frequency?: string | null
+          renewal_reminder_days?: number | null
+          rent_due_day?: number | null
           room_id?: string | null
           security_deposit?: number | null
           start_date: string
@@ -1179,15 +1191,21 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_generate_invoice?: boolean | null
           bed_space_id?: string | null
           created_at?: string
+          deposit_status?: string | null
           ejari_number?: string | null
           end_date?: string
+          grace_period_days?: number | null
           id?: string
+          late_fee_rate?: number | null
           lease_type?: string | null
           monthly_rent?: number
           organization_id?: string
           payment_frequency?: string | null
+          renewal_reminder_days?: number | null
+          rent_due_day?: number | null
           room_id?: string | null
           security_deposit?: number | null
           start_date?: string
@@ -1990,6 +2008,147 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_invoices: {
+        Row: {
+          amount: number
+          auto_send: boolean | null
+          created_at: string
+          description: string | null
+          frequency: string
+          id: string
+          is_active: boolean | null
+          lease_id: string | null
+          next_generate_date: string
+          organization_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          auto_send?: boolean | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          lease_id?: string | null
+          next_generate_date: string
+          organization_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          auto_send?: boolean | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          lease_id?: string | null
+          next_generate_date?: string
+          organization_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_invoices_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rent_schedules: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          late_fee: number | null
+          lease_id: string
+          notes: string | null
+          organization_id: string
+          paid_date: string | null
+          payment_id: string | null
+          status: string | null
+          tenant_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          late_fee?: number | null
+          lease_id: string
+          notes?: string | null
+          organization_id: string
+          paid_date?: string | null
+          payment_id?: string | null
+          status?: string | null
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          late_fee?: number | null
+          lease_id?: string
+          notes?: string | null
+          organization_id?: string
+          paid_date?: string | null
+          payment_id?: string | null
+          status?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_schedules_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_schedules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_schedules_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
