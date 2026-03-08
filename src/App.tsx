@@ -7,6 +7,13 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import AuthPage from "./pages/AuthPage";
 import ResetPassword from "./pages/ResetPassword";
+import HomePage from "./pages/website/HomePage";
+import FeaturesPage from "./pages/website/FeaturesPage";
+import PricingPage from "./pages/website/PricingPage";
+import SolutionsPage from "./pages/website/SolutionsPage";
+import AboutPage from "./pages/website/AboutPage";
+import ContactPage from "./pages/website/ContactPage";
+import PaymentGatewaysPage from "./pages/website/PaymentGatewaysPage";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
 import Tenants from "./pages/Tenants";
@@ -55,9 +62,17 @@ const App = () => (
       <BrowserRouter>
         <OrganizationProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/website" replace />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Public website */}
+            <Route path="/website" element={<HomePage />} />
+            <Route path="/website/features" element={<FeaturesPage />} />
+            <Route path="/website/pricing" element={<PricingPage />} />
+            <Route path="/website/solutions" element={<SolutionsPage />} />
+            <Route path="/website/about" element={<AboutPage />} />
+            <Route path="/website/contact" element={<ContactPage />} />
+            <Route path="/website/payment-gateways" element={<PaymentGatewaysPage />} />
             <Route path="/dashboard" element={<P><Dashboard /></P>} />
             <Route path="/organizations" element={<P><Organizations /></P>} />
             <Route path="/properties" element={<P><Properties /></P>} />
