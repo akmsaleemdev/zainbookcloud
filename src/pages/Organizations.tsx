@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building, Plus, Search, Filter, Pencil, Trash2, MapPin, Mail, Phone, MoreHorizontal, Globe, DollarSign } from "lucide-react";
+import { Building, Plus, Search, Filter, Pencil, Trash2, MapPin, Mail, Phone, MoreHorizontal, Globe, DollarSign, Upload, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -36,9 +36,10 @@ interface OrgForm {
   language: string;
   country: string;
   timezone: string;
+  logo_url: string;
 }
 
-const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5", currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai" };
+const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5", currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai", logo_url: "" };
 
 const Organizations = () => {
   const { user } = useAuth();
@@ -137,6 +138,7 @@ const Organizations = () => {
       email: org.email || "", phone: org.phone || "", address: org.address || "", emirate: org.emirate || "",
       vat_number: org.vat_number || "", vat_enabled: org.vat_enabled !== false, vat_rate: String(org.vat_rate || 5),
       currency: org.currency || "AED", language: org.language || "en", country: org.country || "UAE", timezone: org.timezone || "Asia/Dubai",
+      logo_url: org.logo_url || "",
     });
     setEditingId(org.id);
     setDialogOpen(true);
@@ -189,8 +191,12 @@ const Organizations = () => {
             {filtered.map((org: any) => (
               <div key={org.id} className="glass-card p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {org.logo_url ? (
+                      <img src={org.logo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Building className="w-5 h-5 text-primary" />
+                    )}
                   </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(org)}>
@@ -225,6 +231,43 @@ const Organizations = () => {
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <Label>Company Logo</Label>
+              <div className="flex items-center gap-4">
+                {form.logo_url ? (
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                    <img src={form.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => setForm({ ...form, logo_url: "" })} className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-lg border-2 border-dashed border-border flex items-center justify-center">
+                    <Building className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="text-xs"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const ext = file.name.split('.').pop();
+                      const path = `logos/${Date.now()}.${ext}`;
+                      const { error } = await supabase.storage.from("documents").upload(path, file);
+                      if (error) { toast.error("Upload failed"); return; }
+                      const { data: urlData } = supabase.storage.from("documents").getPublicUrl(path);
+                      setForm({ ...form, logo_url: urlData.publicUrl });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 2MB</p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Name (English) *</Label>

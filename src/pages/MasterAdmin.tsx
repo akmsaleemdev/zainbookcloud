@@ -3,20 +3,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { 
-  Shield, Building2, Users, CreditCard, BarChart3, Search, 
-  Plus, Pencil, Trash2, Eye, Power, AlertTriangle, TrendingUp,
-  Activity, Globe, Crown
+import { PaymentGatewaysTab } from "@/components/master-admin/PaymentGatewaysTab";
+import { PlanDialog, defaultPlanForm, type PlanFormData } from "@/components/master-admin/PlanDialog";
+import {
+  Shield, Building2, Search, Plus, Pencil, Trash2,
+  AlertTriangle, TrendingUp, Crown, CreditCard
 } from "lucide-react";
 
 const MasterAdmin = () => {
@@ -25,10 +23,7 @@ const MasterAdmin = () => {
   const [search, setSearch] = useState("");
   const [planDialog, setPlanDialog] = useState(false);
   const [editPlan, setEditPlan] = useState<any>(null);
-  const [planForm, setPlanForm] = useState({
-    name: "", description: "", plan_type: "monthly", price: 0,
-    max_users: 5, max_units: 25, max_storage_gb: 5, max_api_calls: 2000, ai_usage_limit: 200
-  });
+  const [planForm, setPlanForm] = useState<PlanFormData>(defaultPlanForm);
 
   // Queries
   const { data: allOrgs = [] } = useQuery({
@@ -110,6 +105,25 @@ const MasterAdmin = () => {
 
   const filteredOrgs = allOrgs.filter((o: any) => o.name?.toLowerCase().includes(search.toLowerCase()));
 
+  const openAddPlan = () => {
+    setEditPlan(null);
+    setPlanForm(defaultPlanForm);
+    setPlanDialog(true);
+  };
+
+  const openEditPlan = (p: any) => {
+    setEditPlan(p);
+    setPlanForm({
+      name: p.name || "", description: p.description || "", plan_type: p.plan_type || "monthly",
+      price: p.price || 0, max_users: p.max_users ?? 5, max_units: p.max_units ?? 25,
+      max_properties: p.max_properties ?? 10, max_tenants: p.max_tenants ?? 50,
+      max_storage_gb: p.max_storage_gb ?? 5, max_api_calls: p.max_api_calls ?? 2000,
+      ai_usage_limit: p.ai_usage_limit ?? 200, report_access: p.report_access !== false,
+      ai_features_access: p.ai_features_access !== false,
+    });
+    setPlanDialog(true);
+  };
+
   return (
     <AppLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -142,6 +156,9 @@ const MasterAdmin = () => {
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
             <TabsTrigger value="tickets">Support Tickets</TabsTrigger>
             <TabsTrigger value="modules">Modules</TabsTrigger>
+            <TabsTrigger value="gateways" className="gap-1.5">
+              <CreditCard className="w-3.5 h-3.5" /> Payment Gateways
+            </TabsTrigger>
           </TabsList>
 
           {/* Tenants Tab */}
@@ -181,9 +198,7 @@ const MasterAdmin = () => {
           {/* Plans Tab */}
           <TabsContent value="plans" className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => { setEditPlan(null); setPlanForm({ name: "", description: "", plan_type: "monthly", price: 0, max_users: 5, max_units: 25, max_storage_gb: 5, max_api_calls: 2000, ai_usage_limit: 200 }); setPlanDialog(true); }} className="gap-2">
-                <Plus className="w-4 h-4" /> Add Plan
-              </Button>
+              <Button onClick={openAddPlan} className="gap-2"><Plus className="w-4 h-4" /> Add Plan</Button>
             </div>
             <div className="glass-card overflow-hidden">
               <Table>
@@ -194,6 +209,8 @@ const MasterAdmin = () => {
                     <TableHead>Price</TableHead>
                     <TableHead>Users</TableHead>
                     <TableHead>Units</TableHead>
+                    <TableHead>Properties</TableHead>
+                    <TableHead>AI</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -206,9 +223,11 @@ const MasterAdmin = () => {
                       <TableCell>AED {p.price}</TableCell>
                       <TableCell>{p.max_users === -1 ? "∞" : p.max_users}</TableCell>
                       <TableCell>{p.max_units === -1 ? "∞" : p.max_units}</TableCell>
+                      <TableCell>{p.max_properties === -1 ? "∞" : p.max_properties ?? "—"}</TableCell>
+                      <TableCell>{p.ai_features_access !== false ? "✓" : "✗"}</TableCell>
                       <TableCell><Badge variant={p.is_active ? "default" : "secondary"}>{p.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditPlan(p); setPlanForm(p); setPlanDialog(true); }}><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEditPlan(p)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => deletePlanMutation.mutate(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                       </TableCell>
                     </TableRow>
@@ -307,37 +326,23 @@ const MasterAdmin = () => {
               ))}
             </div>
           </TabsContent>
+
+          {/* Payment Gateways Tab */}
+          <TabsContent value="gateways">
+            <PaymentGatewaysTab />
+          </TabsContent>
         </Tabs>
       </motion.div>
 
-      {/* Plan Dialog */}
-      <Dialog open={planDialog} onOpenChange={setPlanDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{editPlan ? "Edit Plan" : "Create Plan"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <div className="col-span-2 space-y-2"><Label>Name</Label><Input value={planForm.name} onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })} /></div>
-            <div className="col-span-2 space-y-2"><Label>Description</Label><Input value={planForm.description} onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })} /></div>
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select value={planForm.plan_type} onValueChange={(v) => setPlanForm({ ...planForm, plan_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {["trial", "monthly", "quarterly", "half_yearly", "yearly"].map((t) => <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2"><Label>Price (AED)</Label><Input type="number" value={planForm.price} onChange={(e) => setPlanForm({ ...planForm, price: +e.target.value })} /></div>
-            <div className="space-y-2"><Label>Max Users</Label><Input type="number" value={planForm.max_users} onChange={(e) => setPlanForm({ ...planForm, max_users: +e.target.value })} /></div>
-            <div className="space-y-2"><Label>Max Units</Label><Input type="number" value={planForm.max_units} onChange={(e) => setPlanForm({ ...planForm, max_units: +e.target.value })} /></div>
-            <div className="space-y-2"><Label>Storage (GB)</Label><Input type="number" value={planForm.max_storage_gb} onChange={(e) => setPlanForm({ ...planForm, max_storage_gb: +e.target.value })} /></div>
-            <div className="space-y-2"><Label>API Calls</Label><Input type="number" value={planForm.max_api_calls} onChange={(e) => setPlanForm({ ...planForm, max_api_calls: +e.target.value })} /></div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setPlanDialog(false)}>Cancel</Button>
-            <Button onClick={() => savePlanMutation.mutate()} disabled={!planForm.name}>{editPlan ? "Update" : "Create"}</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PlanDialog
+        open={planDialog}
+        onOpenChange={setPlanDialog}
+        form={planForm}
+        setForm={setPlanForm}
+        isEdit={!!editPlan}
+        onSave={() => savePlanMutation.mutate()}
+        isSaving={savePlanMutation.isPending}
+      />
     </AppLayout>
   );
 };
