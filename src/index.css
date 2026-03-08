@@ -137,10 +137,9 @@
 }
 
 @layer components {
-  /* Dark card — matching reference style */
   .glass-card {
-    background: hsl(0 0% 10%);
-    border: 1px solid hsl(0 0% 14%);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
