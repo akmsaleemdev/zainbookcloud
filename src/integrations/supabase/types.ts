@@ -976,6 +976,111 @@ export type Database = {
         }
         Relationships: []
       }
+      utility_meters: {
+        Row: {
+          account_number: string | null
+          created_at: string
+          id: string
+          meter_number: string
+          organization_id: string
+          property_id: string | null
+          provider: string | null
+          status: string | null
+          unit_id: string | null
+          updated_at: string
+          utility_type: string
+        }
+        Insert: {
+          account_number?: string | null
+          created_at?: string
+          id?: string
+          meter_number: string
+          organization_id: string
+          property_id?: string | null
+          provider?: string | null
+          status?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          utility_type?: string
+        }
+        Update: {
+          account_number?: string | null
+          created_at?: string
+          id?: string
+          meter_number?: string
+          organization_id?: string
+          property_id?: string | null
+          provider?: string | null
+          status?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          utility_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_meters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utility_meters_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utility_meters_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utility_readings: {
+        Row: {
+          amount: number | null
+          consumption: number | null
+          created_at: string
+          id: string
+          meter_id: string
+          notes: string | null
+          reading_date: string
+          reading_value: number
+        }
+        Insert: {
+          amount?: number | null
+          consumption?: number | null
+          created_at?: string
+          id?: string
+          meter_id: string
+          notes?: string | null
+          reading_date?: string
+          reading_value: number
+        }
+        Update: {
+          amount?: number | null
+          consumption?: number | null
+          created_at?: string
+          id?: string
+          meter_id?: string
+          notes?: string | null
+          reading_date?: string
+          reading_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_readings_meter_id_fkey"
+            columns: ["meter_id"]
+            isOneToOne: false
+            referencedRelation: "utility_meters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
