@@ -10,8 +10,8 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    if (!GOOGLE_API_KEY) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
     const systemPrompt = `You are ZainBook AI Support Assistant, an expert in property management for the UAE real estate market.
 
