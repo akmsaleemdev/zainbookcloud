@@ -36,9 +36,10 @@ interface OrgForm {
   language: string;
   country: string;
   timezone: string;
+  logo_url: string;
 }
 
-const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5", currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai" };
+const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5", currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai", logo_url: "" };
 
 const Organizations = () => {
   const { user } = useAuth();
