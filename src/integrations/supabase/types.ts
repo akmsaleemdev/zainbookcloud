@@ -1174,6 +1174,65 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          listing_id: string | null
+          listing_label: string | null
+          listing_type: string
+          message: string | null
+          move_in_date: string | null
+          organization_id: string
+          phone: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          listing_id?: string | null
+          listing_label?: string | null
+          listing_type?: string
+          message?: string | null
+          move_in_date?: string | null
+          organization_id: string
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          listing_id?: string | null
+          listing_label?: string | null
+          listing_type?: string
+          message?: string | null
+          move_in_date?: string | null
+          organization_id?: string
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leases: {
         Row: {
           auto_generate_invoice: boolean | null
