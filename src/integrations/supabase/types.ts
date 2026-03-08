@@ -1371,6 +1371,51 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_configs: {
+        Row: {
+          access_token: string | null
+          api_key: string | null
+          created_at: string
+          display_name: string
+          extra_config: Json | null
+          id: string
+          is_active: boolean | null
+          is_test_mode: boolean | null
+          merchant_id: string | null
+          provider: string
+          secret_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          api_key?: string | null
+          created_at?: string
+          display_name: string
+          extra_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_test_mode?: boolean | null
+          merchant_id?: string | null
+          provider: string
+          secret_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          api_key?: string | null
+          created_at?: string
+          display_name?: string
+          extra_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_test_mode?: boolean | null
+          merchant_id?: string | null
+          provider?: string
+          secret_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -1699,6 +1744,7 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
+          ai_features_access: boolean | null
           ai_usage_limit: number | null
           created_at: string
           currency: string
@@ -1707,17 +1753,21 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           max_api_calls: number | null
+          max_properties: number | null
           max_storage_gb: number | null
+          max_tenants: number | null
           max_units: number | null
           max_users: number | null
           name: string
           plan_type: string
           price: number
+          report_access: boolean | null
           sort_order: number | null
           trial_days: number | null
           updated_at: string
         }
         Insert: {
+          ai_features_access?: boolean | null
           ai_usage_limit?: number | null
           created_at?: string
           currency?: string
@@ -1726,17 +1776,21 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           max_api_calls?: number | null
+          max_properties?: number | null
           max_storage_gb?: number | null
+          max_tenants?: number | null
           max_units?: number | null
           max_users?: number | null
           name: string
           plan_type?: string
           price?: number
+          report_access?: boolean | null
           sort_order?: number | null
           trial_days?: number | null
           updated_at?: string
         }
         Update: {
+          ai_features_access?: boolean | null
           ai_usage_limit?: number | null
           created_at?: string
           currency?: string
@@ -1745,12 +1799,15 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           max_api_calls?: number | null
+          max_properties?: number | null
           max_storage_gb?: number | null
+          max_tenants?: number | null
           max_units?: number | null
           max_users?: number | null
           name?: string
           plan_type?: string
           price?: number
+          report_access?: boolean | null
           sort_order?: number | null
           trial_days?: number | null
           updated_at?: string
