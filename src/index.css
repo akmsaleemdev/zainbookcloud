@@ -7,7 +7,8 @@
 
 
 @layer base {
-  :root {
+  :root,
+  .dark {
     /* Near-black base — matching reference dashboard */
     --background: 0 0% 5%;
     --foreground: 0 0% 95%;
@@ -57,6 +58,54 @@
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
   }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 153 54% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 15%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 153 54% 40%;
+
+    --radius: 1rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 40%;
+    --sidebar-primary: 153 54% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 20%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 153 54% 40%;
+
+    --success: 153 54% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+  }
 }
 
 @layer base {
@@ -79,33 +128,31 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 18%);
+    background: hsl(var(--muted));
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(0 0% 25%);
+    background: hsl(var(--muted-foreground));
   }
 }
 
 @layer components {
-  /* Dark card — matching reference style */
   .glass-card {
-    background: hsl(0 0% 10%);
-    border: 1px solid hsl(0 0% 14%);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-card:hover {
-    border-color: hsl(0 0% 18%);
+    border-color: hsl(var(--border) / 0.8);
   }
 
-  /* Floating card — prominent containers */
   .floating-card {
-    background: hsl(0 0% 10%);
-    border: 1px solid hsl(0 0% 14%);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
     border-radius: calc(var(--radius) + 4px);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 24px hsl(0 0% 0% / 0.15);
   }
 
   .glass-sidebar {
