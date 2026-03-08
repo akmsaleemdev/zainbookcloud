@@ -70,19 +70,19 @@ serve(async (req) => {
     const highRange = Math.round(suggestedRent * 1.1);
 
     // AI-powered insights using Google AI Studio
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
     let aiInsight = "";
 
-    if (LOVABLE_API_KEY && suggestedRent > 0) {
+    if (GOOGLE_API_KEY && suggestedRent > 0) {
       try {
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Authorization": `Bearer ${GOOGLE_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: "gemini-2.5-flash",
             messages: [
               {
                 role: "system",
