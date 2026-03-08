@@ -21,17 +21,26 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SET search_path = public;
 
--- App roles enum
-CREATE TYPE public.app_role AS ENUM (
-  'super_admin',
-  'organization_admin',
-  'property_owner',
-  'property_manager',
-  'staff',
-  'accountant',
-  'maintenance_staff',
-  'tenant'
-);
+-- App roles enum (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_type t
+    JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE t.typname = 'app_role' AND n.nspname = 'public'
+  ) THEN
+    CREATE TYPE public.app_role AS ENUM ('super_admin');
+  END IF;
+END $$;
+
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'organization_admin';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'property_owner';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'property_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'staff';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'accountant';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'maintenance_staff';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'tenant';
 
 -- ============================================================
 -- SECTION 2: PROFILES & USER ROLES
