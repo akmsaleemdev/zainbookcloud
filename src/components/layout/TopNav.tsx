@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Bell, LogOut, Sparkles } from "lucide-react";
+import { Search, Bell, LogOut, Sparkles, Sun, Moon, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -7,12 +7,18 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const TopNav = () => {
+interface TopNavProps {
+  onMenuToggle?: () => void;
+}
+
+export const TopNav = ({ onMenuToggle }: TopNavProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { currentOrg } = useOrganization();
+  const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
 
   const { data: profile } = useQuery({
@@ -39,7 +45,6 @@ export const TopNav = () => {
     enabled: !!user,
   });
 
-  // Realtime notification listener
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -61,49 +66,59 @@ export const TopNav = () => {
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
-    : user?.email?.slice(0, 2).toUpperCase() || "ZB";
+    : user?.email?.slice(0, 2).toUpperCase() || "P";
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
 
   return (
-    <header className="h-[72px] border-b border-border/40 flex items-center justify-between px-8 bg-background/80 backdrop-blur-xl">
-      <div className="relative w-96">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          placeholder="Search anything..."
-          className="pl-12 h-12 text-[15px] bg-secondary/60 border-border/30 rounded-2xl focus:border-primary/40 placeholder:text-muted-foreground/50"
-        />
+    <header className="h-[72px] border-b border-border/40 flex items-center justify-between px-4 md:px-8 bg-background/80 backdrop-blur-xl">
+      <div className="flex items-center gap-3">
+        {/* Mobile menu button */}
+        <Button variant="ghost" size="icon" className="md:hidden w-10 h-10 rounded-xl" onClick={onMenuToggle}>
+          <Menu className="w-5 h-5" />
+        </Button>
+        <div className="relative w-48 md:w-96 hidden sm:block">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            placeholder="Search anything..."
+            className="pl-12 h-12 text-[15px] bg-secondary/60 border-border/30 rounded-2xl focus:border-primary/40 placeholder:text-muted-foreground/50"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
+        {/* Theme toggle */}
+        <Button variant="ghost" size="icon" className="w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary" onClick={toggleTheme}>
+          {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </Button>
         <Link to="/ai-insights">
-          <Button variant="ghost" size="icon" className="w-11 h-11 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
+          <Button variant="ghost" size="icon" className="w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
             <Sparkles className="w-5 h-5" />
           </Button>
         </Link>
         <Link to="/notifications">
-          <Button variant="ghost" size="icon" className="relative w-11 h-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary">
+          <Button variant="ghost" size="icon" className="relative w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary">
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold ring-2 ring-background px-1">
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold ring-2 ring-background px-1">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </Button>
         </Link>
-        <div className="w-px h-8 bg-border/40 mx-1" />
+        <div className="w-px h-8 bg-border/40 mx-1 hidden md:block" />
         <Link to="/settings" className="flex items-center gap-3 cursor-pointer">
           <Avatar className="w-10 h-10 rounded-xl">
             <AvatarFallback className="bg-primary/15 text-primary text-sm font-bold rounded-xl">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <p className="text-[15px] font-semibold text-foreground leading-tight">{displayName}</p>
             <p className="text-xs text-muted-foreground">{currentOrg?.name || "No Organization"}</p>
           </div>
         </Link>
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="w-11 h-11 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
           <LogOut className="w-5 h-5" />
         </Button>
       </div>
