@@ -90,9 +90,34 @@ const Reports = () => {
   return (
     <AppLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-        <div>
-          <h1 className="page-header flex items-center gap-2"><BarChart3 className="w-6 h-6" /> Reports</h1>
-          <p className="text-sm text-muted-foreground mt-1">Financial summaries and operational insights</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="page-header flex items-center gap-2"><BarChart3 className="w-6 h-6" /> Reports</h1>
+            <p className="text-sm text-muted-foreground mt-1">Financial summaries and operational insights</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Financial Summary Report",
+                orgName: currentOrg?.name || "",
+                subtitle: `Revenue: AED ${totalRevenue.toLocaleString()} | Outstanding: AED ${totalOutstanding.toLocaleString()}`,
+                columns: ["Metric", "Value"],
+                rows: [
+                  ["Total Revenue", `AED ${totalRevenue.toLocaleString()}`],
+                  ["Outstanding Amount", `AED ${totalOutstanding.toLocaleString()}`],
+                  ["Total Properties", String(properties.length)],
+                  ["Active Tenants", `${activeTenants} of ${tenants.length}`],
+                  ["Open Maintenance", `${openMaintenance} of ${maintenance.length}`],
+                  ["Total Invoices", String(invoices.length)],
+                  ["Paid Invoices", String(invoices.filter((i: any) => i.status === "paid").length)],
+                  ["Overdue Invoices", String(invoices.filter((i: any) => i.status === "overdue").length)],
+                  ["Total Payments", String(payments.length)],
+                ],
+                filename: "financial-report.pdf",
+              });
+              toast.success("Report PDF exported");
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+          </div>
         </div>
 
         {/* KPI Cards */}

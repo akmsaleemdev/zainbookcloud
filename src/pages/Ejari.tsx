@@ -246,6 +246,7 @@ const Ejari = () => {
                     </TableCell>
                     <TableCell className="capitalize">{c.contract_type}</TableCell>
                     <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" title="Download PDF" onClick={() => { generateEjariPDF(c, currentOrg?.name || ""); toast({ title: "Ejari PDF downloaded" }); }}><Download className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(c.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </TableCell>

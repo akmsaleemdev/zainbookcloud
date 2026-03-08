@@ -153,7 +153,7 @@ const Invoices = () => {
                 <td className="p-4 text-sm font-medium text-foreground">AED {Number(inv.total_amount).toLocaleString()}</td>
                 <td className="p-4 text-sm text-muted-foreground">{new Date(inv.due_date).toLocaleDateString()}</td>
                 <td className="p-4"><Badge variant={inv.status === "paid" ? "default" : inv.status === "overdue" ? "destructive" : "secondary"}>{inv.status}</Badge></td>
-                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(inv)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(inv.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
+                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={() => { generateInvoicePDF(inv, currentOrg?.name || ""); toast.success("Invoice PDF downloaded"); }}><Download className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(inv)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(inv.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
               </tr>
             ))}
           </tbody></table>
