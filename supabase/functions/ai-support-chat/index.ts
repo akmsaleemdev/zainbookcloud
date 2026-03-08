@@ -10,8 +10,8 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
-    if (!GOOGLE_API_KEY) throw new Error("GOOGLE_AI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompt = `You are ZainBook AI Support Assistant, an expert in property management for the UAE real estate market.
 
@@ -33,14 +33,14 @@ Available subscription plans: Free Trial (14 days), Starter (AED 199/mo), Profes
 
 Available modules: Property Management, Tenant Management, Lease Management, Unit Management, Maintenance, Financial Reports, AI Insights, Document Management, Accounting Sync, ERP Integration, CRM, Support System`;
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GOOGLE_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
