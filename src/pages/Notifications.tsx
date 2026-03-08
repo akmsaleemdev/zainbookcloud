@@ -161,6 +161,8 @@ const Notifications = () => {
             })}
           </ScrollArea>
         </div>
+
+        <BulkNotificationSender open={bulkOpen} onOpenChange={setBulkOpen} />
       </motion.div>
     </AppLayout>
   );
