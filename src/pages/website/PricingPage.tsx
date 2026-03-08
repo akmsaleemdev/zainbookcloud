@@ -85,7 +85,7 @@ const PricingPage = () => {
                 <PlanFeature>{plan.max_storage_gb === -1 ? "Unlimited" : `${plan.max_storage_gb} GB`} storage</PlanFeature>
                 {plan.ai_usage_limit > 0 && <PlanFeature>AI features ({plan.ai_usage_limit} requests/mo)</PlanFeature>}
               </ul>
-              <Link to="/auth" className="mt-6">
+              <Link to={`/auth?plan=${plan.id}`} className="mt-6">
                 <Button
                   className="w-full gap-1.5"
                   variant={plan.is_featured ? "default" : "outline"}
