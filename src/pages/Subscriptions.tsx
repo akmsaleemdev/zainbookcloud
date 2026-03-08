@@ -29,7 +29,7 @@ const Subscriptions = () => {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [upgradeDialog, setUpgradeDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("plans");
+  const [activeTab, setActiveTab] = useState("overview");
 
   const { data: plans = [] } = useQuery({
     queryKey: ["subscription-plans"],
@@ -287,11 +287,102 @@ const Subscriptions = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="plans">Plans</TabsTrigger>
             <TabsTrigger value="modules">Modules</TabsTrigger>
             <TabsTrigger value="usage">Usage & Limits</TabsTrigger>
             <TabsTrigger value="billing">Billing History</TabsTrigger>
           </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="mt-4 space-y-6">
+            {currentSub ? (
+              <>
+                {/* Plan Details */}
+                <Card className="glass-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-primary" /> Your Subscription
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Plan</span>
+                          <span className="font-medium">{(currentSub as any)?.subscription_plans?.name}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Status</span>
+                          <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">{(currentSub as any)?.status}</Badge>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Billing Cycle</span>
+                          <span className="font-medium">{(currentSub as any)?.billing_cycle === "yearly" ? "Annual" : "Monthly"}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Amount</span>
+                          <span className="font-medium">AED {((currentSub as any)?.total_amount || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Started</span>
+                          <span className="font-medium">{format(new Date((currentSub as any)?.started_at), "dd MMM yyyy")}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Next Billing</span>
+                          <span className="font-medium">
+                            {(currentSub as any)?.next_billing_date
+                              ? format(new Date((currentSub as any).next_billing_date), "dd MMM yyyy")
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Max Users</span>
+                          <span className="font-medium">{(currentSub as any)?.subscription_plans?.max_users === -1 ? "Unlimited" : (currentSub as any)?.subscription_plans?.max_users}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Max Units</span>
+                          <span className="font-medium">{(currentSub as any)?.subscription_plans?.max_units === -1 ? "Unlimited" : (currentSub as any)?.subscription_plans?.max_units}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Active Modules */}
+                <Card className="glass-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-primary" /> Active Modules
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {enabledModules.filter((em: any) => em.is_enabled).map((em: any) => (
+                        <Badge key={em.id} className="bg-primary/20 text-primary text-xs px-3 py-1">
+                          {em.platform_modules?.name || "Module"}
+                        </Badge>
+                      ))}
+                      {enabledModules.filter((em: any) => em.is_enabled).length === 0 && (
+                        <p className="text-sm text-muted-foreground">No modules enabled yet. Modules are activated based on your plan.</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card className="glass-card">
+                <CardContent className="p-8 text-center">
+                  <Crown className="w-12 h-12 mx-auto mb-3 text-primary opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No Active Subscription</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Choose a plan below to get started with ZainBook AI.</p>
+                  <Button onClick={() => setActiveTab("plans")}>View Plans</Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
           <TabsContent value="plans" className="space-y-6 mt-4">
             {/* Billing toggle */}
