@@ -234,6 +234,10 @@ const MasterAdmin = () => {
           <TabsContent value="logs" className="space-y-4">
             <AuditLogsTab />
           </TabsContent>
+
+          <TabsContent value="email-domains" className="space-y-4">
+            <EmailDomainsTab />
+          </TabsContent>
         </Tabs>
       </motion.div>
 

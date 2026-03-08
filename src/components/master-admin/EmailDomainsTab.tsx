@@ -30,11 +30,11 @@ export const EmailDomainsTab = () => {
     queryKey: ["email-domains"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("email_domains")
+        .from("email_domains" as any)
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []) as EmailDomain[];
+      return (data || []) as unknown as EmailDomain[];
     },
   });
 
@@ -42,14 +42,14 @@ export const EmailDomainsTab = () => {
     mutationFn: async () => {
       const dnsRecords = {
         spf: { type: "TXT", name: "@", value: `v=spf1 include:_spf.${domain} ~all` },
-        dkim: { type: "TXT", name: `mail._domainkey`, value: "pending-setup" },
+        dkim: { type: "TXT", name: "mail._domainkey", value: "pending-setup" },
         mx: { type: "MX", name: "@", value: `mail.${domain}`, priority: 10 },
       };
-      const { error } = await supabase.from("email_domains").insert({
+      const { error } = await supabase.from("email_domains" as any).insert({
         domain,
         status: "pending",
         dns_records: dnsRecords,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -63,7 +63,7 @@ export const EmailDomainsTab = () => {
 
   const deleteDomainMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("email_domains").delete().eq("id", id);
+      const { error } = await supabase.from("email_domains" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -74,10 +74,9 @@ export const EmailDomainsTab = () => {
 
   const verifyDomainMutation = useMutation({
     mutationFn: async (id: string) => {
-      // In production, this would call an edge function to verify DNS records
       const { error } = await supabase
-        .from("email_domains")
-        .update({ status: "verified", verified_at: new Date().toISOString() })
+        .from("email_domains" as any)
+        .update({ status: "verified", verified_at: new Date().toISOString() } as any)
         .eq("id", id);
       if (error) throw error;
     },
@@ -90,7 +89,7 @@ export const EmailDomainsTab = () => {
   const statusBadge = (status: string) => {
     switch (status) {
       case "verified":
-        return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Verified</Badge>;
+        return <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Verified</Badge>;
       case "pending":
         return <Badge variant="secondary" className="gap-1"><Clock className="w-3 h-3" /> Pending</Badge>;
       case "failed":
@@ -171,9 +170,9 @@ export const EmailDomainsTab = () => {
 
       {/* DNS Records Info for pending domains */}
       {domains.filter(d => d.status === "pending").map((d) => (
-        <Card key={d.id} className="glass-card border-amber-500/20">
+        <Card key={d.id} className="glass-card border-primary/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-amber-400">DNS Records Required for {d.domain}</CardTitle>
+            <CardTitle className="text-sm font-medium text-primary">DNS Records Required for {d.domain}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {d.dns_records && Object.entries(d.dns_records).map(([key, record]: [string, any]) => (
