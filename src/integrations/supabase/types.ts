@@ -143,6 +143,97 @@ export type Database = {
           },
         ]
       }
+      ejari_contracts: {
+        Row: {
+          annual_rent: number
+          contract_number: string | null
+          contract_type: string | null
+          created_at: string
+          ejari_number: string
+          end_date: string
+          expiry_date: string | null
+          id: string
+          lease_id: string | null
+          notes: string | null
+          organization_id: string
+          payment_method: string | null
+          property_name: string | null
+          registration_date: string | null
+          security_deposit: number | null
+          start_date: string
+          status: string | null
+          tenant_id: string
+          unit_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          annual_rent: number
+          contract_number?: string | null
+          contract_type?: string | null
+          created_at?: string
+          ejari_number: string
+          end_date: string
+          expiry_date?: string | null
+          id?: string
+          lease_id?: string | null
+          notes?: string | null
+          organization_id: string
+          payment_method?: string | null
+          property_name?: string | null
+          registration_date?: string | null
+          security_deposit?: number | null
+          start_date: string
+          status?: string | null
+          tenant_id: string
+          unit_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annual_rent?: number
+          contract_number?: string | null
+          contract_type?: string | null
+          created_at?: string
+          ejari_number?: string
+          end_date?: string
+          expiry_date?: string | null
+          id?: string
+          lease_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string | null
+          property_name?: string | null
+          registration_date?: string | null
+          security_deposit?: number | null
+          start_date?: string
+          status?: string | null
+          tenant_id?: string
+          unit_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ejari_contracts_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ejari_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ejari_contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
