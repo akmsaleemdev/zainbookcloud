@@ -100,10 +100,10 @@ const Leases = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const emptyForm = { tenant_id: "", unit_id: "", lease_type: "fixed", start_date: "", end_date: "", monthly_rent: "", security_deposit: "0", payment_frequency: "monthly", ejari_number: "" };
+  const emptyForm = { tenant_id: "", unit_id: "", lease_type: "fixed", start_date: "", end_date: "", monthly_rent: "", security_deposit: "0", payment_frequency: "monthly", ejari_number: "", late_fee_rate: "0", grace_period_days: "5", rent_due_day: "1", renewal_reminder_days: "30" };
   const openCreate = () => { setForm(emptyForm); setEditingId(null); setDialogOpen(true); };
   const openEdit = (l: any) => {
-    setForm({ tenant_id: l.tenant_id, unit_id: l.unit_id || "", lease_type: l.lease_type, start_date: l.start_date, end_date: l.end_date, monthly_rent: String(l.monthly_rent), security_deposit: String(l.security_deposit || 0), payment_frequency: l.payment_frequency, ejari_number: l.ejari_number || "" });
+    setForm({ tenant_id: l.tenant_id, unit_id: l.unit_id || "", lease_type: l.lease_type, start_date: l.start_date, end_date: l.end_date, monthly_rent: String(l.monthly_rent), security_deposit: String(l.security_deposit || 0), payment_frequency: l.payment_frequency, ejari_number: l.ejari_number || "", late_fee_rate: String(l.late_fee_rate || 0), grace_period_days: String(l.grace_period_days || 5), rent_due_day: String(l.rent_due_day || 1), renewal_reminder_days: String(l.renewal_reminder_days || 30) });
     setEditingId(l.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
