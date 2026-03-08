@@ -58,6 +58,8 @@ const navGroups = [
     items: [
       { to: "/messaging", icon: MessageSquare, label: "Messaging" },
       { to: "/notifications", icon: Bell, label: "Notifications" },
+      { to: "/complaints", icon: MessageSquare, label: "Complaints" },
+      { to: "/notices", icon: BookOpen, label: "Notices" },
     ],
   },
   {
