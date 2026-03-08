@@ -332,6 +332,46 @@ const Reports = () => {
               </Card>
             </div>
           </TabsContent>
+
+          {/* EXPORT ALL */}
+          <TabsContent value="export-all" className="space-y-6">
+            <Card className="glass-card">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2"><Zap className="w-5 h-5 text-primary" /> Quick Export Reports</h3>
+                <p className="text-sm text-muted-foreground">Generate comprehensive PDF reports for all categories in one click.</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { label: "Financial Summary", fn: () => exportReport("Financial Summary", ["Metric", "Value"], [
+                      ["Total Revenue", `AED ${totalRevenue.toLocaleString()}`], ["Outstanding", `AED ${totalOutstanding.toLocaleString()}`],
+                      ["VAT Collected", `AED ${totalVAT.toLocaleString()}`], ["Total Invoices", String(invoices.length)],
+                      ["Paid Invoices", String(invoices.filter((i: any) => i.status === "paid").length)],
+                    ], "financial-summary.pdf") },
+                    { label: "Occupancy Report", fn: () => exportReport("Occupancy Report", ["Metric", "Value"], [
+                      ["Total Units", String(units.length)], ["Occupied", String(occupiedUnits)],
+                      ["Vacant", String(units.length - occupiedUnits)], ["Occupancy Rate", `${occupancyRate}%`],
+                    ], "occupancy-report.pdf") },
+                    { label: "Tenant Report", fn: () => exportReport("Tenant Report", ["Metric", "Value"], [
+                      ["Total Tenants", String(tenants.length)], ["Active", String(activeTenants)],
+                    ], "tenant-report.pdf") },
+                    { label: "Maintenance Report", fn: () => exportReport("Maintenance Report", ["Metric", "Value"], [
+                      ["Total Requests", String(maintenance.length)], ["Open", String(openMaintenance)],
+                      ["Total Cost", `AED ${maintenanceCost.toLocaleString()}`],
+                    ], "maintenance-report.pdf") },
+                    { label: "Utility Report", fn: () => exportReport("Utility Report", ["Type", "Amount"],
+                      utilityByType.map(u => [u.name, `AED ${u.totalAmount.toLocaleString()}`]),
+                      "utility-report.pdf") },
+                    { label: "Invoice List", fn: () => exportReport("Invoice List", ["#", "Amount", "Status", "Due Date"],
+                      invoices.slice(0, 100).map((i: any) => [i.invoice_number, `AED ${Number(i.total_amount).toLocaleString()}`, i.status, i.due_date]),
+                      "invoice-list.pdf") },
+                  ].map((r) => (
+                    <Button key={r.label} variant="outline" className="gap-2 h-12 justify-start" onClick={r.fn}>
+                      <Download className="w-4 h-4" /> {r.label}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </motion.div>
     </AppLayout>
