@@ -10,7 +10,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MessageSquareWarning, Plus, Search, Trash2, Clock, AlertTriangle, CheckCircle2, Filter } from "lucide-react";
+import { MessageSquareWarning, Plus, Search, Trash2, Clock, AlertTriangle, CheckCircle2, Filter, Download } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { Textarea } from "@/components/ui/textarea";
+import { generateComplaintPDF, generateTablePDF } from "@/lib/pdfUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
