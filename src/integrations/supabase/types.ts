@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_chat_sessions: {
+        Row: {
+          category: string | null
+          created_at: string
+          escalated_ticket_id: string | null
+          id: string
+          organization_id: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          escalated_ticket_id?: string | null
+          id?: string
+          organization_id?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          escalated_ticket_id?: string | null
+          id?: string
+          organization_id?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_sessions_escalated_ticket_id_fkey"
+            columns: ["escalated_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_chat_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       amenities: {
         Row: {
           billing_frequency: string | null
@@ -209,6 +289,69 @@ export type Database = {
           },
         ]
       }
+      customer_subscriptions: {
+        Row: {
+          billing_cycle: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          next_billing_date: string | null
+          notes: string | null
+          organization_id: string
+          plan_id: string
+          started_at: string
+          status: string
+          total_amount: number | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          next_billing_date?: string | null
+          notes?: string | null
+          organization_id: string
+          plan_id: string
+          started_at?: string
+          status?: string
+          total_amount?: number | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          next_billing_date?: string | null
+          notes?: string | null
+          organization_id?: string
+          plan_id?: string
+          started_at?: string
+          status?: string
+          total_amount?: number | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string | null
@@ -388,6 +531,100 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      erp_connections: {
+        Row: {
+          config: Json | null
+          connection_name: string
+          created_at: string
+          enabled_sync_types: string[] | null
+          erp_type: string
+          id: string
+          last_sync_at: string | null
+          organization_id: string
+          status: string | null
+          sync_frequency: string | null
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          connection_name: string
+          created_at?: string
+          enabled_sync_types?: string[] | null
+          erp_type: string
+          id?: string
+          last_sync_at?: string | null
+          organization_id: string
+          status?: string | null
+          sync_frequency?: string | null
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          connection_name?: string
+          created_at?: string
+          enabled_sync_types?: string[] | null
+          erp_type?: string
+          id?: string
+          last_sync_at?: string | null
+          organization_id?: string
+          status?: string | null
+          sync_frequency?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "erp_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      erp_sync_logs: {
+        Row: {
+          completed_at: string | null
+          connection_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          records_synced: number | null
+          started_at: string | null
+          status: string | null
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          connection_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          connection_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "erp_sync_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "erp_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -900,6 +1137,81 @@ export type Database = {
           },
         ]
       }
+      plan_modules: {
+        Row: {
+          addon_price: number | null
+          id: string
+          is_included: boolean | null
+          module_id: string
+          plan_id: string
+        }
+        Insert: {
+          addon_price?: number | null
+          id?: string
+          is_included?: boolean | null
+          module_id: string
+          plan_id: string
+        }
+        Update: {
+          addon_price?: number | null
+          id?: string
+          is_included?: boolean | null
+          module_id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_modules_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "platform_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_modules_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_modules: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1048,6 +1360,173 @@ export type Database = {
           },
         ]
       }
+      subscription_modules: {
+        Row: {
+          enabled_at: string | null
+          id: string
+          is_enabled: boolean | null
+          module_id: string
+          subscription_id: string
+        }
+        Insert: {
+          enabled_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          module_id: string
+          subscription_id: string
+        }
+        Update: {
+          enabled_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          module_id?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_modules_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "platform_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_modules_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "customer_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          ai_usage_limit: number | null
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          max_api_calls: number | null
+          max_storage_gb: number | null
+          max_units: number | null
+          max_users: number | null
+          name: string
+          plan_type: string
+          price: number
+          sort_order: number | null
+          trial_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_usage_limit?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          max_api_calls?: number | null
+          max_storage_gb?: number | null
+          max_units?: number | null
+          max_users?: number | null
+          name: string
+          plan_type?: string
+          price?: number
+          sort_order?: number | null
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_usage_limit?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          max_api_calls?: number | null
+          max_storage_gb?: number | null
+          max_units?: number | null
+          max_users?: number | null
+          name?: string
+          plan_type?: string
+          price?: number
+          sort_order?: number | null
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          ai_suggested_solution: string | null
+          assigned_to: string | null
+          category: string
+          closed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          organization_id: string | null
+          priority: string
+          resolved_at: string | null
+          sla_due_at: string | null
+          status: string
+          subject: string
+          tags: string[] | null
+          ticket_number: string
+          updated_at: string
+        }
+        Insert: {
+          ai_suggested_solution?: string | null
+          assigned_to?: string | null
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          organization_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: string
+          subject: string
+          tags?: string[] | null
+          ticket_number: string
+          updated_at?: string
+        }
+        Update: {
+          ai_suggested_solution?: string | null
+          assigned_to?: string | null
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          organization_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: string
+          subject?: string
+          tags?: string[] | null
+          ticket_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string
@@ -1112,6 +1591,44 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          attachments: Json | null
+          body: string
+          created_at: string
+          id: string
+          sender_id: string | null
+          sender_type: string | null
+          ticket_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          body: string
+          created_at?: string
+          id?: string
+          sender_id?: string | null
+          sender_type?: string | null
+          ticket_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string | null
+          sender_type?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]
