@@ -4,8 +4,11 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, DollarSign, Home, Users, Wrench, FileText, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart3, DollarSign, Home, Users, Wrench, FileText, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Button } from "@/components/ui/button";
+import { generateTablePDF } from "@/lib/pdfUtils";
+import { toast } from "sonner";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
@@ -87,9 +90,34 @@ const Reports = () => {
   return (
     <AppLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-        <div>
-          <h1 className="page-header flex items-center gap-2"><BarChart3 className="w-6 h-6" /> Reports</h1>
-          <p className="text-sm text-muted-foreground mt-1">Financial summaries and operational insights</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="page-header flex items-center gap-2"><BarChart3 className="w-6 h-6" /> Reports</h1>
+            <p className="text-sm text-muted-foreground mt-1">Financial summaries and operational insights</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Financial Summary Report",
+                orgName: currentOrg?.name || "",
+                subtitle: `Revenue: AED ${totalRevenue.toLocaleString()} | Outstanding: AED ${totalOutstanding.toLocaleString()}`,
+                columns: ["Metric", "Value"],
+                rows: [
+                  ["Total Revenue", `AED ${totalRevenue.toLocaleString()}`],
+                  ["Outstanding Amount", `AED ${totalOutstanding.toLocaleString()}`],
+                  ["Total Properties", String(properties.length)],
+                  ["Active Tenants", `${activeTenants} of ${tenants.length}`],
+                  ["Open Maintenance", `${openMaintenance} of ${maintenance.length}`],
+                  ["Total Invoices", String(invoices.length)],
+                  ["Paid Invoices", String(invoices.filter((i: any) => i.status === "paid").length)],
+                  ["Overdue Invoices", String(invoices.filter((i: any) => i.status === "overdue").length)],
+                  ["Total Payments", String(payments.length)],
+                ],
+                filename: "financial-report.pdf",
+              });
+              toast.success("Report PDF exported");
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+          </div>
         </div>
 
         {/* KPI Cards */}

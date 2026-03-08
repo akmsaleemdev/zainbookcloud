@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, Pencil, Trash2, ShieldCheck, FileText } from "lucide-react";
+import { Plus, Search, Filter, Pencil, Trash2, ShieldCheck, FileText, Download } from "lucide-react";
+import { generateEjariPDF, generateTablePDF } from "@/lib/pdfUtils";
 import { format } from "date-fns";
 
 const statusColors: Record<string, string> = {
@@ -186,9 +187,22 @@ const Ejari = () => {
             <h1 className="page-header flex items-center gap-2"><ShieldCheck className="w-6 h-6" /> Ejari Contracts</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage Ejari registrations and contract compliance</p>
           </div>
-          <Button onClick={() => { setEditId(null); setForm(defaultForm); setOpen(true); }} className="gap-2">
-            <Plus className="w-4 h-4" /> New Ejari
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Ejari Contracts Report",
+                orgName: currentOrg?.name || "",
+                subtitle: `Total: ${filtered.length} contracts`,
+                columns: ["Ejari #", "Tenant", "Property", "Annual Rent", "Start", "End", "Status"],
+                rows: filtered.map((c: any) => [c.ejari_number, c.tenants?.full_name || "—", c.property_name || "—", `AED ${Number(c.annual_rent).toLocaleString()}`, new Date(c.start_date).toLocaleDateString(), new Date(c.end_date).toLocaleDateString(), c.status]),
+                filename: "ejari-report.pdf",
+              });
+              toast({ title: "PDF exported" });
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+            <Button onClick={() => { setEditId(null); setForm(defaultForm); setOpen(true); }} className="gap-2">
+              <Plus className="w-4 h-4" /> New Ejari
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -232,6 +246,7 @@ const Ejari = () => {
                     </TableCell>
                     <TableCell className="capitalize">{c.contract_type}</TableCell>
                     <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" title="Download PDF" onClick={() => { generateEjariPDF(c, currentOrg?.name || ""); toast({ title: "Ejari PDF downloaded" }); }}><Download className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(c.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </TableCell>

@@ -10,11 +10,16 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building, Plus, Search, Filter, Pencil, Trash2, MapPin, Mail, Phone, MoreHorizontal } from "lucide-react";
+import { Building, Plus, Search, Filter, Pencil, Trash2, MapPin, Mail, Phone, MoreHorizontal, Globe, DollarSign } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const EMIRATES = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Umm Al Quwain", "Fujairah"];
+const CURRENCIES = ["AED", "USD", "EUR", "GBP", "SAR", "QAR", "BHD", "KWD", "OMR"];
+const LANGUAGES = [{ value: "en", label: "English" }, { value: "ar", label: "Arabic" }];
+const COUNTRIES = ["UAE", "Saudi Arabia", "Qatar", "Bahrain", "Kuwait", "Oman", "Egypt", "Jordan"];
+const TIMEZONES = ["Asia/Dubai", "Asia/Riyadh", "Asia/Qatar", "Asia/Bahrain", "Asia/Kuwait", "Asia/Muscat", "Africa/Cairo"];
 
 interface OrgForm {
   name: string;
@@ -24,9 +29,16 @@ interface OrgForm {
   phone: string;
   address: string;
   emirate: string;
+  vat_number: string;
+  vat_enabled: boolean;
+  vat_rate: string;
+  currency: string;
+  language: string;
+  country: string;
+  timezone: string;
 }
 
-const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "" };
+const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5", currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai" };
 
 const Organizations = () => {
   const { user } = useAuth();
@@ -63,14 +75,15 @@ const Organizations = () => {
 
   const createMutation = useMutation({
     mutationFn: async (formData: OrgForm) => {
+      const { vat_rate, vat_enabled, ...rest } = formData;
+      const payload = { ...rest, vat_rate: parseFloat(vat_rate) || 5, vat_enabled, created_by: user!.id };
       const { data: org, error } = await supabase
         .from("organizations")
-        .insert({ ...formData, created_by: user!.id })
+        .insert(payload as any)
         .select()
         .single();
       if (error) throw error;
 
-      // Auto-add creator as org admin
       const { error: memberError } = await supabase
         .from("organization_members")
         .insert({ organization_id: org.id, user_id: user!.id, role: "organization_admin" as any });
@@ -89,7 +102,9 @@ const Organizations = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, formData }: { id: string; formData: OrgForm }) => {
-      const { error } = await supabase.from("organizations").update(formData).eq("id", id);
+      const { vat_rate, vat_enabled, ...rest } = formData;
+      const payload = { ...rest, vat_rate: parseFloat(vat_rate) || 5, vat_enabled };
+      const { error } = await supabase.from("organizations").update(payload as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -117,7 +132,12 @@ const Organizations = () => {
 
   const openCreate = () => { setForm(emptyForm); setEditingId(null); setDialogOpen(true); };
   const openEdit = (org: any) => {
-    setForm({ name: org.name, name_ar: org.name_ar || "", trade_license: org.trade_license || "", email: org.email || "", phone: org.phone || "", address: org.address || "", emirate: org.emirate || "" });
+    setForm({
+      name: org.name, name_ar: org.name_ar || "", trade_license: org.trade_license || "",
+      email: org.email || "", phone: org.phone || "", address: org.address || "", emirate: org.emirate || "",
+      vat_number: org.vat_number || "", vat_enabled: org.vat_enabled !== false, vat_rate: String(org.vat_rate || 5),
+      currency: org.currency || "AED", language: org.language || "en", country: org.country || "UAE", timezone: org.timezone || "Asia/Dubai",
+    });
     setEditingId(org.id);
     setDialogOpen(true);
   };
@@ -187,12 +207,13 @@ const Organizations = () => {
                   {org.emirate && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="w-3 h-3" />{org.emirate}</div>}
                   {org.email && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Mail className="w-3 h-3" />{org.email}</div>}
                   {org.phone && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="w-3 h-3" />{org.phone}</div>}
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><DollarSign className="w-3 h-3" />{org.currency || "AED"}</div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Globe className="w-3 h-3" />{org.country || "UAE"} • {org.timezone || "Asia/Dubai"}</div>
                 </div>
-                {org.trade_license && (
-                  <div className="mt-3 pt-3 border-t border-border/30">
-                    <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>
-                  </div>
-                )}
+                <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
+                  {org.trade_license && <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>}
+                  <span className="text-xs text-muted-foreground">VAT: {org.vat_enabled !== false ? `${org.vat_rate || 5}%` : "Disabled"}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -201,10 +222,8 @@ const Organizations = () => {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -244,6 +263,59 @@ const Organizations = () => {
             <div className="space-y-2">
               <Label>Address</Label>
               <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Full address" />
+            </div>
+
+            {/* Advanced Settings */}
+            <div className="border-t border-border/30 pt-4 mt-2">
+              <p className="text-sm font-medium text-foreground mb-3">Business Settings</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>VAT Registration Number</Label>
+                  <Input value={form.vat_number} onChange={(e) => setForm({ ...form, vat_number: e.target.value })} placeholder="TRN 100..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>VAT Rate (%)</Label>
+                  <Input type="number" value={form.vat_rate} onChange={(e) => setForm({ ...form, vat_rate: e.target.value })} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <Label>Enable VAT</Label>
+                <Switch checked={form.vat_enabled} onCheckedChange={(v) => setForm({ ...form, vat_enabled: v })} />
+              </div>
+            </div>
+
+            <div className="border-t border-border/30 pt-4 mt-2">
+              <p className="text-sm font-medium text-foreground mb-3">Regional Settings</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Language</Label>
+                  <Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Country</Label>
+                  <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Timezone</Label>
+                  <Select value={form.timezone} onValueChange={(v) => setForm({ ...form, timezone: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{TIMEZONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>

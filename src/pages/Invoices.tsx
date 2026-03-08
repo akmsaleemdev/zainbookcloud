@@ -10,7 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Receipt, Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Receipt, Plus, Search, Pencil, Trash2, Download } from "lucide-react";
+import { generateInvoicePDF, generateTablePDF } from "@/lib/pdfUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,7 +114,20 @@ const Invoices = () => {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="flex items-center justify-between">
           <div><h1 className="page-header">Invoices</h1><p className="text-sm text-muted-foreground mt-1">Manage invoices with 5% VAT</p></div>
-          <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Create Invoice</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Invoice Report",
+                orgName: currentOrg?.name || "",
+                subtitle: `Total: ${filtered.length} invoices`,
+                columns: ["Invoice #", "Tenant", "Amount", "VAT", "Total", "Due Date", "Status"],
+                rows: filtered.map((i: any) => [i.invoice_number, i.tenants?.full_name || "—", `AED ${Number(i.amount).toLocaleString()}`, `AED ${Number(i.vat_amount).toLocaleString()}`, `AED ${Number(i.total_amount).toLocaleString()}`, new Date(i.due_date).toLocaleDateString(), i.status]),
+                filename: "invoices-report.pdf",
+              });
+              toast.success("PDF exported");
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+            <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Create Invoice</Button>
+          </div>
         </div>
         <div className="relative max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search invoices..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" /></div>
 
@@ -139,7 +153,7 @@ const Invoices = () => {
                 <td className="p-4 text-sm font-medium text-foreground">AED {Number(inv.total_amount).toLocaleString()}</td>
                 <td className="p-4 text-sm text-muted-foreground">{new Date(inv.due_date).toLocaleDateString()}</td>
                 <td className="p-4"><Badge variant={inv.status === "paid" ? "default" : inv.status === "overdue" ? "destructive" : "secondary"}>{inv.status}</Badge></td>
-                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(inv)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(inv.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
+                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={() => { generateInvoicePDF(inv, currentOrg?.name || ""); toast.success("Invoice PDF downloaded"); }}><Download className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(inv)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(inv.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
               </tr>
             ))}
           </tbody></table>
