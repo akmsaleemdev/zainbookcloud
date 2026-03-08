@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ModuleGuard } from "@/components/access-control/ModuleGuard";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import AuthPage from "./pages/AuthPage";
 import ResetPassword from "./pages/ResetPassword";
@@ -56,6 +57,14 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+/** Protected + Module guard wrapper */
+const PM = ({ module, children }: { module: string; children: React.ReactNode }) => (
+  <ProtectedRoute>
+    <ModuleGuard module={module}>{children}</ModuleGuard>
+  </ProtectedRoute>
+);
+
+/** Protected only (no module guard — e.g. dashboard) */
 const P = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>{children}</ProtectedRoute>
 );
@@ -80,43 +89,44 @@ const App = () => (
             <Route path="/website/about" element={<AboutPage />} />
             <Route path="/website/contact" element={<ContactPage />} />
             <Route path="/website/payment-gateways" element={<PaymentGatewaysPage />} />
+            {/* App routes with module-level access control */}
             <Route path="/dashboard" element={<P><Dashboard /></P>} />
-            <Route path="/organizations" element={<P><Organizations /></P>} />
-            <Route path="/properties" element={<P><Properties /></P>} />
-            <Route path="/buildings" element={<P><Buildings /></P>} />
-            <Route path="/floors" element={<P><Floors /></P>} />
-            <Route path="/units" element={<P><Units /></P>} />
-            <Route path="/rooms" element={<P><Rooms /></P>} />
-            <Route path="/bed-spaces" element={<P><BedSpaces /></P>} />
-            <Route path="/tenants" element={<P><Tenants /></P>} />
-            <Route path="/leases" element={<P><Leases /></P>} />
-            <Route path="/ejari" element={<P><Ejari /></P>} />
-            <Route path="/invoices" element={<P><Invoices /></P>} />
-            <Route path="/payments" element={<P><Payments /></P>} />
-            <Route path="/maintenance" element={<P><Maintenance /></P>} />
-            <Route path="/amenities" element={<P><Amenities /></P>} />
-            <Route path="/utilities" element={<P><Utilities /></P>} />
-            <Route path="/documents" element={<P><Documents /></P>} />
-            <Route path="/messaging" element={<P><Messaging /></P>} />
-            <Route path="/notifications" element={<P><Notifications /></P>} />
-            <Route path="/complaints" element={<P><Complaints /></P>} />
-            <Route path="/notices" element={<P><Notices /></P>} />
-            <Route path="/reports" element={<P><Reports /></P>} />
-            <Route path="/analytics" element={<P><Analytics /></P>} />
-            <Route path="/ai-insights" element={<P><AIInsights /></P>} />
-            <Route path="/automation" element={<P><Automation /></P>} />
-            <Route path="/owner-portal" element={<P><OwnerPortal /></P>} />
-            <Route path="/tenant-portal" element={<P><TenantPortal /></P>} />
-            <Route path="/public-booking" element={<P><PublicBooking /></P>} />
-            <Route path="/subscriptions" element={<P><Subscriptions /></P>} />
-            <Route path="/master-admin" element={<P><MasterAdmin /></P>} />
-            <Route path="/support" element={<P><SupportCenter /></P>} />
-            <Route path="/erp-integrations" element={<P><ERPIntegrations /></P>} />
-            <Route path="/user-management" element={<P><UserManagement /></P>} />
-            <Route path="/settings" element={<P><SettingsPage /></P>} />
-            <Route path="/uae-management" element={<P><UAEApartmentManagement /></P>} />
-            <Route path="/cheque-tracking" element={<P><ChequeTracking /></P>} />
-            <Route path="/rent-management" element={<P><RentManagement /></P>} />
+            <Route path="/organizations" element={<PM module="organizations"><Organizations /></PM>} />
+            <Route path="/properties" element={<PM module="properties"><Properties /></PM>} />
+            <Route path="/buildings" element={<PM module="buildings"><Buildings /></PM>} />
+            <Route path="/floors" element={<PM module="floors"><Floors /></PM>} />
+            <Route path="/units" element={<PM module="units"><Units /></PM>} />
+            <Route path="/rooms" element={<PM module="rooms"><Rooms /></PM>} />
+            <Route path="/bed-spaces" element={<PM module="bed-spaces"><BedSpaces /></PM>} />
+            <Route path="/tenants" element={<PM module="tenants"><Tenants /></PM>} />
+            <Route path="/leases" element={<PM module="leases"><Leases /></PM>} />
+            <Route path="/ejari" element={<PM module="ejari"><Ejari /></PM>} />
+            <Route path="/rent-management" element={<PM module="rent-management"><RentManagement /></PM>} />
+            <Route path="/invoices" element={<PM module="invoices"><Invoices /></PM>} />
+            <Route path="/payments" element={<PM module="payments"><Payments /></PM>} />
+            <Route path="/cheque-tracking" element={<PM module="cheque-tracking"><ChequeTracking /></PM>} />
+            <Route path="/maintenance" element={<PM module="maintenance"><Maintenance /></PM>} />
+            <Route path="/amenities" element={<PM module="amenities"><Amenities /></PM>} />
+            <Route path="/utilities" element={<PM module="utilities"><Utilities /></PM>} />
+            <Route path="/documents" element={<PM module="documents"><Documents /></PM>} />
+            <Route path="/uae-management" element={<PM module="uae-management"><UAEApartmentManagement /></PM>} />
+            <Route path="/messaging" element={<PM module="messaging"><Messaging /></PM>} />
+            <Route path="/notifications" element={<PM module="notifications"><Notifications /></PM>} />
+            <Route path="/complaints" element={<PM module="complaints"><Complaints /></PM>} />
+            <Route path="/notices" element={<PM module="notices"><Notices /></PM>} />
+            <Route path="/reports" element={<PM module="reports"><Reports /></PM>} />
+            <Route path="/analytics" element={<PM module="analytics"><Analytics /></PM>} />
+            <Route path="/ai-insights" element={<PM module="ai-insights"><AIInsights /></PM>} />
+            <Route path="/automation" element={<PM module="automation"><Automation /></PM>} />
+            <Route path="/owner-portal" element={<PM module="owner-portal"><OwnerPortal /></PM>} />
+            <Route path="/tenant-portal" element={<PM module="tenant-portal"><TenantPortal /></PM>} />
+            <Route path="/public-booking" element={<PM module="public-booking"><PublicBooking /></PM>} />
+            <Route path="/subscriptions" element={<PM module="subscriptions"><Subscriptions /></PM>} />
+            <Route path="/master-admin" element={<PM module="master-admin"><MasterAdmin /></PM>} />
+            <Route path="/support" element={<PM module="support"><SupportCenter /></PM>} />
+            <Route path="/erp-integrations" element={<PM module="erp-integrations"><ERPIntegrations /></PM>} />
+            <Route path="/user-management" element={<PM module="user-management"><UserManagement /></PM>} />
+            <Route path="/settings" element={<PM module="settings"><SettingsPage /></PM>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </OrganizationProvider>
