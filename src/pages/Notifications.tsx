@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
-import { Bell, BellOff, Check, CheckCheck, Trash2, Info, AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
+import { Bell, BellOff, Check, CheckCheck, Trash2, Info, AlertTriangle, AlertCircle, CheckCircle, Send } from "lucide-react";
 import { format } from "date-fns";
+import { BulkNotificationSender } from "@/components/notifications/BulkNotificationSender";
 
 const typeIcons: Record<string, any> = {
   info: Info,
@@ -31,6 +32,7 @@ const Notifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -103,6 +105,9 @@ const Notifications = () => {
             <p className="text-sm text-muted-foreground mt-1">Stay updated with system events</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)} className="gap-1">
+              <Send className="w-4 h-4" /> Bulk Send
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setFilter(filter === "all" ? "unread" : "all")}>
               {filter === "all" ? <BellOff className="w-4 h-4 mr-1" /> : <Bell className="w-4 h-4 mr-1" />}
               {filter === "all" ? "Unread Only" : "Show All"}
@@ -156,6 +161,8 @@ const Notifications = () => {
             })}
           </ScrollArea>
         </div>
+
+        <BulkNotificationSender open={bulkOpen} onOpenChange={setBulkOpen} />
       </motion.div>
     </AppLayout>
   );

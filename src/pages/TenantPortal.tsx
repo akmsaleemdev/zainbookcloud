@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
-import { Users, FileText, CreditCard, Wrench, Home, Plus, CalendarDays, AlertCircle } from "lucide-react";
+import { Users, FileText, CreditCard, Wrench, Home, Plus, CalendarDays, AlertCircle, FolderOpen, Download, ExternalLink } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 
 const TenantPortal = () => {
@@ -77,6 +77,26 @@ const TenantPortal = () => {
     enabled: !!tenantRecord,
   });
 
+  const { data: documents = [] } = useQuery({
+    queryKey: ["tenant-documents", tenantRecord?.id],
+    queryFn: async () => {
+      if (!tenantRecord) return [];
+      const { data } = await supabase.from("documents").select("*").eq("tenant_id", tenantRecord.id).order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!tenantRecord,
+  });
+
+  const { data: complaints = [] } = useQuery({
+    queryKey: ["tenant-complaints", tenantRecord?.id, currentOrg?.id],
+    queryFn: async () => {
+      if (!tenantRecord || !currentOrg) return [];
+      const { data } = await supabase.from("complaints").select("*").eq("tenant_id", tenantRecord.id).eq("organization_id", currentOrg.id).order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!tenantRecord && !!currentOrg,
+  });
+
   const createMaintenanceMutation = useMutation({
     mutationFn: async () => {
       if (!currentOrg || !user) throw new Error("Missing context");
@@ -112,7 +132,7 @@ const TenantPortal = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="page-header flex items-center gap-2"><Users className="w-6 h-6" /> Tenant Portal</h1>
-            <p className="text-sm text-muted-foreground mt-1">Your lease, payments, and requests</p>
+            <p className="text-sm text-muted-foreground mt-1">Your lease, payments, documents, and requests</p>
           </div>
           {tenantRecord && (
             <Button onClick={() => setMaintenanceDialog(true)} className="gap-2">
@@ -128,11 +148,12 @@ const TenantPortal = () => {
         ) : (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <Card className="glass-card"><CardContent className="pt-6 text-center"><Home className="w-7 h-7 mx-auto text-primary mb-2" /><div className="text-lg font-bold">{activeLease ? "Active" : "No Lease"}</div><p className="text-xs text-muted-foreground">Lease Status</p></CardContent></Card>
               <Card className="glass-card"><CardContent className="pt-6 text-center"><CreditCard className="w-7 h-7 mx-auto text-emerald-400 mb-2" /><div className="text-lg font-bold">AED {activeLease ? Number(activeLease.monthly_rent).toLocaleString() : "0"}</div><p className="text-xs text-muted-foreground">Monthly Rent</p></CardContent></Card>
               <Card className="glass-card"><CardContent className="pt-6 text-center"><FileText className="w-7 h-7 mx-auto text-orange-400 mb-2" /><div className="text-lg font-bold">{pendingInvoices.length}</div><p className="text-xs text-muted-foreground">Pending Invoices</p></CardContent></Card>
               <Card className="glass-card"><CardContent className="pt-6 text-center"><Wrench className="w-7 h-7 mx-auto text-blue-400 mb-2" /><div className="text-lg font-bold">{maintenanceReqs.filter((m: any) => m.status !== "completed").length}</div><p className="text-xs text-muted-foreground">Open Requests</p></CardContent></Card>
+              <Card className="glass-card"><CardContent className="pt-6 text-center"><FolderOpen className="w-7 h-7 mx-auto text-violet-400 mb-2" /><div className="text-lg font-bold">{documents.length}</div><p className="text-xs text-muted-foreground">Documents</p></CardContent></Card>
             </div>
 
             {/* Lease Timeline */}
@@ -163,10 +184,12 @@ const TenantPortal = () => {
             )}
 
             <Tabs defaultValue="invoices">
-              <TabsList className="bg-secondary/50">
+              <TabsList className="bg-secondary/50 flex-wrap">
                 <TabsTrigger value="invoices" className="gap-1.5"><FileText className="w-4 h-4" /> Invoices</TabsTrigger>
                 <TabsTrigger value="payments" className="gap-1.5"><CreditCard className="w-4 h-4" /> Payments</TabsTrigger>
                 <TabsTrigger value="maintenance" className="gap-1.5"><Wrench className="w-4 h-4" /> Maintenance</TabsTrigger>
+                <TabsTrigger value="documents" className="gap-1.5"><FolderOpen className="w-4 h-4" /> Documents</TabsTrigger>
+                <TabsTrigger value="complaints" className="gap-1.5"><AlertCircle className="w-4 h-4" /> Complaints</TabsTrigger>
               </TabsList>
 
               <TabsContent value="invoices">
@@ -229,6 +252,58 @@ const TenantPortal = () => {
                             <TableCell><Badge variant={m.priority === "critical" ? "destructive" : "outline"}>{m.priority}</Badge></TableCell>
                             <TableCell><Badge variant="secondary">{m.status}</Badge></TableCell>
                             <TableCell className="text-xs">{format(new Date(m.created_at), "dd MMM yyyy")}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="documents">
+                <Card className="glass-card">
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead>Type</TableHead><TableHead>Expiry</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {documents.length === 0 ? (
+                          <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No documents</TableCell></TableRow>
+                        ) : documents.map((d: any) => (
+                          <TableRow key={d.id}>
+                            <TableCell className="font-medium">{d.name}</TableCell>
+                            <TableCell><Badge variant="outline">{d.category || "general"}</Badge></TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{d.file_type || "—"}</TableCell>
+                            <TableCell className="text-xs">{d.expiry_date ? format(new Date(d.expiry_date), "dd MMM yyyy") : "—"}</TableCell>
+                            <TableCell>
+                              {d.file_url && (
+                                <Button variant="ghost" size="icon" asChild>
+                                  <a href={d.file_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="complaints">
+                <Card className="glass-card">
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Subject</TableHead><TableHead>Category</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {complaints.length === 0 ? (
+                          <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No complaints</TableCell></TableRow>
+                        ) : complaints.map((c: any) => (
+                          <TableRow key={c.id}>
+                            <TableCell className="font-medium">{c.subject}</TableCell>
+                            <TableCell className="capitalize text-xs">{c.category}</TableCell>
+                            <TableCell><Badge variant={c.priority === "critical" || c.priority === "high" ? "destructive" : "outline"}>{c.priority}</Badge></TableCell>
+                            <TableCell><Badge variant={c.status === "resolved" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
+                            <TableCell className="text-xs">{format(new Date(c.created_at), "dd MMM yyyy")}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
