@@ -70,6 +70,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/website" replace />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             {/* Public website */}
             <Route path="/website" element={<HomePage />} />
