@@ -128,11 +128,11 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 18%);
+    background: hsl(var(--muted));
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(0 0% 25%);
+    background: hsl(var(--muted-foreground));
   }
 }
 
