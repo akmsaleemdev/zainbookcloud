@@ -40,9 +40,10 @@ const navGroups = [
   {
     label: "Finance",
     items: [
+      { to: "/rent-management", icon: Banknote, label: "Rent Mgmt" },
       { to: "/invoices", icon: Receipt, label: "Invoices" },
       { to: "/payments", icon: CreditCard, label: "Payments" },
-      { to: "/cheque-tracking", icon: Banknote, label: "Cheque Tracking" },
+      { to: "/cheque-tracking", icon: Banknote, label: "Cheques" },
     ],
   },
   {

@@ -114,6 +114,7 @@ const App = () => (
             <Route path="/settings" element={<P><SettingsPage /></P>} />
             <Route path="/uae-management" element={<P><UAEApartmentManagement /></P>} />
             <Route path="/cheque-tracking" element={<P><ChequeTracking /></P>} />
+            <Route path="/rent-management" element={<P><RentManagement /></P>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </OrganizationProvider>
