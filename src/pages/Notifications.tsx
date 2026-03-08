@@ -32,6 +32,7 @@ const Notifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications", user?.id],
