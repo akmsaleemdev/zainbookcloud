@@ -1,3 +1,193 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-const UserManagement = () => <ModulePage title="User Management" description="Manage users, roles, and permissions" onAdd={() => {}} addLabel="Add User" />;
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
+import { Plus, Search, ShieldCheck, Pencil, Trash2 } from "lucide-react";
+import { Constants } from "@/integrations/supabase/types";
+
+const roles = Constants.public.Enums.app_role;
+
+const UserManagement = () => {
+  const { currentOrg } = useOrganization();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState({ user_id: "", role: "staff" as string });
+  const [search, setSearch] = useState("");
+
+  const orgId = currentOrg?.id;
+
+  const { data: members = [], isLoading } = useQuery({
+    queryKey: ["org-members-mgmt", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await supabase
+        .from("organization_members")
+        .select("*")
+        .eq("organization_id", orgId)
+        .order("created_at");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+  });
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["all-profiles"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("user_id, full_name, phone, email:full_name");
+      return data || [];
+    },
+  });
+
+  const getProfileName = (userId: string) => {
+    const p = profiles.find((pr: any) => pr.user_id === userId);
+    return p?.full_name || userId.slice(0, 8) + "...";
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!orgId) throw new Error("No org");
+      if (editId) {
+        const { error } = await supabase.from("organization_members").update({ role: form.role as any }).eq("id", editId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("organization_members").insert({
+          organization_id: orgId,
+          user_id: form.user_id,
+          role: form.role as any,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["org-members-mgmt"] });
+      setOpen(false); setEditId(null); setForm({ user_id: "", role: "staff" });
+      toast({ title: editId ? "Member updated" : "Member added" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("organization_members").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["org-members-mgmt"] });
+      toast({ title: "Member removed" });
+    },
+  });
+
+  const roleColors: Record<string, string> = {
+    super_admin: "bg-destructive/20 text-destructive",
+    organization_admin: "bg-primary/20 text-primary",
+    property_owner: "bg-emerald-500/20 text-emerald-400",
+    property_manager: "bg-blue-500/20 text-blue-400",
+    staff: "bg-muted text-muted-foreground",
+    accountant: "bg-orange-500/20 text-orange-400",
+    maintenance_staff: "bg-yellow-500/20 text-yellow-400",
+    tenant: "bg-muted text-muted-foreground",
+  };
+
+  const filtered = members.filter((m: any) =>
+    getProfileName(m.user_id).toLowerCase().includes(search.toLowerCase()) ||
+    m.role?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (!orgId) {
+    return <AppLayout><div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Please select an organization first.</p></div></AppLayout>;
+  }
+
+  return (
+    <AppLayout>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="page-header flex items-center gap-2"><ShieldCheck className="w-6 h-6" /> User Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage organization members and roles</p>
+          </div>
+          <Button onClick={() => { setEditId(null); setForm({ user_id: "", role: "staff" }); setOpen(true); }} className="gap-2">
+            <Plus className="w-4 h-4" /> Add Member
+          </Button>
+        </div>
+
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search members..." className="pl-10 bg-secondary/50 border-border/50" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+
+        <div className="glass-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No members found.</TableCell></TableRow>
+              ) : filtered.map((m: any) => (
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium">{getProfileName(m.user_id)}</TableCell>
+                  <TableCell><Badge className={roleColors[m.role] || ""}>{m.role?.replace("_", " ")}</Badge></TableCell>
+                  <TableCell><Badge variant={m.is_active ? "default" : "secondary"}>{m.is_active ? "Active" : "Inactive"}</Badge></TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => { setEditId(m.id); setForm({ user_id: m.user_id, role: m.role }); setOpen(true); }}><Pencil className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(m.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </motion.div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{editId ? "Edit Member Role" : "Add Member"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            {!editId && (
+              <div className="space-y-2">
+                <Label>User ID</Label>
+                <Input value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} placeholder="Paste user UUID" />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {roles.map((r) => <SelectItem key={r} value={r}>{r.replace(/_/g, " ")}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={!editId && !form.user_id}>{editId ? "Update" : "Add"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
+  );
+};
+
 export default UserManagement;
