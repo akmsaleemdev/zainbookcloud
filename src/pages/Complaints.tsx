@@ -16,10 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { Textarea } from "@/components/ui/textarea";
 import { generateComplaintPDF, generateTablePDF } from "@/lib/pdfUtils";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/useAuth";
-import { Textarea } from "@/components/ui/textarea";
 
 const CATEGORIES = ["general", "noise", "cleanliness", "security", "parking", "maintenance", "neighbor", "pest", "utilities", "other"];
 const PRIORITIES = ["low", "medium", "high", "urgent"];
