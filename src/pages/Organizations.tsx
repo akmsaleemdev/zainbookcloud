@@ -102,7 +102,9 @@ const Organizations = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, formData }: { id: string; formData: OrgForm }) => {
-      const { error } = await supabase.from("organizations").update(formData).eq("id", id);
+      const { vat_rate, vat_enabled, ...rest } = formData;
+      const payload = { ...rest, vat_rate: parseFloat(vat_rate) || 5, vat_enabled };
+      const { error } = await supabase.from("organizations").update(payload as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
