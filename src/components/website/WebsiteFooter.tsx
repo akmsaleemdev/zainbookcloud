@@ -19,7 +19,7 @@ const footerLinks = {
 };
 
 export const WebsiteFooter = forwardRef<HTMLElement>((_, ref) => (
-  <footer className="border-t border-border/40 bg-background">
+  <footer ref={ref} className="border-t border-border/40 bg-background">
     <div className="mx-auto max-w-7xl px-6 py-16">
       <div className="grid gap-8 md:grid-cols-4">
         <div>
