@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { PaymentGatewaysTab } from "@/components/master-admin/PaymentGatewaysTab";
+import { EmailDomainsTab } from "@/components/master-admin/EmailDomainsTab";
 import { PlanDialog, defaultPlanForm, type PlanFormData } from "@/components/master-admin/PlanDialog";
 import { TenantsTab } from "@/components/master-admin/TenantsTab";
 import { SubscriptionsTab } from "@/components/master-admin/SubscriptionsTab";
@@ -18,7 +19,7 @@ import { ModulesTab } from "@/components/master-admin/ModulesTab";
 import { AuditLogsTab } from "@/components/master-admin/AuditLogsTab";
 import {
   Shield, Building2, Plus, Pencil, Trash2,
-  AlertTriangle, TrendingUp, Crown, CreditCard, FileText
+  AlertTriangle, TrendingUp, Crown, CreditCard, FileText, Mail
 } from "lucide-react";
 
 const MasterAdmin = () => {
@@ -164,6 +165,9 @@ const MasterAdmin = () => {
             <TabsTrigger value="logs" className="gap-1.5">
               <FileText className="w-3.5 h-3.5" /> Logs
             </TabsTrigger>
+            <TabsTrigger value="email-domains" className="gap-1.5">
+              <Mail className="w-3.5 h-3.5" /> Email Domains
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -229,6 +233,10 @@ const MasterAdmin = () => {
 
           <TabsContent value="logs" className="space-y-4">
             <AuditLogsTab />
+          </TabsContent>
+
+          <TabsContent value="email-domains" className="space-y-4">
+            <EmailDomainsTab />
           </TabsContent>
         </Tabs>
       </motion.div>
