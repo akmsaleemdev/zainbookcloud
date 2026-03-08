@@ -105,6 +105,9 @@ const Notifications = () => {
             <p className="text-sm text-muted-foreground mt-1">Stay updated with system events</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)} className="gap-1">
+              <Send className="w-4 h-4" /> Bulk Send
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setFilter(filter === "all" ? "unread" : "all")}>
               {filter === "all" ? <BellOff className="w-4 h-4 mr-1" /> : <Bell className="w-4 h-4 mr-1" />}
               {filter === "all" ? "Unread Only" : "Show All"}
