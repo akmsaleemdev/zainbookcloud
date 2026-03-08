@@ -5,7 +5,7 @@ import {
   Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen,
   MessageSquare, BarChart3, Brain, Zap, UserCircle, Settings,
   ChevronLeft, ChevronRight, Building, Globe, BookOpen, Bell,
-  Landmark, ShieldCheck, Shield, Headphones, Link2, Crown
+  Landmark, ShieldCheck, Shield, Headphones, Link2, Crown, Car, Banknote
 } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,6 +42,7 @@ const navGroups = [
     items: [
       { to: "/invoices", icon: Receipt, label: "Invoices" },
       { to: "/payments", icon: CreditCard, label: "Payments" },
+      { to: "/cheque-tracking", icon: Banknote, label: "Cheque Tracking" },
     ],
   },
   {
@@ -51,6 +52,7 @@ const navGroups = [
       { to: "/amenities", icon: Wifi, label: "Amenities" },
       { to: "/utilities", icon: Landmark, label: "Utilities" },
       { to: "/documents", icon: FolderOpen, label: "Documents" },
+      { to: "/uae-management", icon: Car, label: "UAE Management" },
     ],
   },
   {

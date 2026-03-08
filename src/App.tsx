@@ -48,6 +48,8 @@ import UserManagement from "./pages/UserManagement";
 import SettingsPage from "./pages/SettingsPage";
 import Complaints from "./pages/Complaints";
 import Notices from "./pages/Notices";
+import UAEApartmentManagement from "./pages/UAEApartmentManagement";
+import ChequeTracking from "./pages/ChequeTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -109,6 +111,8 @@ const App = () => (
             <Route path="/erp-integrations" element={<P><ERPIntegrations /></P>} />
             <Route path="/user-management" element={<P><UserManagement /></P>} />
             <Route path="/settings" element={<P><SettingsPage /></P>} />
+            <Route path="/uae-management" element={<P><UAEApartmentManagement /></P>} />
+            <Route path="/cheque-tracking" element={<P><ChequeTracking /></P>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </OrganizationProvider>
