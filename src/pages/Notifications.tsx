@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
-import { Bell, BellOff, Check, CheckCheck, Trash2, Info, AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
+import { Bell, BellOff, Check, CheckCheck, Trash2, Info, AlertTriangle, AlertCircle, CheckCircle, Send } from "lucide-react";
 import { format } from "date-fns";
+import { BulkNotificationSender } from "@/components/notifications/BulkNotificationSender";
 
 const typeIcons: Record<string, any> = {
   info: Info,
