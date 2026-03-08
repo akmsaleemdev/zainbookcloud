@@ -50,6 +50,7 @@ import Complaints from "./pages/Complaints";
 import Notices from "./pages/Notices";
 import UAEApartmentManagement from "./pages/UAEApartmentManagement";
 import ChequeTracking from "./pages/ChequeTracking";
+import RentManagement from "./pages/RentManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
