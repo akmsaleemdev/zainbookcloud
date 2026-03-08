@@ -227,6 +227,43 @@ const Organizations = () => {
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <Label>Company Logo</Label>
+              <div className="flex items-center gap-4">
+                {form.logo_url ? (
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                    <img src={form.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => setForm({ ...form, logo_url: "" })} className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-lg border-2 border-dashed border-border flex items-center justify-center">
+                    <Building className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="text-xs"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const ext = file.name.split('.').pop();
+                      const path = `logos/${Date.now()}.${ext}`;
+                      const { error } = await supabase.storage.from("documents").upload(path, file);
+                      if (error) { toast.error("Upload failed"); return; }
+                      const { data: urlData } = supabase.storage.from("documents").getPublicUrl(path);
+                      setForm({ ...form, logo_url: urlData.publicUrl });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 2MB</p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Name (English) *</Label>
