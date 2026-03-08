@@ -85,6 +85,8 @@ const Leases = () => {
         start_date: f.start_date, end_date: f.end_date, monthly_rent: parseFloat(f.monthly_rent),
         security_deposit: parseFloat(f.security_deposit) || 0, payment_frequency: f.payment_frequency,
         ejari_number: f.ejari_number || null,
+        late_fee_rate: parseFloat(f.late_fee_rate) || 0, grace_period_days: parseInt(f.grace_period_days) || 5,
+        rent_due_day: parseInt(f.rent_due_day) || 1, renewal_reminder_days: parseInt(f.renewal_reminder_days) || 30,
       }).eq("id", id);
       if (error) throw error;
     },
