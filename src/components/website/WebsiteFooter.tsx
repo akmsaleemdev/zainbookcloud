@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
@@ -17,8 +18,8 @@ const footerLinks = {
   ],
 };
 
-export const WebsiteFooter = () => (
-  <footer className="border-t border-border/40 bg-background">
+export const WebsiteFooter = forwardRef<HTMLElement>((_, ref) => (
+  <footer ref={ref} className="border-t border-border/40 bg-background">
     <div className="mx-auto max-w-7xl px-6 py-16">
       <div className="grid gap-8 md:grid-cols-4">
         <div>
@@ -52,4 +53,6 @@ export const WebsiteFooter = () => (
       </div>
     </div>
   </footer>
-);
+));
+
+WebsiteFooter.displayName = "WebsiteFooter";
