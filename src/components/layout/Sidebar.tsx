@@ -108,6 +108,28 @@ export const Sidebar = () => {
         )}
       </div>
 
+      {/* Org Switcher */}
+      {!collapsed && organizations.length > 0 && (
+        <div className="px-3 py-3 border-b border-sidebar-border">
+          <Select
+            value={currentOrg?.id || ""}
+            onValueChange={(v) => {
+              const org = organizations.find((o) => o.id === v);
+              if (org) setCurrentOrg(org);
+            }}
+          >
+            <SelectTrigger className="bg-sidebar-accent/50 border-sidebar-border text-xs h-8">
+              <SelectValue placeholder="Select org" />
+            </SelectTrigger>
+            <SelectContent>
+              {organizations.map((o) => (
+                <SelectItem key={o.id} value={o.id} className="text-xs">{o.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-4 scrollbar-thin">
         {navGroups.map((group) => (
