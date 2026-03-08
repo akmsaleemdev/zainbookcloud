@@ -85,6 +85,9 @@ const App = () => (
             <Route path="/tenant-portal" element={<P><TenantPortal /></P>} />
             <Route path="/public-booking" element={<P><PublicBooking /></P>} />
             <Route path="/subscriptions" element={<P><Subscriptions /></P>} />
+            <Route path="/master-admin" element={<P><MasterAdmin /></P>} />
+            <Route path="/support" element={<P><SupportCenter /></P>} />
+            <Route path="/erp-integrations" element={<P><ERPIntegrations /></P>} />
             <Route path="/user-management" element={<P><UserManagement /></P>} />
             <Route path="/settings" element={<P><SettingsPage /></P>} />
             <Route path="*" element={<NotFound />} />

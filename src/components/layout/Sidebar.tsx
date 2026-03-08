@@ -78,9 +78,17 @@ const navGroups = [
     ],
   },
   {
+    label: "Integrations",
+    items: [
+      { to: "/erp-integrations", icon: Link2, label: "ERP" },
+      { to: "/support", icon: Headphones, label: "Support" },
+    ],
+  },
+  {
     label: "System",
     items: [
-      { to: "/subscriptions", icon: BookOpen, label: "Plans" },
+      { to: "/subscriptions", icon: Crown, label: "Plans" },
+      { to: "/master-admin", icon: Shield, label: "Admin" },
       { to: "/user-management", icon: ShieldCheck, label: "Users" },
       { to: "/settings", icon: Settings, label: "Settings" },
     ],
