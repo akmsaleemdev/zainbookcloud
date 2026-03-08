@@ -149,7 +149,7 @@ const Properties = () => {
                   </div>
                 </div>
                 <h3 className="font-semibold text-foreground">{p.name}</h3>
-                <span className="text-xs text-primary capitalize">{p.property_type.replace("_", " ")}</span>
+                <span className="text-xs text-primary capitalize">{(p.property_type || "residential").replace("_", " ")}</span>
                 <div className="space-y-1 mt-2">
                   <div className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="w-3 h-3" />{[p.area, p.city, p.emirate].filter(Boolean).join(", ")}</div>
                 </div>
