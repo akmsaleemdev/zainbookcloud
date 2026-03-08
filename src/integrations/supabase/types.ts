@@ -2153,6 +2153,48 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          can_approve: boolean
+          can_create: boolean
+          can_delete: boolean
+          can_export: boolean
+          can_manage: boolean
+          can_read: boolean
+          can_update: boolean
+          created_at: string
+          id: string
+          module_slug: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          can_approve?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_export?: boolean
+          can_manage?: boolean
+          can_read?: boolean
+          can_update?: boolean
+          created_at?: string
+          id?: string
+          module_slug: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          can_approve?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_export?: boolean
+          can_manage?: boolean
+          can_read?: boolean
+          can_update?: boolean
+          created_at?: string
+          id?: string
+          module_slug?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           created_at: string
@@ -2635,6 +2677,38 @@ export type Database = {
           },
         ]
       }
+      usage_limits: {
+        Row: {
+          current_count: number
+          id: string
+          organization_id: string
+          resource_type: string
+          updated_at: string
+        }
+        Insert: {
+          current_count?: number
+          id?: string
+          organization_id: string
+          resource_type: string
+          updated_at?: string
+        }
+        Update: {
+          current_count?: number
+          id?: string
+          organization_id?: string
+          resource_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_limits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -2832,6 +2906,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_plan_module_access: {
+        Args: { _module_slug: string; _org_id: string }
+        Returns: boolean
+      }
+      check_usage_limit: {
+        Args: { _org_id: string; _resource: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
