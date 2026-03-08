@@ -83,12 +83,12 @@ const Dashboard = () => {
         {/* Header */}
         <motion.div variants={item} className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">{greeting}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Here's your property portfolio overview</p>
+            <h1 className="text-3xl font-semibold text-foreground tracking-tight">{greeting}</h1>
+            <p className="text-base text-muted-foreground mt-1">Here's your property portfolio overview</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Calendar className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Calendar className="w-4 h-4" />
               {new Date().toLocaleDateString("en-AE", { month: "short", day: "numeric", year: "numeric" })}
             </div>
           </div>
@@ -101,9 +101,9 @@ const Dashboard = () => {
               key={qa.label}
               variant="outline"
               size="sm"
-              className="h-8 text-xs border-border/40 bg-muted/30 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-200"
+              className="h-9 text-sm border-border/40 bg-muted/30 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-200"
             >
-              <qa.icon className="w-3.5 h-3.5 mr-1.5" />
+              <qa.icon className="w-4 h-4 mr-1.5" />
               {qa.label}
             </Button>
           ))}
@@ -114,16 +114,16 @@ const Dashboard = () => {
           {stats.map((stat) => (
             <div key={stat.label} className="glass-card stat-glow p-4 group cursor-default">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="w-4 h-4 text-primary" />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <stat.icon className="w-4.5 h-4.5 text-primary" />
                 </div>
-                <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${stat.positive ? "text-primary" : "text-destructive"}`}>
-                  {stat.positive ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                <span className={`text-xs font-semibold flex items-center gap-0.5 ${stat.positive ? "text-primary" : "text-destructive"}`}>
+                  {stat.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {stat.change}
                 </span>
               </div>
-              <div className="text-xl font-bold text-foreground tracking-tight">{stat.value}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</div>
+              <div className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
             </div>
           ))}
         </motion.div>
@@ -134,14 +134,14 @@ const Dashboard = () => {
           <motion.div variants={item} className="floating-card p-5 lg:col-span-2">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-semibold text-foreground text-sm">Revenue Analytics</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Last 6 months performance</p>
+                <h3 className="font-semibold text-foreground text-base">Revenue Analytics</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">Last 6 months performance</p>
               </div>
-              <Badge variant="outline" className="text-[10px] border-border/40 text-muted-foreground">
+              <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">
                 AED
               </Badge>
             </div>
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
@@ -150,15 +150,15 @@ const Dashboard = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 12%, 14%)" />
-                <XAxis dataKey="month" stroke="hsl(220, 10%, 35%)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(220, 10%, 35%)" fontSize={11} tickLine={false} axisLine={false} />
+                <XAxis dataKey="month" stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(220, 16%, 12%)",
                     border: "1px solid hsl(220, 12%, 20%)",
                     borderRadius: "10px",
                     color: "hsl(0, 0%, 95%)",
-                    fontSize: "12px",
+                    fontSize: "13px",
                     backdropFilter: "blur(12px)",
                     boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
                   }}
@@ -171,8 +171,8 @@ const Dashboard = () => {
 
           {/* Occupancy Pie */}
           <motion.div variants={item} className="floating-card p-5">
-            <h3 className="font-semibold text-foreground text-sm mb-1">Occupancy Rate</h3>
-            <p className="text-[11px] text-muted-foreground mb-4">Current portfolio status</p>
+            <h3 className="font-semibold text-foreground text-base mb-1">Occupancy Rate</h3>
+            <p className="text-sm text-muted-foreground mb-4">Current portfolio status</p>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie
@@ -193,9 +193,9 @@ const Dashboard = () => {
             </ResponsiveContainer>
             <div className="space-y-2.5 mt-3">
               {occupancyData.map((d) => (
-                <div key={d.name} className="flex items-center justify-between text-xs">
+                <div key={d.name} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
                     <span className="text-muted-foreground">{d.name}</span>
                   </div>
                   <span className="font-semibold text-foreground">{d.value}%</span>
@@ -211,22 +211,22 @@ const Dashboard = () => {
           <motion.div variants={item} className="floating-card p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-foreground text-sm">Maintenance</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Active requests by category</p>
+                <h3 className="font-semibold text-foreground text-base">Maintenance</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">Active requests by category</p>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={190}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={maintenanceData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 12%, 14%)" />
-                <XAxis dataKey="type" stroke="hsl(220, 10%, 35%)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(220, 10%, 35%)" fontSize={11} tickLine={false} axisLine={false} />
+                <XAxis dataKey="type" stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(220, 10%, 35%)" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(220, 16%, 12%)",
                     border: "1px solid hsl(220, 12%, 20%)",
                     borderRadius: "10px",
                     color: "hsl(0, 0%, 95%)",
-                    fontSize: "12px",
+                    fontSize: "13px",
                     boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
                   }}
                 />
@@ -239,35 +239,35 @@ const Dashboard = () => {
           <motion.div variants={item} className="floating-card p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-foreground text-sm">Recent Activity</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Latest updates</p>
+                <h3 className="font-semibold text-foreground text-base">Recent Activity</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">Latest updates</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-7 text-[11px] text-muted-foreground hover:text-primary">
-                View All <ChevronRight className="w-3 h-3 ml-0.5" />
+              <Button variant="ghost" size="sm" className="h-8 text-sm text-muted-foreground hover:text-primary">
+                View All <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
               </Button>
             </div>
             <div className="space-y-1">
               {recentActivity.map((a, i) => (
-                <div key={i} className="flex items-center justify-between py-2.5 border-b border-border/20 last:border-0 group cursor-default">
+                <div key={i} className="flex items-center justify-between py-3 border-b border-border/20 last:border-0 group cursor-default">
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                       a.type === "payment" ? "bg-primary/10 text-primary" :
                       a.type === "maintenance" ? "bg-warning/10 text-warning" :
                       "bg-muted text-muted-foreground"
                     }`}>
-                      {a.type === "payment" ? <CreditCard className="w-3.5 h-3.5" /> :
-                       a.type === "maintenance" ? <Wrench className="w-3.5 h-3.5" /> :
-                       a.type === "tenant" ? <Users className="w-3.5 h-3.5" /> :
-                       a.type === "lease" ? <FileText className="w-3.5 h-3.5" /> :
-                       <Building2 className="w-3.5 h-3.5" />}
+                      {a.type === "payment" ? <CreditCard className="w-4 h-4" /> :
+                       a.type === "maintenance" ? <Wrench className="w-4 h-4" /> :
+                       a.type === "tenant" ? <Users className="w-4 h-4" /> :
+                       a.type === "lease" ? <FileText className="w-4 h-4" /> :
+                       <Building2 className="w-4 h-4" />}
                     </div>
                     <div>
-                      <p className="text-[13px] text-foreground font-medium">{a.action}</p>
-                      <p className="text-[11px] text-muted-foreground">{a.name}</p>
+                      <p className="text-sm text-foreground font-medium">{a.action}</p>
+                      <p className="text-xs text-muted-foreground">{a.name}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Clock className="w-2.5 h-2.5" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
                     {a.time}
                   </div>
                 </div>

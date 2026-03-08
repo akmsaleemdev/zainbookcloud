@@ -71,69 +71,69 @@ const AuthPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        className="floating-card w-full max-w-[400px] p-8 relative z-10"
+        className="floating-card w-full max-w-[420px] p-10 relative z-10"
       >
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="w-12 h-12 rounded-xl bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/20">
+            <Sparkles className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">ZainBook</h1>
-            <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">AI Property Management</p>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">ZainBook</h1>
+            <p className="text-xs text-muted-foreground font-medium tracking-wider uppercase">AI Property Management</p>
           </div>
         </div>
 
-        <h2 className="text-base font-semibold text-center text-foreground mb-0.5">
+        <h2 className="text-lg font-semibold text-center text-foreground mb-1">
           {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Account" : "Reset Password"}
         </h2>
-        <p className="text-xs text-muted-foreground text-center mb-6">
+        <p className="text-sm text-muted-foreground text-center mb-6">
           {mode === "login" ? "Sign in to continue" : mode === "signup" ? "Get started with ZainBook" : "Enter your email"}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {mode === "signup" && (
-            <div className="space-y-1.5">
-              <Label htmlFor="fullName" className="text-xs text-muted-foreground">Full Name</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" className="h-9 text-sm bg-muted/30 border-border/30 rounded-lg" required />
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-sm text-muted-foreground">Full Name</Label>
+              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" className="h-11 text-sm bg-muted/30 border-border/30 rounded-lg" required />
             </div>
           )}
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-xs text-muted-foreground">Email</Label>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm text-muted-foreground">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" className="pl-9 h-9 text-sm bg-muted/30 border-border/30 rounded-lg" required />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" className="pl-10 h-11 text-sm bg-muted/30 border-border/30 rounded-lg" required />
             </div>
           </div>
           {mode !== "forgot" && (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs text-muted-foreground">Password</Label>
+                <Label htmlFor="password" className="text-sm text-muted-foreground">Password</Label>
                 {mode === "login" && (
-                  <button type="button" onClick={() => setMode("forgot")} className="text-[10px] text-primary hover:underline font-medium">
+                  <button type="button" onClick={() => setMode("forgot")} className="text-xs text-primary hover:underline font-medium">
                     Forgot?
                   </button>
                 )}
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pl-9 pr-9 h-9 text-sm bg-muted/30 border-border/30 rounded-lg" required minLength={6} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pl-10 pr-10 h-11 text-sm bg-muted/30 border-border/30 rounded-lg" required minLength={6} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
           )}
 
-          <Button type="submit" className="w-full h-9 text-sm btn-premium rounded-lg font-medium" disabled={loading}>
+          <Button type="submit" className="w-full h-11 text-sm btn-premium rounded-lg font-medium" disabled={loading}>
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : mode === "signup" ? "Create Account" : "Send Reset Link"}
           </Button>
         </form>
 
-        <div className="text-xs text-center text-muted-foreground mt-5">
+        <div className="text-sm text-center text-muted-foreground mt-6">
           {mode === "forgot" ? (
             <button onClick={() => setMode("login")} className="text-primary hover:underline font-medium flex items-center gap-1 mx-auto">
-              <ArrowLeft className="w-3 h-3" /> Back to Sign In
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign In
             </button>
           ) : (
             <p>

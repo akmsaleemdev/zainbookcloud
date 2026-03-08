@@ -25,10 +25,10 @@ export const ModulePage = ({ title, description, children, onAdd, addLabel = "Ad
         <div className="flex items-center justify-between">
           <div>
             <h1 className="page-header">{title}</h1>
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            <p className="text-base text-muted-foreground mt-1">{description}</p>
           </div>
           {onAdd && (
-            <Button onClick={onAdd} className="gap-2">
+            <Button onClick={onAdd} className="gap-2 h-10 text-sm">
               <Plus className="w-4 h-4" /> {addLabel}
             </Button>
           )}
@@ -38,9 +38,9 @@ export const ModulePage = ({ title, description, children, onAdd, addLabel = "Ad
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder={`Search ${title.toLowerCase()}...`} className="pl-10 bg-secondary/50 border-border/50" />
+            <Input placeholder={`Search ${title.toLowerCase()}...`} className="pl-10 h-10 text-sm bg-secondary/50 border-border/50" />
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2 h-10 text-sm">
             <Filter className="w-4 h-4" /> Filters
           </Button>
         </div>
@@ -48,7 +48,7 @@ export const ModulePage = ({ title, description, children, onAdd, addLabel = "Ad
         {/* Content */}
         {children || (
           <div className="glass-card p-12 text-center">
-            <p className="text-muted-foreground">No data yet. Click "{addLabel}" to get started.</p>
+            <p className="text-base text-muted-foreground">No data yet. Click "{addLabel}" to get started.</p>
           </div>
         )}
       </motion.div>

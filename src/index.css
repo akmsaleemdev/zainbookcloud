@@ -139,7 +139,7 @@
   }
 
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground transition-all duration-200 text-[13px] font-medium;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground transition-all duration-200 text-sm font-medium;
   }
 
   .sidebar-item:hover {
@@ -152,11 +152,11 @@
   }
 
   .page-header {
-    @apply text-2xl font-semibold text-foreground tracking-tight;
+    @apply text-3xl font-semibold text-foreground tracking-tight;
   }
 
   .section-label {
-    @apply text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground px-3 mb-2;
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground px-3 mb-2;
   }
 
   /* Floating card variant */

@@ -95,25 +95,25 @@ export const Sidebar = () => {
   return (
     <aside
       className={`glass-sidebar h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        collapsed ? "w-[64px]" : "w-[240px]"
+        collapsed ? "w-[68px]" : "w-[250px]"
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 h-14 border-b border-sidebar-border">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <span className="text-primary-foreground font-bold text-xs">Z</span>
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+          <span className="text-primary-foreground font-bold text-sm">Z</span>
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-semibold text-foreground text-sm tracking-tight">ZainBook</span>
-            <span className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">AI Platform</span>
+            <span className="font-semibold text-foreground text-base tracking-tight">ZainBook</span>
+            <span className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">AI Platform</span>
           </div>
         )}
       </div>
 
       {/* Org Switcher */}
       {!collapsed && organizations.length > 0 && (
-        <div className="px-3 py-2.5 border-b border-sidebar-border">
+        <div className="px-3 py-3 border-b border-sidebar-border">
           <Select
             value={currentOrg?.id || ""}
             onValueChange={(v) => {
@@ -121,12 +121,12 @@ export const Sidebar = () => {
               if (org) setCurrentOrg(org);
             }}
           >
-            <SelectTrigger className="bg-sidebar-accent/60 border-sidebar-border/50 text-xs h-7 rounded-md">
+            <SelectTrigger className="bg-sidebar-accent/60 border-sidebar-border/50 text-sm h-9 rounded-md">
               <SelectValue placeholder="Select org" />
             </SelectTrigger>
             <SelectContent>
               {organizations.map((o) => (
-                <SelectItem key={o.id} value={o.id} className="text-xs">{o.name}</SelectItem>
+                <SelectItem key={o.id} value={o.id} className="text-sm">{o.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -148,7 +148,7 @@ export const Sidebar = () => {
                   }`}
                   title={item.label}
                 >
-                  <item.icon className="w-4 h-4 shrink-0" />
+                  <item.icon className="w-[18px] h-[18px] shrink-0" />
                   {!collapsed && <span>{item.label}</span>}
                 </NavLink>
               ))}
@@ -160,9 +160,9 @@ export const Sidebar = () => {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-center h-10 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center justify-center h-12 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
       >
-        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
     </aside>
   );
