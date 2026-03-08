@@ -88,9 +88,20 @@ const navGroups = [
 ];
 
 export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const { organizations, currentOrg, setCurrentOrg } = useOrganization();
   const location = useLocation();
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", JSON.stringify(next));
+      return next;
+    });
+  };
 
   return (
     <aside
