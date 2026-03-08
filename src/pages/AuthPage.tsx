@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Building2, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { motion } from "framer-motion";
 
 const AuthPage = () => {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -48,7 +49,7 @@ const AuthPage = () => {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw error;
-        toast.success("Password reset email sent! Check your inbox.");
+        toast.success("Password reset email sent!");
         setMode("login");
       }
     } catch (error: any) {
@@ -59,70 +60,77 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-info/5 rounded-full blur-3xl" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Ambient orbs */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[20%] left-[15%] w-[500px] h-[500px] bg-primary/[0.04] rounded-full blur-[140px]" />
+        <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-info/[0.03] rounded-full blur-[120px]" />
       </div>
 
-      <div className="glass-panel w-full max-w-md p-8 relative z-10">
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-primary-foreground" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        className="floating-card w-full max-w-[400px] p-8 relative z-10"
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2.5 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/20">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">ZainBook</h1>
-            <p className="text-xs text-muted-foreground">AI Property Management</p>
+            <h1 className="text-xl font-bold text-foreground tracking-tight">ZainBook</h1>
+            <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">AI Property Management</p>
           </div>
         </div>
 
-        <h2 className="text-lg font-semibold text-center text-foreground mb-1">
+        <h2 className="text-base font-semibold text-center text-foreground mb-0.5">
           {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Account" : "Reset Password"}
         </h2>
-        <p className="text-sm text-muted-foreground text-center mb-6">
-          {mode === "login" ? "Sign in to your account" : mode === "signup" ? "Get started with ZainBook" : "Enter your email to reset your password"}
+        <p className="text-xs text-muted-foreground text-center mb-6">
+          {mode === "login" ? "Sign in to continue" : mode === "signup" ? "Get started with ZainBook" : "Enter your email"}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-muted-foreground">Full Name</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter your full name" className="bg-secondary/50 border-border/50" required />
+            <div className="space-y-1.5">
+              <Label htmlFor="fullName" className="text-xs text-muted-foreground">Full Name</Label>
+              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" className="h-9 text-sm bg-muted/30 border-border/30 rounded-lg" required />
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-muted-foreground">Email</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs text-muted-foreground">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" className="pl-10 bg-secondary/50 border-border/50" required />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" className="pl-9 h-9 text-sm bg-muted/30 border-border/30 rounded-lg" required />
             </div>
           </div>
           {mode !== "forgot" && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-muted-foreground">Password</Label>
+                <Label htmlFor="password" className="text-xs text-muted-foreground">Password</Label>
                 {mode === "login" && (
-                  <button type="button" onClick={() => setMode("forgot")} className="text-xs text-primary hover:underline">
-                    Forgot password?
+                  <button type="button" onClick={() => setMode("forgot")} className="text-[10px] text-primary hover:underline font-medium">
+                    Forgot?
                   </button>
                 )}
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pl-10 pr-10 bg-secondary/50 border-border/50" required minLength={6} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pl-9 pr-9 h-9 text-sm bg-muted/30 border-border/30 rounded-lg" required minLength={6} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-9 text-sm btn-premium rounded-lg font-medium" disabled={loading}>
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : mode === "signup" ? "Create Account" : "Send Reset Link"}
           </Button>
         </form>
 
-        <div className="text-sm text-center text-muted-foreground mt-6">
+        <div className="text-xs text-center text-muted-foreground mt-5">
           {mode === "forgot" ? (
             <button onClick={() => setMode("login")} className="text-primary hover:underline font-medium flex items-center gap-1 mx-auto">
               <ArrowLeft className="w-3 h-3" /> Back to Sign In
@@ -136,7 +144,7 @@ const AuthPage = () => {
             </p>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

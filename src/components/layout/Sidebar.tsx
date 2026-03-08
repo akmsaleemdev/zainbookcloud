@@ -5,7 +5,7 @@ import {
   Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen,
   MessageSquare, BarChart3, Brain, Zap, UserCircle, Settings,
   ChevronLeft, ChevronRight, Building, Globe, BookOpen, Bell,
-  Landmark, ShieldCheck, ChevronsUpDown
+  Landmark, ShieldCheck
 } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,7 +18,7 @@ const navGroups = [
     ],
   },
   {
-    label: "Property Management",
+    label: "Property",
     items: [
       { to: "/organizations", icon: Building, label: "Organizations" },
       { to: "/properties", icon: Home, label: "Properties" },
@@ -30,11 +30,11 @@ const navGroups = [
     ],
   },
   {
-    label: "Tenants & Leases",
+    label: "Tenants",
     items: [
       { to: "/tenants", icon: Users, label: "Tenants" },
       { to: "/leases", icon: FileText, label: "Leases" },
-      { to: "/ejari", icon: ShieldCheck, label: "Ejari Contracts" },
+      { to: "/ejari", icon: ShieldCheck, label: "Ejari" },
     ],
   },
   {
@@ -72,16 +72,16 @@ const navGroups = [
   {
     label: "Portals",
     items: [
-      { to: "/owner-portal", icon: UserCircle, label: "Owner Portal" },
-      { to: "/tenant-portal", icon: Users, label: "Tenant Portal" },
-      { to: "/public-booking", icon: Globe, label: "Public Booking" },
+      { to: "/owner-portal", icon: UserCircle, label: "Owner" },
+      { to: "/tenant-portal", icon: Users, label: "Tenant" },
+      { to: "/public-booking", icon: Globe, label: "Booking" },
     ],
   },
   {
     label: "System",
     items: [
-      { to: "/subscriptions", icon: BookOpen, label: "Subscriptions" },
-      { to: "/user-management", icon: ShieldCheck, label: "User Management" },
+      { to: "/subscriptions", icon: BookOpen, label: "Plans" },
+      { to: "/user-management", icon: ShieldCheck, label: "Users" },
       { to: "/settings", icon: Settings, label: "Settings" },
     ],
   },
@@ -94,23 +94,26 @@ export const Sidebar = () => {
 
   return (
     <aside
-      className={`glass-sidebar h-screen flex flex-col transition-all duration-300 ${
-        collapsed ? "w-[68px]" : "w-[260px]"
+      className={`glass-sidebar h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        collapsed ? "w-[64px]" : "w-[240px]"
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <span className="text-primary-foreground font-bold text-sm">Z</span>
+      <div className="flex items-center gap-2.5 px-4 h-14 border-b border-sidebar-border">
+        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+          <span className="text-primary-foreground font-bold text-xs">Z</span>
         </div>
         {!collapsed && (
-          <span className="font-semibold text-foreground text-lg">ZainBook</span>
+          <div className="flex flex-col">
+            <span className="font-semibold text-foreground text-sm tracking-tight">ZainBook</span>
+            <span className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">AI Platform</span>
+          </div>
         )}
       </div>
 
       {/* Org Switcher */}
       {!collapsed && organizations.length > 0 && (
-        <div className="px-3 py-3 border-b border-sidebar-border">
+        <div className="px-3 py-2.5 border-b border-sidebar-border">
           <Select
             value={currentOrg?.id || ""}
             onValueChange={(v) => {
@@ -118,7 +121,7 @@ export const Sidebar = () => {
               if (org) setCurrentOrg(org);
             }}
           >
-            <SelectTrigger className="bg-sidebar-accent/50 border-sidebar-border text-xs h-8">
+            <SelectTrigger className="bg-sidebar-accent/60 border-sidebar-border/50 text-xs h-7 rounded-md">
               <SelectValue placeholder="Select org" />
             </SelectTrigger>
             <SelectContent>
@@ -131,7 +134,7 @@ export const Sidebar = () => {
       )}
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-4 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-3">
         {navGroups.map((group) => (
           <div key={group.label}>
             {!collapsed && <div className="section-label">{group.label}</div>}
@@ -157,9 +160,9 @@ export const Sidebar = () => {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-center h-12 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center justify-center h-10 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
       >
-        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
       </button>
     </aside>
   );
