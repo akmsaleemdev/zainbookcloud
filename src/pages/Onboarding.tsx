@@ -95,91 +95,19 @@ const Onboarding = () => {
     mutationFn: async () => {
       if (!user || !selectedPlanId) throw new Error("Missing user or plan");
 
-      const plan = plans.find((p: any) => p.id === selectedPlanId);
-      if (!plan) throw new Error("Plan not found");
-
-      // 1. Create organization
-      const { data: org, error: orgError } = await supabase
-        .from("organizations")
-        .insert({
-          name: orgName,
-          name_ar: orgNameAr || null,
-          emirate,
-          email: orgEmail,
-          phone: orgPhone || null,
-          created_by: user.id,
-          country: "UAE",
-          currency: "AED",
-          timezone: "Asia/Dubai",
-        })
-        .select("id")
-        .single();
-
-      if (orgError) throw orgError;
-
-      // 2. Add user as organization_admin
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .insert({
-          user_id: user.id,
-          organization_id: org.id,
-          role: "organization_admin" as any,
-          is_active: true,
-        });
-
-      if (memberError) throw memberError;
-
-      // 3. Create subscription
-      const multiplier = billingCycle === "yearly" ? 10 : 1;
-      const totalAmount = (plan as any).price * multiplier;
-      const isTrial = (plan as any).plan_type === "trial";
-
-      const { data: sub, error: subError } = await supabase
-        .from("customer_subscriptions")
-        .insert({
-          organization_id: org.id,
-          plan_id: selectedPlanId,
-          billing_cycle: billingCycle,
-          total_amount: totalAmount,
-          status: isTrial ? "trialing" : "active",
-          trial_ends_at: isTrial
-            ? new Date(Date.now() + ((plan as any).trial_days || 14) * 86400000).toISOString()
-            : null,
-          next_billing_date: new Date(
-            Date.now() + (billingCycle === "yearly" ? 365 : 30) * 86400000
-          ).toISOString().split("T")[0],
-        })
-        .select("id")
-        .single();
-
-      if (subError) throw subError;
-
-      // 4. Enable plan modules
-      const includedMods = planModules.filter((pm: any) => pm.plan_id === selectedPlanId);
-      if (includedMods.length > 0 && sub) {
-        for (const pm of includedMods) {
-          await supabase.from("subscription_modules").upsert({
-            subscription_id: sub.id,
-            module_id: (pm as any).module_id,
-            is_enabled: true,
-            enabled_at: new Date().toISOString(),
-          }, { onConflict: "subscription_id,module_id" }).select();
-        }
-      }
-
-      // 5. Log billing history
-      await supabase.from("billing_history").insert({
-        organization_id: org.id,
-        action: "new_subscription",
-        plan_name: (plan as any).name,
-        amount: totalAmount,
-        billing_cycle: billingCycle,
-        description: `Subscribed to ${(plan as any).name} plan`,
-        invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
-        status: (plan as any).price === 0 ? "trial" : "completed",
+      const { data, error } = await supabase.rpc("onboard_organization", {
+        _user_id: user.id,
+        _org_name: orgName,
+        _org_name_ar: orgNameAr || null,
+        _emirate: emirate,
+        _org_email: orgEmail,
+        _org_phone: orgPhone || null,
+        _plan_id: selectedPlanId,
+        _billing_cycle: billingCycle,
       });
 
-      return org;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       setStep("complete");
