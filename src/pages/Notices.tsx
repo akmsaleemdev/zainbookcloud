@@ -229,6 +229,9 @@ const Notices = () => {
                       <Send className="w-3 h-3" />
                     </Button>
                   )}
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={(e) => { e.stopPropagation(); generateNoticePDF(n, currentOrg?.name || ""); toast.success("PDF downloaded"); }}>
+                    <Download className="w-3 h-3" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(n.id); }}>
                     <Trash2 className="w-3 h-3" />
                   </Button>
