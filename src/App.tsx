@@ -48,6 +48,8 @@ import UserManagement from "./pages/UserManagement";
 import SettingsPage from "./pages/SettingsPage";
 import Complaints from "./pages/Complaints";
 import Notices from "./pages/Notices";
+import UAEApartmentManagement from "./pages/UAEApartmentManagement";
+import ChequeTracking from "./pages/ChequeTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
