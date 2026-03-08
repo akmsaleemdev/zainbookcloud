@@ -16,6 +16,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const EMIRATES = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Umm Al Quwain", "Fujairah"];
+const CURRENCIES = ["AED", "USD", "EUR", "GBP", "SAR", "QAR", "BHD", "KWD", "OMR"];
+const LANGUAGES = [{ value: "en", label: "English" }, { value: "ar", label: "Arabic" }];
+const COUNTRIES = ["UAE", "Saudi Arabia", "Qatar", "Bahrain", "Kuwait", "Oman", "Egypt", "Jordan"];
+const TIMEZONES = ["Asia/Dubai", "Asia/Riyadh", "Asia/Qatar", "Asia/Bahrain", "Asia/Kuwait", "Asia/Muscat", "Africa/Cairo"];
 
 interface OrgForm {
   name: string;
@@ -25,9 +29,16 @@ interface OrgForm {
   phone: string;
   address: string;
   emirate: string;
+  vat_number: string;
+  vat_enabled: boolean;
+  vat_rate: string;
+  currency: string;
+  language: string;
+  country: string;
+  timezone: string;
 }
 
-const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "" };
+const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5", currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai" };
 
 const Organizations = () => {
   const { user } = useAuth();
