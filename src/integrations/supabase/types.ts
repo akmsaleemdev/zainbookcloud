@@ -307,6 +307,66 @@ export type Database = {
           },
         ]
       }
+      billing_history: {
+        Row: {
+          action: string
+          amount: number | null
+          billing_cycle: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          invoice_number: string | null
+          organization_id: string
+          plan_name: string | null
+          status: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          action?: string
+          amount?: number | null
+          billing_cycle?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          invoice_number?: string | null
+          organization_id: string
+          plan_name?: string | null
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number | null
+          billing_cycle?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          invoice_number?: string | null
+          organization_id?: string
+          plan_name?: string | null
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "customer_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buildings: {
         Row: {
           created_at: string
