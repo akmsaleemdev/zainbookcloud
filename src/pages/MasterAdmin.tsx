@@ -15,9 +15,10 @@ import { TenantsTab } from "@/components/master-admin/TenantsTab";
 import { SubscriptionsTab } from "@/components/master-admin/SubscriptionsTab";
 import { TicketsTab } from "@/components/master-admin/TicketsTab";
 import { ModulesTab } from "@/components/master-admin/ModulesTab";
+import { AuditLogsTab } from "@/components/master-admin/AuditLogsTab";
 import {
   Shield, Building2, Plus, Pencil, Trash2,
-  AlertTriangle, TrendingUp, Crown, CreditCard
+  AlertTriangle, TrendingUp, Crown, CreditCard, FileText
 } from "lucide-react";
 
 const MasterAdmin = () => {
@@ -151,23 +152,24 @@ const MasterAdmin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-secondary/50">
-            <TabsTrigger value="overview">Tenants</TabsTrigger>
+          <TabsList className="bg-secondary/50 flex-wrap">
+            <TabsTrigger value="overview">Organizations</TabsTrigger>
             <TabsTrigger value="plans">Plans</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-            <TabsTrigger value="tickets">Support Tickets</TabsTrigger>
+            <TabsTrigger value="tickets">Tickets</TabsTrigger>
             <TabsTrigger value="modules">Modules</TabsTrigger>
             <TabsTrigger value="gateways" className="gap-1.5">
-              <CreditCard className="w-3.5 h-3.5" /> Payment Gateways
+              <CreditCard className="w-3.5 h-3.5" /> Gateways
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="gap-1.5">
+              <FileText className="w-3.5 h-3.5" /> Logs
             </TabsTrigger>
           </TabsList>
 
-          {/* Tenants Tab - Enhanced */}
           <TabsContent value="overview" className="space-y-4">
             <TenantsTab />
           </TabsContent>
 
-          {/* Plans Tab */}
           <TabsContent value="plans" className="space-y-4">
             <div className="flex justify-end">
               <Button onClick={openAddPlan} className="gap-2"><Plus className="w-4 h-4" /> Add Plan</Button>
@@ -209,24 +211,24 @@ const MasterAdmin = () => {
             </div>
           </TabsContent>
 
-          {/* Subscriptions Tab - Enhanced */}
           <TabsContent value="subscriptions" className="space-y-4">
             <SubscriptionsTab />
           </TabsContent>
 
-          {/* Tickets Tab - Enhanced */}
           <TabsContent value="tickets" className="space-y-4">
             <TicketsTab />
           </TabsContent>
 
-          {/* Modules Tab - Enhanced */}
           <TabsContent value="modules" className="space-y-4">
             <ModulesTab />
           </TabsContent>
 
-          {/* Payment Gateways Tab */}
           <TabsContent value="gateways">
             <PaymentGatewaysTab />
+          </TabsContent>
+
+          <TabsContent value="logs" className="space-y-4">
+            <AuditLogsTab />
           </TabsContent>
         </Tabs>
       </motion.div>
