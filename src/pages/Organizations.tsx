@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building, Plus, Search, Filter, Pencil, Trash2, MapPin, Mail, Phone, MoreHorizontal, Globe, DollarSign } from "lucide-react";
+import { Building, Plus, Search, Filter, Pencil, Trash2, MapPin, Mail, Phone, MoreHorizontal, Globe, DollarSign, Upload, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
