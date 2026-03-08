@@ -102,6 +102,24 @@ const Subscriptions = () => {
     enabled: !!currentOrg?.id,
   });
 
+  const { data: usageLimits = [] } = useQuery({
+    queryKey: ["usage-limits", currentOrg?.id],
+    queryFn: async () => {
+      if (!currentOrg?.id) return [];
+      const { data } = await supabase
+        .from("usage_limits")
+        .select("*")
+        .eq("organization_id", currentOrg.id);
+      return data || [];
+    },
+    enabled: !!currentOrg?.id,
+  });
+
+  const getUsageCount = (resource: string) => {
+    const entry = usageLimits.find((u: any) => u.resource_type === resource);
+    return entry?.current_count || 0;
+  };
+
   // Handle payment callback from Stripe
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
