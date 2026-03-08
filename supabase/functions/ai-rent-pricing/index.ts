@@ -73,16 +73,16 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     let aiInsight = "";
 
-    if (GOOGLE_API_KEY && suggestedRent > 0) {
+    if (LOVABLE_API_KEY && suggestedRent > 0) {
       try {
-        const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${GOOGLE_API_KEY}`,
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "gemini-2.5-flash",
+            model: "google/gemini-3-flash-preview",
             messages: [
               {
                 role: "system",

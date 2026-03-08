@@ -40,7 +40,7 @@ Available modules: Property Management, Tenant Management, Lease Management, Uni
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
