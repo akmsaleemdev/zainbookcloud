@@ -1,12 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 import { AlertTriangle, CheckCircle, Clock, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 
 export const TicketsTab = () => {
+  const queryClient = useQueryClient();
+
   const { data: tickets = [] } = useQuery({
     queryKey: ["master-tickets-full"],
     queryFn: async () => {
@@ -17,6 +22,23 @@ export const TicketsTab = () => {
         .limit(100);
       return data || [];
     },
+  });
+
+  const updateTicketMutation = useMutation({
+    mutationFn: async ({ id, field, value }: { id: string; field: string; value: string }) => {
+      const update: any = { [field]: value };
+      if (field === "status" && (value === "resolved" || value === "closed")) {
+        update.resolved_at = new Date().toISOString();
+      }
+      const { error } = await supabase.from("support_tickets").update(update).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-tickets-full"] });
+      queryClient.invalidateQueries({ queryKey: ["master-open-tickets"] });
+      toast({ title: "Ticket updated" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
   const openCount = tickets.filter((t: any) => t.status === "open").length;
@@ -40,7 +62,6 @@ export const TicketsTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { icon: MessageSquare, label: "Total Tickets", value: tickets.length, color: "text-blue-400" },
@@ -71,7 +92,6 @@ export const TicketsTab = () => {
         </div>
       )}
 
-      {/* Table */}
       <div className="glass-card overflow-hidden">
         <Table>
           <TableHeader>
@@ -83,12 +103,13 @@ export const TicketsTab = () => {
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {tickets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No support tickets yet
                 </TableCell>
               </TableRow>
@@ -102,17 +123,42 @@ export const TicketsTab = () => {
                     <Badge variant="secondary" className="text-xs">{t.category}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className={`text-xs ${priorityStyles[t.priority] || ""}`}>
-                      {t.priority}
-                    </Badge>
+                    <Select
+                      value={t.priority}
+                      onValueChange={(v) => updateTicketMutation.mutate({ id: t.id, field: "priority", value: v })}
+                    >
+                      <SelectTrigger className={`h-7 text-xs w-24 border-0 ${priorityStyles[t.priority] || ""}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["low", "medium", "high", "critical"].map((p) => (
+                          <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className={`text-xs ${statusStyles[t.status] || ""}`}>
-                      {t.status}
-                    </Badge>
+                    <Select
+                      value={t.status}
+                      onValueChange={(v) => updateTicketMutation.mutate({ id: t.id, field: "status", value: v })}
+                    >
+                      <SelectTrigger className={`h-7 text-xs w-28 border-0 ${statusStyles[t.status] || ""}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["open", "in_progress", "resolved", "closed"].map((s) => (
+                          <SelectItem key={s} value={s} className="text-xs">{s.replace("_", " ")}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {format(new Date(t.created_at), "dd MMM yyyy")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="text-xs text-muted-foreground">
+                      {t.resolved_at ? `Resolved ${format(new Date(t.resolved_at), "dd MMM")}` : ""}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))

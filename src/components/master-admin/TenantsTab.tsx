@@ -1,15 +1,23 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Building2, Users, Crown } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import { Search, Building2, Users, Crown, Eye, Power, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
 export const TenantsTab = () => {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [detailOrg, setDetailOrg] = useState<any>(null);
 
   const { data: orgsWithSubs = [] } = useQuery({
     queryKey: ["master-orgs-subs"],
@@ -34,6 +42,18 @@ export const TenantsTab = () => {
         return { ...org, subscription: sub, memberCount };
       });
     },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase.from("organizations").update({ is_active } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-orgs-subs"] });
+      toast({ title: "Organization status updated" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
   const filtered = orgsWithSubs.filter((o: any) =>
@@ -108,12 +128,13 @@ export const TenantsTab = () => {
               <TableHead>Sub Status</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Joined</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   No organizations found
                 </TableCell>
               </TableRow>
@@ -138,14 +159,14 @@ export const TenantsTab = () => {
                   <TableCell>
                     {org.subscription ? (
                       <Badge
-                        variant={org.subscription.status === "active" ? "default" : "secondary"}
-                        className={
+                        variant="secondary"
+                        className={`text-xs ${
                           org.subscription.status === "active"
-                            ? "bg-emerald-500/20 text-emerald-400 text-xs"
+                            ? "bg-emerald-500/20 text-emerald-400"
                             : org.subscription.status === "trialing"
-                            ? "bg-amber-500/20 text-amber-400 text-xs"
-                            : "text-xs"
-                        }
+                            ? "bg-amber-500/20 text-amber-400"
+                            : ""
+                        }`}
                       >
                         {org.subscription.status}
                       </Badge>
@@ -161,12 +182,57 @@ export const TenantsTab = () => {
                   <TableCell className="text-xs text-muted-foreground">
                     {format(new Date(org.created_at), "dd MMM yyyy")}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailOrg(org)} title="View Details">
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={() => toggleActiveMutation.mutate({ id: org.id, is_active: !org.is_active })}
+                      title={org.is_active ? "Deactivate" : "Activate"}
+                    >
+                      <Power className={`w-3.5 h-3.5 ${org.is_active ? "text-emerald-400" : "text-destructive"}`} />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      {/* Org Detail Dialog */}
+      <Dialog open={!!detailOrg} onOpenChange={() => setDetailOrg(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Organization Details</DialogTitle>
+          </DialogHeader>
+          {detailOrg && (
+            <div className="space-y-3 py-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{detailOrg.name}</span></div>
+                <div><span className="text-muted-foreground">Arabic:</span> <span className="font-medium">{detailOrg.name_ar || "—"}</span></div>
+                <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{detailOrg.email || "—"}</span></div>
+                <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{detailOrg.phone || "—"}</span></div>
+                <div><span className="text-muted-foreground">Emirate:</span> <span className="font-medium">{detailOrg.emirate || "—"}</span></div>
+                <div><span className="text-muted-foreground">Country:</span> <span className="font-medium">{detailOrg.country || "UAE"}</span></div>
+                <div><span className="text-muted-foreground">Currency:</span> <span className="font-medium">{detailOrg.currency || "AED"}</span></div>
+                <div><span className="text-muted-foreground">Members:</span> <span className="font-medium">{detailOrg.memberCount}</span></div>
+                <div><span className="text-muted-foreground">Trade License:</span> <span className="font-medium">{detailOrg.trade_license || "—"}</span></div>
+                <div><span className="text-muted-foreground">VAT #:</span> <span className="font-medium">{detailOrg.vat_number || "—"}</span></div>
+                <div><span className="text-muted-foreground">Status:</span> <Badge variant={detailOrg.is_active ? "default" : "secondary"}>{detailOrg.is_active ? "Active" : "Inactive"}</Badge></div>
+                <div><span className="text-muted-foreground">Plan:</span> <span className="font-medium">{detailOrg.subscription?.subscription_plans?.name || "No Plan"}</span></div>
+              </div>
+              <div className="text-xs text-muted-foreground pt-2 border-t border-border/30">
+                Created: {format(new Date(detailOrg.created_at), "dd MMM yyyy HH:mm")}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailOrg(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
