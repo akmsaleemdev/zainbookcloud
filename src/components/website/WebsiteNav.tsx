@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Sparkles } from "lucide-react";
@@ -12,7 +12,7 @@ const navLinks = [
   { label: "Contact", path: "/website/contact" },
 ];
 
-export const WebsiteNav = () => {
+export const WebsiteNav = forwardRef<HTMLElement>((_, ref) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
