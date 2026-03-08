@@ -46,6 +46,8 @@ import SupportCenter from "./pages/SupportCenter";
 import ERPIntegrations from "./pages/ERPIntegrations";
 import UserManagement from "./pages/UserManagement";
 import SettingsPage from "./pages/SettingsPage";
+import Complaints from "./pages/Complaints";
+import Notices from "./pages/Notices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
