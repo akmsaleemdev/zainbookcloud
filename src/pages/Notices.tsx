@@ -151,7 +151,18 @@ const Notices = () => {
             <h1 className="page-header">Notices</h1>
             <p className="text-sm text-muted-foreground mt-1">Create and distribute notices to tenants and staff</p>
           </div>
-          <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Create Notice</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Notices Report", orgName: currentOrg?.name || "",
+                columns: ["Title", "Type", "Recipients", "Status", "Date"],
+                rows: filtered.map((n: any) => [n.title, n.notice_type, n.recipient_type, n.status, new Date(n.created_at).toLocaleDateString()]),
+                filename: "notices-report.pdf",
+              });
+              toast.success("Report exported");
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+            <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Create Notice</Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
