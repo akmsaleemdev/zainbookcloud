@@ -17,12 +17,24 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
-import { 
+import {
   MessageSquare, Ticket, Plus, Send, Bot, User, Search,
-  Clock, AlertTriangle, CheckCircle, Loader2, Headphones, Sparkles
+  Clock, AlertTriangle, CheckCircle, Loader2, Headphones, Sparkles,
+  BookOpen, HelpCircle, FileText
 } from "lucide-react";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-support-chat`;
+
+const KB_ARTICLES = [
+  { title: "Getting Started with ZainBook", category: "guide", summary: "Learn how to set up your organization, add properties, and invite team members." },
+  { title: "Understanding Ejari Registration", category: "uae", summary: "Step-by-step guide to registering tenancy contracts on the Ejari system in Dubai." },
+  { title: "Setting Up ERP Integrations", category: "technical", summary: "Connect ZainBook with Oracle NetSuite, SAP, Dynamics 365, Odoo, or Zoho." },
+  { title: "Managing Subscription Plans", category: "billing", summary: "Upgrade, downgrade, or cancel your subscription. Understand billing cycles." },
+  { title: "Maintenance Request Workflow", category: "guide", summary: "How maintenance requests flow from tenant submission to resolution." },
+  { title: "RERA Compliance Checklist", category: "uae", summary: "Ensure your properties comply with RERA regulations across all Emirates." },
+  { title: "Cheque Tracking & PDC Management", category: "guide", summary: "Track post-dated cheques, manage deposits, and handle bounced cheques." },
+  { title: "AI Insights & Rent Pricing", category: "technical", summary: "Use AI-powered tools for market rent analysis and financial forecasting." },
+];
 
 const SupportCenter = () => {
   const { user } = useAuth();
@@ -36,6 +48,7 @@ const SupportCenter = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [ticketDialog, setTicketDialog] = useState(false);
   const [ticketForm, setTicketForm] = useState({ subject: "", description: "", category: "general", priority: "medium" });
+  const [kbSearch, setKbSearch] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
@@ -58,6 +71,8 @@ const SupportCenter = () => {
     setChatInput("");
     setChatLoading(true);
 
+    let assistantContent = "";
+
     try {
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -68,13 +83,20 @@ const SupportCenter = () => {
         body: JSON.stringify({ messages: [...chatMessages, userMsg].filter(m => m.role !== "system") }),
       });
 
-      if (!resp.ok || !resp.body) {
-        throw new Error("Failed to get response");
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        if (resp.status === 429) {
+          toast({ title: "Rate limit", description: "Too many requests. Please wait a moment.", variant: "destructive" });
+        } else if (resp.status === 402) {
+          toast({ title: "Credits exhausted", description: "AI credits need to be topped up.", variant: "destructive" });
+        }
+        throw new Error(errorData.error || "Failed to get response");
       }
+
+      if (!resp.body) throw new Error("No response body");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
-      let assistantContent = "";
       let buffer = "";
 
       while (true) {
@@ -87,6 +109,7 @@ const SupportCenter = () => {
           let line = buffer.slice(0, newlineIndex);
           buffer = buffer.slice(newlineIndex + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
           if (!line.startsWith("data: ")) continue;
           const jsonStr = line.slice(6).trim();
           if (jsonStr === "[DONE]") break;
@@ -103,11 +126,38 @@ const SupportCenter = () => {
                 return [...prev, { role: "assistant", content: assistantContent }];
               });
             }
-          } catch { /* partial json */ }
+          } catch { /* partial json, wait for more data */ }
+        }
+      }
+
+      // Flush remaining buffer
+      if (buffer.trim()) {
+        for (let raw of buffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setChatMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.role === "assistant") {
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+                }
+                return [...prev, { role: "assistant", content: assistantContent }];
+              });
+            }
+          } catch { /* ignore */ }
         }
       }
     } catch (e) {
-      setChatMessages(prev => [...prev, { role: "assistant", content: "I'm sorry, I'm having trouble connecting right now. Please try again or create a support ticket for human assistance." }]);
+      if (!assistantContent) {
+        setChatMessages(prev => [...prev, { role: "assistant", content: "I'm sorry, I'm having trouble connecting right now. Please try again or create a support ticket for human assistance." }]);
+      }
     }
     setChatLoading(false);
   };
@@ -147,13 +197,25 @@ const SupportCenter = () => {
     closed: CheckCircle,
   };
 
+  const categoryColors: Record<string, string> = {
+    guide: "bg-blue-500/20 text-blue-400",
+    uae: "bg-amber-500/20 text-amber-400",
+    technical: "bg-violet-500/20 text-violet-400",
+    billing: "bg-emerald-500/20 text-emerald-400",
+  };
+
+  const filteredArticles = KB_ARTICLES.filter(a =>
+    a.title.toLowerCase().includes(kbSearch.toLowerCase()) ||
+    a.summary.toLowerCase().includes(kbSearch.toLowerCase())
+  );
+
   return (
     <AppLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="page-header flex items-center gap-2"><Headphones className="w-6 h-6 text-primary" /> Support Center</h1>
-            <p className="text-sm text-muted-foreground mt-1">AI-powered support and ticket management</p>
+            <p className="text-sm text-muted-foreground mt-1">AI-powered support, tickets, and knowledge base</p>
           </div>
           <Button onClick={() => setTicketDialog(true)} className="gap-2">
             <Plus className="w-4 h-4" /> New Ticket
@@ -163,7 +225,8 @@ const SupportCenter = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-secondary/50">
             <TabsTrigger value="chat" className="gap-2"><Bot className="w-4 h-4" /> AI Chat</TabsTrigger>
-            <TabsTrigger value="tickets" className="gap-2"><Ticket className="w-4 h-4" /> My Tickets</TabsTrigger>
+            <TabsTrigger value="tickets" className="gap-2"><Ticket className="w-4 h-4" /> My Tickets ({tickets.length})</TabsTrigger>
+            <TabsTrigger value="kb" className="gap-2"><BookOpen className="w-4 h-4" /> Knowledge Base</TabsTrigger>
           </TabsList>
 
           {/* AI Chat */}
@@ -172,6 +235,7 @@ const SupportCenter = () => {
               <CardHeader className="pb-3 border-b border-border/50">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" /> AI Support Assistant
+                  <Badge variant="outline" className="ml-auto text-[10px]">Powered by AI</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -185,8 +249,8 @@ const SupportCenter = () => {
                           </div>
                         )}
                         <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm ${
-                          msg.role === "user" 
-                            ? "bg-primary text-primary-foreground" 
+                          msg.role === "user"
+                            ? "bg-primary text-primary-foreground"
                             : "bg-secondary/80"
                         }`}>
                           <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -198,7 +262,7 @@ const SupportCenter = () => {
                         )}
                       </div>
                     ))}
-                    {chatLoading && (
+                    {chatLoading && !chatMessages[chatMessages.length - 1]?.content && (
                       <div className="flex gap-3">
                         <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
                           <Bot className="w-4 h-4 text-primary" />
@@ -213,10 +277,10 @@ const SupportCenter = () => {
                 </ScrollArea>
                 <div className="p-4 border-t border-border/50">
                   <form onSubmit={(e) => { e.preventDefault(); sendChat(); }} className="flex gap-2">
-                    <Input 
-                      value={chatInput} 
-                      onChange={(e) => setChatInput(e.target.value)} 
-                      placeholder="Type your message..." 
+                    <Input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Type your message..."
                       className="bg-secondary/50 border-border/50"
                       disabled={chatLoading}
                     />
@@ -247,7 +311,7 @@ const SupportCenter = () => {
                   {ticketsLoading ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></TableCell></TableRow>
                   ) : tickets.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No tickets yet</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No tickets yet. Use AI Chat or create a ticket above.</TableCell></TableRow>
                   ) : tickets.map((t: any) => {
                     const StatusIcon = statusIcons[t.status] || Clock;
                     return (
@@ -268,6 +332,32 @@ const SupportCenter = () => {
                   })}
                 </TableBody>
               </Table>
+            </div>
+          </TabsContent>
+
+          {/* Knowledge Base */}
+          <TabsContent value="kb">
+            <div className="space-y-4">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search articles..." className="pl-10 bg-secondary/50 border-border/50" value={kbSearch} onChange={(e) => setKbSearch(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredArticles.map((article, i) => (
+                  <Card key={i} className="glass-card hover:border-primary/30 transition-colors cursor-pointer">
+                    <CardContent className="pt-6 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary shrink-0" />
+                          <h3 className="font-medium text-sm">{article.title}</h3>
+                        </div>
+                        <Badge className={`text-[10px] ${categoryColors[article.category] || ""}`}>{article.category}</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground pl-6">{article.summary}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -303,7 +393,7 @@ const SupportCenter = () => {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setTicketDialog(false)}>Cancel</Button>
-            <Button onClick={() => createTicketMutation.mutate()} disabled={!ticketForm.subject}>Create Ticket</Button>
+            <Button onClick={() => createTicketMutation.mutate()} disabled={!ticketForm.subject || createTicketMutation.isPending}>Create Ticket</Button>
           </div>
         </DialogContent>
       </Dialog>

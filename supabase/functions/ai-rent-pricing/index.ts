@@ -24,14 +24,12 @@ serve(async (req) => {
 
     const { property_type, emirate, area_sqft, bedrooms, furnishing, community } = await req.json();
 
-    // Query existing leases for comparable pricing
     const { data: leases } = await supabaseClient
       .from("leases")
       .select("monthly_rent, units(area_sqft, bedrooms, unit_type, buildings(properties(emirate, property_type, community)))")
       .eq("status", "active")
       .limit(200);
 
-    // Filter comparable leases
     const comparables = (leases || []).filter((l: any) => {
       const prop = l.units?.buildings?.properties;
       if (!prop) return false;
@@ -40,13 +38,11 @@ serve(async (req) => {
       return sameEmirate || sameType;
     });
 
-    // Calculate statistics
     const rents = comparables.map((l: any) => l.monthly_rent).filter(Boolean);
     const avgRent = rents.length > 0 ? rents.reduce((a: number, b: number) => a + b, 0) / rents.length : 0;
     const minRent = rents.length > 0 ? Math.min(...rents) : 0;
     const maxRent = rents.length > 0 ? Math.max(...rents) : 0;
 
-    // Estimate based on area if provided
     let estimatedRent = avgRent;
     if (area_sqft && rents.length > 0) {
       const areas = comparables
@@ -59,7 +55,6 @@ serve(async (req) => {
       }
     }
 
-    // Adjustments
     let adjustmentFactor = 1.0;
     if (furnishing === "furnished") adjustmentFactor += 0.15;
     if (furnishing === "semi-furnished") adjustmentFactor += 0.07;
@@ -69,20 +64,20 @@ serve(async (req) => {
     const lowRange = Math.round(suggestedRent * 0.9);
     const highRange = Math.round(suggestedRent * 1.1);
 
-    // AI-powered insights using Google AI Studio
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    // AI-powered insights using Lovable AI Gateway
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     let aiInsight = "";
 
-    if (GOOGLE_API_KEY && suggestedRent > 0) {
+    if (LOVABLE_API_KEY && suggestedRent > 0) {
       try {
-        const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${GOOGLE_API_KEY}`,
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "gemini-2.5-flash",
+            model: "google/gemini-2.5-flash-lite",
             messages: [
               {
                 role: "system",
