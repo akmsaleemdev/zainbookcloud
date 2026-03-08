@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          billing_frequency: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_paid: boolean | null
+          name: string
+          name_ar: string | null
+          organization_id: string
+          price: number | null
+          property_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_frequency?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_paid?: boolean | null
+          name: string
+          name_ar?: string | null
+          organization_id: string
+          price?: number | null
+          property_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_frequency?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_paid?: boolean | null
+          name?: string
+          name_ar?: string | null
+          organization_id?: string
+          price?: number | null
+          property_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "amenities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
