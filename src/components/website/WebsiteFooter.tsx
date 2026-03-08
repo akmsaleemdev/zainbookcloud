@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
@@ -17,7 +18,7 @@ const footerLinks = {
   ],
 };
 
-export const WebsiteFooter = () => (
+export const WebsiteFooter = forwardRef<HTMLElement>((_, ref) => (
   <footer className="border-t border-border/40 bg-background">
     <div className="mx-auto max-w-7xl px-6 py-16">
       <div className="grid gap-8 md:grid-cols-4">
