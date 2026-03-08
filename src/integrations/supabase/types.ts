@@ -1186,48 +1186,69 @@ export type Database = {
       organizations: {
         Row: {
           address: string | null
+          country: string | null
           created_at: string
           created_by: string | null
+          currency: string | null
           email: string | null
           emirate: string | null
           id: string
           is_active: boolean | null
+          language: string | null
           logo_url: string | null
           name: string
           name_ar: string | null
           phone: string | null
+          timezone: string | null
           trade_license: string | null
           updated_at: string
+          vat_enabled: boolean | null
+          vat_number: string | null
+          vat_rate: number | null
         }
         Insert: {
           address?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           email?: string | null
           emirate?: string | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           logo_url?: string | null
           name: string
           name_ar?: string | null
           phone?: string | null
+          timezone?: string | null
           trade_license?: string | null
           updated_at?: string
+          vat_enabled?: boolean | null
+          vat_number?: string | null
+          vat_rate?: number | null
         }
         Update: {
           address?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           email?: string | null
           emirate?: string | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           logo_url?: string | null
           name?: string
           name_ar?: string | null
           phone?: string | null
+          timezone?: string | null
           trade_license?: string | null
           updated_at?: string
+          vat_enabled?: boolean | null
+          vat_number?: string | null
+          vat_rate?: number | null
         }
         Relationships: []
       }
