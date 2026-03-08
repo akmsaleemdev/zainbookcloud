@@ -257,6 +257,9 @@ const Complaints = () => {
                     {c.status.replace("_", " ")}
                   </Badge>
                   <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(c.created_at).toLocaleDateString()}</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={(e) => { e.stopPropagation(); generateComplaintPDF(c, currentOrg?.name || ""); toast.success("PDF downloaded"); }}>
+                    <Download className="w-3 h-3" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(c.id); }}>
                     <Trash2 className="w-3 h-3" />
                   </Button>
