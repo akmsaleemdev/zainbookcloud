@@ -1166,6 +1166,81 @@ export type Database = {
           },
         ]
       }
+      employee_loans: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          employee_id: string
+          end_date: string | null
+          id: string
+          installments_count: number | null
+          loan_amount: number
+          loan_type: string | null
+          monthly_deduction: number
+          notes: string | null
+          organization_id: string
+          remaining_balance: number | null
+          start_date: string
+          status: string
+          total_paid: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          employee_id: string
+          end_date?: string | null
+          id?: string
+          installments_count?: number | null
+          loan_amount: number
+          loan_type?: string | null
+          monthly_deduction: number
+          notes?: string | null
+          organization_id: string
+          remaining_balance?: number | null
+          start_date?: string
+          status?: string
+          total_paid?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          employee_id?: string
+          end_date?: string | null
+          id?: string
+          installments_count?: number | null
+          loan_amount?: number
+          loan_type?: string | null
+          monthly_deduction?: number
+          notes?: string | null
+          organization_id?: string
+          remaining_balance?: number | null
+          start_date?: string
+          status?: string
+          total_paid?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_loans_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_loans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           address: string | null
@@ -2317,6 +2392,176 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_items: {
+        Row: {
+          absence_deduction: number | null
+          absent_days: number | null
+          basic_salary: number | null
+          created_at: string
+          employee_id: string
+          food_allowance: number | null
+          gross_salary: number | null
+          housing_allowance: number | null
+          id: string
+          loan_deduction: number | null
+          net_salary: number | null
+          notes: string | null
+          other_allowances: number | null
+          other_deductions: number | null
+          overtime_amount: number | null
+          overtime_hours: number | null
+          payroll_run_id: string
+          penalty_deduction: number | null
+          phone_allowance: number | null
+          status: string
+          total_deductions: number | null
+          transport_allowance: number | null
+          updated_at: string
+          working_days: number | null
+        }
+        Insert: {
+          absence_deduction?: number | null
+          absent_days?: number | null
+          basic_salary?: number | null
+          created_at?: string
+          employee_id: string
+          food_allowance?: number | null
+          gross_salary?: number | null
+          housing_allowance?: number | null
+          id?: string
+          loan_deduction?: number | null
+          net_salary?: number | null
+          notes?: string | null
+          other_allowances?: number | null
+          other_deductions?: number | null
+          overtime_amount?: number | null
+          overtime_hours?: number | null
+          payroll_run_id: string
+          penalty_deduction?: number | null
+          phone_allowance?: number | null
+          status?: string
+          total_deductions?: number | null
+          transport_allowance?: number | null
+          updated_at?: string
+          working_days?: number | null
+        }
+        Update: {
+          absence_deduction?: number | null
+          absent_days?: number | null
+          basic_salary?: number | null
+          created_at?: string
+          employee_id?: string
+          food_allowance?: number | null
+          gross_salary?: number | null
+          housing_allowance?: number | null
+          id?: string
+          loan_deduction?: number | null
+          net_salary?: number | null
+          notes?: string | null
+          other_allowances?: number | null
+          other_deductions?: number | null
+          overtime_amount?: number | null
+          overtime_hours?: number | null
+          payroll_run_id?: string
+          penalty_deduction?: number | null
+          phone_allowance?: number | null
+          status?: string
+          total_deductions?: number | null
+          transport_allowance?: number | null
+          updated_at?: string
+          working_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_items_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_items_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          paid_at: string | null
+          payroll_month: number
+          payroll_year: number
+          run_date: string
+          status: string
+          total_allowances: number | null
+          total_basic: number | null
+          total_deductions: number | null
+          total_employees: number | null
+          total_net_salary: number | null
+          updated_at: string
+          wps_file_url: string | null
+          wps_generated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          paid_at?: string | null
+          payroll_month: number
+          payroll_year: number
+          run_date?: string
+          status?: string
+          total_allowances?: number | null
+          total_basic?: number | null
+          total_deductions?: number | null
+          total_employees?: number | null
+          total_net_salary?: number | null
+          updated_at?: string
+          wps_file_url?: string | null
+          wps_generated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          payroll_month?: number
+          payroll_year?: number
+          run_date?: string
+          status?: string
+          total_allowances?: number | null
+          total_basic?: number | null
+          total_deductions?: number | null
+          total_employees?: number | null
+          total_net_salary?: number | null
+          updated_at?: string
+          wps_file_url?: string | null
+          wps_generated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
