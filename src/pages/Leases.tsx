@@ -23,6 +23,7 @@ const Leases = () => {
   const [form, setForm] = useState({
     tenant_id: "", unit_id: "", lease_type: "fixed", start_date: "", end_date: "",
     monthly_rent: "", security_deposit: "0", payment_frequency: "monthly", ejari_number: "",
+    late_fee_rate: "0", grace_period_days: "5", rent_due_day: "1", renewal_reminder_days: "30",
   });
   const [search, setSearch] = useState("");
 
@@ -68,6 +69,8 @@ const Leases = () => {
         lease_type: f.lease_type, start_date: f.start_date, end_date: f.end_date,
         monthly_rent: parseFloat(f.monthly_rent), security_deposit: parseFloat(f.security_deposit) || 0,
         payment_frequency: f.payment_frequency, ejari_number: f.ejari_number || null,
+        late_fee_rate: parseFloat(f.late_fee_rate) || 0, grace_period_days: parseInt(f.grace_period_days) || 5,
+        rent_due_day: parseInt(f.rent_due_day) || 1, renewal_reminder_days: parseInt(f.renewal_reminder_days) || 30,
       });
       if (error) throw error;
     },
@@ -82,6 +85,8 @@ const Leases = () => {
         start_date: f.start_date, end_date: f.end_date, monthly_rent: parseFloat(f.monthly_rent),
         security_deposit: parseFloat(f.security_deposit) || 0, payment_frequency: f.payment_frequency,
         ejari_number: f.ejari_number || null,
+        late_fee_rate: parseFloat(f.late_fee_rate) || 0, grace_period_days: parseInt(f.grace_period_days) || 5,
+        rent_due_day: parseInt(f.rent_due_day) || 1, renewal_reminder_days: parseInt(f.renewal_reminder_days) || 30,
       }).eq("id", id);
       if (error) throw error;
     },
@@ -95,10 +100,10 @@ const Leases = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const emptyForm = { tenant_id: "", unit_id: "", lease_type: "fixed", start_date: "", end_date: "", monthly_rent: "", security_deposit: "0", payment_frequency: "monthly", ejari_number: "" };
+  const emptyForm = { tenant_id: "", unit_id: "", lease_type: "fixed", start_date: "", end_date: "", monthly_rent: "", security_deposit: "0", payment_frequency: "monthly", ejari_number: "", late_fee_rate: "0", grace_period_days: "5", rent_due_day: "1", renewal_reminder_days: "30" };
   const openCreate = () => { setForm(emptyForm); setEditingId(null); setDialogOpen(true); };
   const openEdit = (l: any) => {
-    setForm({ tenant_id: l.tenant_id, unit_id: l.unit_id || "", lease_type: l.lease_type, start_date: l.start_date, end_date: l.end_date, monthly_rent: String(l.monthly_rent), security_deposit: String(l.security_deposit || 0), payment_frequency: l.payment_frequency, ejari_number: l.ejari_number || "" });
+    setForm({ tenant_id: l.tenant_id, unit_id: l.unit_id || "", lease_type: l.lease_type, start_date: l.start_date, end_date: l.end_date, monthly_rent: String(l.monthly_rent), security_deposit: String(l.security_deposit || 0), payment_frequency: l.payment_frequency, ejari_number: l.ejari_number || "", late_fee_rate: String(l.late_fee_rate || 0), grace_period_days: String(l.grace_period_days || 5), rent_due_day: String(l.rent_due_day || 1), renewal_reminder_days: String(l.renewal_reminder_days || 30) });
     setEditingId(l.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
@@ -162,6 +167,14 @@ const Leases = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Payment Frequency</Label><Select value={form.payment_frequency} onValueChange={(v) => setForm({ ...form, payment_frequency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="semi_annual">Semi-Annual</SelectItem><SelectItem value="annual">Annual</SelectItem></SelectContent></Select></div>
               <div className="space-y-2"><Label>Ejari Number</Label><Input value={form.ejari_number} onChange={(e) => setForm({ ...form, ejari_number: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Rent Due Day</Label><Input type="number" min="1" max="28" value={form.rent_due_day} onChange={(e) => setForm({ ...form, rent_due_day: e.target.value })} placeholder="1-28" /></div>
+              <div className="space-y-2"><Label>Late Fee Rate (%)</Label><Input type="number" step="0.5" value={form.late_fee_rate} onChange={(e) => setForm({ ...form, late_fee_rate: e.target.value })} placeholder="e.g. 5" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Grace Period (days)</Label><Input type="number" value={form.grace_period_days} onChange={(e) => setForm({ ...form, grace_period_days: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Renewal Reminder (days)</Label><Input type="number" value={form.renewal_reminder_days} onChange={(e) => setForm({ ...form, renewal_reminder_days: e.target.value })} /></div>
             </div>
             <DialogFooter><Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button><Button type="submit">{editingId ? "Update" : "Create"}</Button></DialogFooter>
           </form>

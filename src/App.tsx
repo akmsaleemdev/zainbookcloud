@@ -50,6 +50,7 @@ import Complaints from "./pages/Complaints";
 import Notices from "./pages/Notices";
 import UAEApartmentManagement from "./pages/UAEApartmentManagement";
 import ChequeTracking from "./pages/ChequeTracking";
+import RentManagement from "./pages/RentManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/settings" element={<P><SettingsPage /></P>} />
             <Route path="/uae-management" element={<P><UAEApartmentManagement /></P>} />
             <Route path="/cheque-tracking" element={<P><ChequeTracking /></P>} />
+            <Route path="/rent-management" element={<P><RentManagement /></P>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </OrganizationProvider>

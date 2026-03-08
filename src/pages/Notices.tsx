@@ -10,7 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Megaphone, Plus, Search, Trash2, Clock, Send, FileText, Filter, Eye } from "lucide-react";
+import { Megaphone, Plus, Search, Trash2, Clock, Send, FileText, Filter, Eye, Download } from "lucide-react";
+import { generateNoticePDF, generateTablePDF } from "@/lib/pdfUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -150,7 +151,18 @@ const Notices = () => {
             <h1 className="page-header">Notices</h1>
             <p className="text-sm text-muted-foreground mt-1">Create and distribute notices to tenants and staff</p>
           </div>
-          <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Create Notice</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Notices Report", orgName: currentOrg?.name || "",
+                columns: ["Title", "Type", "Recipients", "Status", "Date"],
+                rows: filtered.map((n: any) => [n.title, n.notice_type, n.recipient_type, n.status, new Date(n.created_at).toLocaleDateString()]),
+                filename: "notices-report.pdf",
+              });
+              toast.success("Report exported");
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+            <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Create Notice</Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -217,6 +229,9 @@ const Notices = () => {
                       <Send className="w-3 h-3" />
                     </Button>
                   )}
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={(e) => { e.stopPropagation(); generateNoticePDF(n, currentOrg?.name || ""); toast.success("PDF downloaded"); }}>
+                    <Download className="w-3 h-3" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(n.id); }}>
                     <Trash2 className="w-3 h-3" />
                   </Button>

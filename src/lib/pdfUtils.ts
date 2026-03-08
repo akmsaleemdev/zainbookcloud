@@ -122,6 +122,90 @@ export const generateInvoicePDF = (invoice: any, orgName: string) => {
   doc.save(`invoice-${invoice.invoice_number}.pdf`);
 };
 
+export const generateComplaintPDF = (complaint: any, orgName: string) => {
+  const doc = new jsPDF();
+  doc.setFontSize(22);
+  doc.setTextColor(40, 40, 40);
+  doc.text("COMPLAINT REPORT", 14, 25);
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(orgName, 14, 33);
+  doc.text(`Date: ${new Date(complaint.created_at).toLocaleDateString()}`, 14, 40);
+
+  const statusColor = complaint.status === "resolved" || complaint.status === "closed" ? [34, 139, 34] : complaint.status === "in_progress" ? [200, 150, 0] : [220, 38, 38];
+  doc.setFontSize(12);
+  doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+  doc.text(`Status: ${(complaint.status || "open").toUpperCase()}`, 140, 25);
+
+  autoTable(doc, {
+    head: [["Field", "Details"]],
+    body: [
+      ["Subject", complaint.subject],
+      ["Category", (complaint.category || "general").charAt(0).toUpperCase() + (complaint.category || "general").slice(1)],
+      ["Priority", (complaint.priority || "medium").toUpperCase()],
+      ["Tenant", complaint.tenants?.full_name || "—"],
+      ["Property", complaint.properties?.name || "—"],
+      ["Unit", complaint.units?.unit_number || "—"],
+      ["Description", complaint.description || "—"],
+      ["Resolution", complaint.resolution || "—"],
+      ["Created", new Date(complaint.created_at).toLocaleString()],
+      ["Resolved", complaint.resolved_at ? new Date(complaint.resolved_at).toLocaleString() : "—"],
+    ],
+    startY: 48,
+    styles: { fontSize: 10, cellPadding: 5 },
+    headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 40 } },
+    margin: { left: 14, right: 14 },
+  });
+
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text("ZainBook AI - Property Management Platform", 14, doc.internal.pageSize.height - 10);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 130, doc.internal.pageSize.height - 10);
+  doc.save(`complaint-${complaint.id.slice(0, 8)}.pdf`);
+};
+
+export const generateNoticePDF = (notice: any, orgName: string) => {
+  const doc = new jsPDF();
+  doc.setFontSize(22);
+  doc.setTextColor(40, 40, 40);
+  doc.text("NOTICE", 14, 25);
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(orgName, 14, 33);
+  doc.text(`Date: ${new Date(notice.created_at).toLocaleDateString()}`, 14, 40);
+  if (notice.published_at) doc.text(`Published: ${new Date(notice.published_at).toLocaleDateString()}`, 14, 46);
+
+  doc.setFontSize(14);
+  doc.setTextColor(40, 40, 40);
+  doc.text(notice.title, 14, 58);
+
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  const meta = `Type: ${(notice.notice_type || "general").charAt(0).toUpperCase() + (notice.notice_type || "general").slice(1)} | Recipients: ${(notice.recipient_type || "all").replace("_", " ")}`;
+  doc.text(meta, 14, 66);
+  if (notice.properties?.name) doc.text(`Property: ${notice.properties.name}`, 14, 72);
+
+  const descY = notice.properties?.name ? 82 : 76;
+  if (notice.description) {
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(notice.description, 14, descY, { maxWidth: 180 });
+  }
+
+  if (notice.expires_at) {
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Expires: ${new Date(notice.expires_at).toLocaleDateString()}`, 14, doc.internal.pageSize.height - 20);
+  }
+
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text("ZainBook AI - Property Management Platform", 14, doc.internal.pageSize.height - 10);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 130, doc.internal.pageSize.height - 10);
+  doc.save(`notice-${notice.id.slice(0, 8)}.pdf`);
+};
+
 export const generateEjariPDF = (contract: any, orgName: string) => {
   const doc = new jsPDF();
   

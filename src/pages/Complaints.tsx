@@ -10,11 +10,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MessageSquareWarning, Plus, Search, Trash2, Clock, AlertTriangle, CheckCircle2, Filter } from "lucide-react";
+import { MessageSquareWarning, Plus, Search, Trash2, Clock, AlertTriangle, CheckCircle2, Filter, Download } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { Textarea } from "@/components/ui/textarea";
+import { generateComplaintPDF, generateTablePDF } from "@/lib/pdfUtils";
 
 const CATEGORIES = ["general", "noise", "cleanliness", "security", "parking", "maintenance", "neighbor", "pest", "utilities", "other"];
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -174,7 +175,18 @@ const Complaints = () => {
             <h1 className="page-header">Complaints</h1>
             <p className="text-sm text-muted-foreground mt-1">Track and manage tenant complaints</p>
           </div>
-          <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> File Complaint</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Complaints Report", orgName: currentOrg?.name || "",
+                columns: ["Subject", "Category", "Priority", "Tenant", "Status", "Date"],
+                rows: filtered.map((c: any) => [c.subject, c.category, c.priority, c.tenants?.full_name || "—", c.status, new Date(c.created_at).toLocaleDateString()]),
+                filename: "complaints-report.pdf",
+              });
+              toast.success("Report exported");
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+            <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> File Complaint</Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -241,6 +253,9 @@ const Complaints = () => {
                     {c.status.replace("_", " ")}
                   </Badge>
                   <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(c.created_at).toLocaleDateString()}</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={(e) => { e.stopPropagation(); generateComplaintPDF(c, currentOrg?.name || ""); toast.success("PDF downloaded"); }}>
+                    <Download className="w-3 h-3" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(c.id); }}>
                     <Trash2 className="w-3 h-3" />
                   </Button>
