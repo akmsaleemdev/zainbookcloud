@@ -89,6 +89,7 @@ const navGroups = [
 
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const { organizations, currentOrg, setCurrentOrg } = useOrganization();
   const location = useLocation();
 
   return (
