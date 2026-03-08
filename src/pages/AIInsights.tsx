@@ -12,9 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 import {
   Brain, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
-  Clock, DollarSign, Calculator, Sparkles, Building2, Loader2
+  Clock, DollarSign, Calculator, Sparkles, Building2, Loader2,
+  Wrench, BarChart3, Target, Zap, ShieldCheck
 } from "lucide-react";
 
 const AIInsights = () => {
@@ -67,6 +69,16 @@ const AIInsights = () => {
     enabled: !!orgId,
   });
 
+  const { data: payments = [] } = useQuery({
+    queryKey: ["ai-payments", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data } = await supabase.from("payments").select("*").eq("organization_id", orgId);
+      return data || [];
+    },
+    enabled: !!orgId,
+  });
+
   const handleRentPricing = async () => {
     setRentLoading(true);
     try {
@@ -96,11 +108,37 @@ const AIInsights = () => {
   const totalMonthlyRent = activeLeases.reduce((s: number, l: any) => s + Number(l.monthly_rent || 0), 0);
   const avgRent = activeLeases.length > 0 ? totalMonthlyRent / activeLeases.length : 0;
 
+  // Predictive Maintenance metrics
+  const openMaintenance = maintenance.filter((m: any) => m.status === "open");
+  const inProgressMaintenance = maintenance.filter((m: any) => m.status === "in_progress");
+  const completedMaintenance = maintenance.filter((m: any) => m.status === "completed");
+  const avgResolutionDays = completedMaintenance.length > 0
+    ? completedMaintenance.reduce((s: number, m: any) => {
+        const created = new Date(m.created_at).getTime();
+        const completed = m.completed_at ? new Date(m.completed_at).getTime() : created;
+        return s + (completed - created) / 86400000;
+      }, 0) / completedMaintenance.length
+    : 0;
+  const maintenanceByCat = maintenance.reduce((acc: Record<string, number>, m: any) => {
+    const cat = m.category || "Other";
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+  const topCategories = Object.entries(maintenanceByCat).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const maintenanceCostTotal = maintenance.reduce((s: number, m: any) => s + Number(m.actual_cost || m.estimated_cost || 0), 0);
+
+  // Financial Forecasting metrics
+  const totalCollected = payments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+  const totalInvoiced = invoices.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+  const collectionRate = totalInvoiced > 0 ? Math.round((totalCollected / totalInvoiced) * 100) : 100;
+  const projectedAnnualRevenue = totalMonthlyRent * 12;
+  const overdueAmount = overdueInvoices.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+
   const insights = [
     ...(expiringLeases.length > 0 ? [{ type: "warning" as const, icon: Clock, title: `${expiringLeases.length} Lease(s) Expiring Soon`, description: `${expiringLeases.length} active lease(s) will expire within 30 days. Consider reaching out for renewal.` }] : []),
-    ...(overdueInvoices.length > 0 ? [{ type: "error" as const, icon: DollarSign, title: `${overdueInvoices.length} Overdue Invoice(s)`, description: `Total overdue: AED ${overdueInvoices.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0).toLocaleString()}. Follow up immediately.` }] : []),
+    ...(overdueInvoices.length > 0 ? [{ type: "error" as const, icon: DollarSign, title: `${overdueInvoices.length} Overdue Invoice(s)`, description: `Total overdue: AED ${overdueAmount.toLocaleString()}. Follow up immediately.` }] : []),
     ...(criticalMaintenance.length > 0 ? [{ type: "error" as const, icon: AlertTriangle, title: `${criticalMaintenance.length} Critical Maintenance`, description: "Unresolved critical maintenance issues need immediate attention." }] : []),
-    ...(expiringVisas.length > 0 ? [{ type: "warning" as const, icon: AlertTriangle, title: `${expiringVisas.length} Visa(s) Expiring`, description: "Tenant visas expiring within 30 days. Ensure compliance documentation is updated." }] : []),
+    ...(expiringVisas.length > 0 ? [{ type: "warning" as const, icon: AlertTriangle, title: `${expiringVisas.length} Visa(s) Expiring`, description: "Tenant visas expiring within 30 days." }] : []),
     { type: "info" as const, icon: TrendingUp, title: "Portfolio Summary", description: `${activeLeases.length} active leases · AED ${totalMonthlyRent.toLocaleString()}/month · Avg: AED ${Math.round(avgRent).toLocaleString()}/month` },
     ...(expiringLeases.length === 0 && overdueInvoices.length === 0 && criticalMaintenance.length === 0 ? [{ type: "success" as const, icon: CheckCircle, title: "All Clear!", description: "No urgent issues detected. Your portfolio is running smoothly." }] : []),
   ];
@@ -121,15 +159,18 @@ const AIInsights = () => {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div>
           <h1 className="page-header flex items-center gap-2"><Brain className="w-6 h-6" /> AI Insights</h1>
-          <p className="text-sm text-muted-foreground mt-1">Smart recommendations and AI-powered tools</p>
+          <p className="text-sm text-muted-foreground mt-1">Smart recommendations, predictions, and AI-powered tools</p>
         </div>
 
         <Tabs defaultValue="insights">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="insights">Portfolio Insights</TabsTrigger>
+            <TabsTrigger value="predictive" className="gap-1.5"><Wrench className="w-3.5 h-3.5" /> Predictive Maintenance</TabsTrigger>
+            <TabsTrigger value="forecast" className="gap-1.5"><BarChart3 className="w-3.5 h-3.5" /> Financial Forecast</TabsTrigger>
             <TabsTrigger value="rent-pricing">AI Rent Pricing</TabsTrigger>
           </TabsList>
 
+          {/* Portfolio Insights Tab */}
           <TabsContent value="insights" className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="glass-card"><CardContent className="pt-6 text-center"><div className="text-3xl font-bold text-destructive">{overdueInvoices.length}</div><p className="text-xs text-muted-foreground mt-1">Overdue Invoices</p></CardContent></Card>
@@ -137,7 +178,6 @@ const AIInsights = () => {
               <Card className="glass-card"><CardContent className="pt-6 text-center"><div className="text-3xl font-bold text-destructive">{criticalMaintenance.length}</div><p className="text-xs text-muted-foreground mt-1">Critical Issues</p></CardContent></Card>
               <Card className="glass-card"><CardContent className="pt-6 text-center"><div className="text-3xl font-bold text-orange-400">{expiringVisas.length}</div><p className="text-xs text-muted-foreground mt-1">Expiring Visas</p></CardContent></Card>
             </div>
-
             <div className="space-y-4">
               {insights.map((insight, i) => {
                 const style = typeStyles[insight.type];
@@ -156,9 +196,188 @@ const AIInsights = () => {
             </div>
           </TabsContent>
 
+          {/* Predictive Maintenance Tab */}
+          <TabsContent value="predictive" className="space-y-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <Wrench className="w-8 h-8 mx-auto text-orange-400 mb-2" />
+                  <div className="text-3xl font-bold">{openMaintenance.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Open Requests</p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <Zap className="w-8 h-8 mx-auto text-blue-400 mb-2" />
+                  <div className="text-3xl font-bold">{inProgressMaintenance.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">In Progress</p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <Clock className="w-8 h-8 mx-auto text-primary mb-2" />
+                  <div className="text-3xl font-bold">{avgResolutionDays.toFixed(1)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Avg Resolution (days)</p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <DollarSign className="w-8 h-8 mx-auto text-emerald-400 mb-2" />
+                  <div className="text-3xl font-bold">AED {maintenanceCostTotal.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Total Maintenance Cost</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="glass-card">
+                <CardHeader><CardTitle className="text-base flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Top Issue Categories</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {topCategories.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No maintenance data yet.</p>
+                  ) : topCategories.map(([cat, count]) => {
+                    const pct = Math.round((count / maintenance.length) * 100);
+                    return (
+                      <div key={cat} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="capitalize">{cat.replace(/_/g, " ")}</span>
+                          <span className="text-muted-foreground">{count} ({pct}%)</span>
+                        </div>
+                        <Progress value={pct} className="h-2" />
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> AI Predictions</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {criticalMaintenance.length > 2 ? (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <p className="text-sm font-medium text-destructive">⚠ High Critical Volume</p>
+                      <p className="text-xs text-muted-foreground mt-1">{criticalMaintenance.length} unresolved critical issues. Consider hiring additional maintenance staff or outsourcing.</p>
+                    </div>
+                  ) : null}
+                  {avgResolutionDays > 7 ? (
+                    <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                      <p className="text-sm font-medium text-orange-400">⏱ Slow Resolution Time</p>
+                      <p className="text-xs text-muted-foreground mt-1">Average {avgResolutionDays.toFixed(1)} days to resolve. Target under 5 days for tenant satisfaction.</p>
+                    </div>
+                  ) : avgResolutionDays > 0 ? (
+                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <p className="text-sm font-medium text-emerald-400">✓ Good Resolution Time</p>
+                      <p className="text-xs text-muted-foreground mt-1">Average {avgResolutionDays.toFixed(1)} days — within healthy range.</p>
+                    </div>
+                  ) : null}
+                  {topCategories.length > 0 && (
+                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <p className="text-sm font-medium text-blue-400">📊 Focus Area</p>
+                      <p className="text-xs text-muted-foreground mt-1">"{topCategories[0][0].replace(/_/g, " ")}" accounts for {Math.round((topCategories[0][1] / maintenance.length) * 100)}% of all issues. Consider preventive measures.</p>
+                    </div>
+                  )}
+                  {maintenance.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No maintenance data available for predictions.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Financial Forecast Tab */}
+          <TabsContent value="forecast" className="space-y-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <DollarSign className="w-8 h-8 mx-auto text-primary mb-2" />
+                  <div className="text-3xl font-bold">AED {totalMonthlyRent.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Monthly Rent Roll</p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <TrendingUp className="w-8 h-8 mx-auto text-emerald-400 mb-2" />
+                  <div className="text-3xl font-bold">AED {projectedAnnualRevenue.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Projected Annual Revenue</p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <ShieldCheck className="w-8 h-8 mx-auto text-blue-400 mb-2" />
+                  <div className="text-3xl font-bold">{collectionRate}%</div>
+                  <p className="text-xs text-muted-foreground mt-1">Collection Rate</p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center">
+                  <TrendingDown className="w-8 h-8 mx-auto text-destructive mb-2" />
+                  <div className="text-3xl font-bold">AED {overdueAmount.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Outstanding Amount</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="glass-card">
+                <CardHeader><CardTitle className="text-base flex items-center gap-2"><BarChart3 className="w-4 h-4 text-primary" /> Revenue Breakdown</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm"><span>Total Invoiced</span><span className="font-medium">AED {totalInvoiced.toLocaleString()}</span></div>
+                    <Progress value={100} className="h-2" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm"><span>Total Collected</span><span className="font-medium text-emerald-400">AED {totalCollected.toLocaleString()}</span></div>
+                    <Progress value={collectionRate} className="h-2" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm"><span>Outstanding</span><span className="font-medium text-destructive">AED {overdueAmount.toLocaleString()}</span></div>
+                    <Progress value={totalInvoiced > 0 ? (overdueAmount / totalInvoiced) * 100 : 0} className="h-2" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm"><span>Maintenance Costs</span><span className="font-medium text-orange-400">AED {maintenanceCostTotal.toLocaleString()}</span></div>
+                    <Progress value={projectedAnnualRevenue > 0 ? (maintenanceCostTotal / projectedAnnualRevenue) * 100 : 0} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> AI Financial Insights</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {collectionRate < 80 ? (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <p className="text-sm font-medium text-destructive">⚠ Low Collection Rate</p>
+                      <p className="text-xs text-muted-foreground mt-1">At {collectionRate}%, collection is below the 80% threshold. Review overdue accounts and consider late fee enforcement.</p>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <p className="text-sm font-medium text-emerald-400">✓ Healthy Collection Rate</p>
+                      <p className="text-xs text-muted-foreground mt-1">{collectionRate}% collection — well within target.</p>
+                    </div>
+                  )}
+                  {expiringLeases.length > 0 && (
+                    <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                      <p className="text-sm font-medium text-orange-400">📋 Renewal Risk</p>
+                      <p className="text-xs text-muted-foreground mt-1">{expiringLeases.length} leases expiring soon, representing AED {expiringLeases.reduce((s: number, l: any) => s + Number(l.monthly_rent || 0), 0).toLocaleString()}/month in potential revenue loss.</p>
+                    </div>
+                  )}
+                  {maintenanceCostTotal > projectedAnnualRevenue * 0.1 && projectedAnnualRevenue > 0 ? (
+                    <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                      <p className="text-sm font-medium text-orange-400">🔧 High Maintenance Ratio</p>
+                      <p className="text-xs text-muted-foreground mt-1">Maintenance costs are {((maintenanceCostTotal / projectedAnnualRevenue) * 100).toFixed(1)}% of projected revenue. Industry average is under 10%.</p>
+                    </div>
+                  ) : null}
+                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <p className="text-sm font-medium text-primary">💰 Net Operating Estimate</p>
+                    <p className="text-xs text-muted-foreground mt-1">Projected NOI: AED {(projectedAnnualRevenue - maintenanceCostTotal).toLocaleString()}/year based on current rent roll and maintenance costs.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* AI Rent Pricing Tab */}
           <TabsContent value="rent-pricing" className="mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Input Form */}
               <Card className="glass-card">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -192,14 +411,8 @@ const AIInsights = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Area (sqft)</Label>
-                      <Input type="number" placeholder="e.g. 1200" value={rentForm.area_sqft} onChange={(e) => setRentForm({ ...rentForm, area_sqft: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label>Bedrooms</Label>
-                      <Input type="number" placeholder="e.g. 2" value={rentForm.bedrooms} onChange={(e) => setRentForm({ ...rentForm, bedrooms: e.target.value })} />
-                    </div>
+                    <div><Label>Area (sqft)</Label><Input type="number" placeholder="e.g. 1200" value={rentForm.area_sqft} onChange={(e) => setRentForm({ ...rentForm, area_sqft: e.target.value })} /></div>
+                    <div><Label>Bedrooms</Label><Input type="number" placeholder="e.g. 2" value={rentForm.bedrooms} onChange={(e) => setRentForm({ ...rentForm, bedrooms: e.target.value })} /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -213,10 +426,7 @@ const AIInsights = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label>Community</Label>
-                      <Input placeholder="e.g. JBR, Marina" value={rentForm.community} onChange={(e) => setRentForm({ ...rentForm, community: e.target.value })} />
-                    </div>
+                    <div><Label>Community</Label><Input placeholder="e.g. JBR, Marina" value={rentForm.community} onChange={(e) => setRentForm({ ...rentForm, community: e.target.value })} /></div>
                   </div>
                   <Button className="w-full gap-2" onClick={handleRentPricing} disabled={rentLoading}>
                     {rentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
@@ -225,21 +435,14 @@ const AIInsights = () => {
                 </CardContent>
               </Card>
 
-              {/* Results */}
               <div className="space-y-4">
                 {rentResult ? (
                   <>
                     <Card className="glass-card border-primary/30">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <DollarSign className="w-5 h-5 text-primary" /> Suggested Rent
-                        </CardTitle>
-                      </CardHeader>
+                      <CardHeader className="pb-2"><CardTitle className="text-lg flex items-center gap-2"><DollarSign className="w-5 h-5 text-primary" /> Suggested Rent</CardTitle></CardHeader>
                       <CardContent>
                         <div className="text-center py-4">
-                          <div className="text-4xl font-bold text-primary">
-                            AED {rentResult.suggested_rent?.toLocaleString()}
-                          </div>
+                          <div className="text-4xl font-bold text-primary">AED {rentResult.suggested_rent?.toLocaleString()}</div>
                           <p className="text-sm text-muted-foreground mt-1">per month</p>
                           <div className="flex items-center justify-center gap-4 mt-3">
                             <Badge variant="secondary">Low: AED {rentResult.low_range?.toLocaleString()}</Badge>
@@ -248,36 +451,19 @@ const AIInsights = () => {
                         </div>
                       </CardContent>
                     </Card>
-
                     <Card className="glass-card">
                       <CardContent className="p-4 space-y-3">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Comparable Leases</span>
-                          <span className="font-medium">{rentResult.comparable_count}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Avg Comparable Rent</span>
-                          <span className="font-medium">AED {rentResult.avg_comparable_rent?.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Market Range</span>
-                          <span className="font-medium">AED {rentResult.min_comparable_rent?.toLocaleString()} – {rentResult.max_comparable_rent?.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Adjustment Factor</span>
-                          <span className="font-medium">{((rentResult.adjustment_factor - 1) * 100).toFixed(0)}%</span>
-                        </div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Comparable Leases</span><span className="font-medium">{rentResult.comparable_count}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Avg Comparable Rent</span><span className="font-medium">AED {rentResult.avg_comparable_rent?.toLocaleString()}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Market Range</span><span className="font-medium">AED {rentResult.min_comparable_rent?.toLocaleString()} – {rentResult.max_comparable_rent?.toLocaleString()}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Adjustment</span><span className="font-medium">{((rentResult.adjustment_factor - 1) * 100).toFixed(0)}%</span></div>
                       </CardContent>
                     </Card>
-
                     {rentResult.ai_insight && (
                       <Card className="glass-card bg-primary/5 border-primary/20">
                         <CardContent className="p-4 flex gap-3">
                           <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-medium mb-1">AI Market Insight</p>
-                            <p className="text-sm text-muted-foreground">{rentResult.ai_insight}</p>
-                          </div>
+                          <div><p className="text-sm font-medium mb-1">AI Market Insight</p><p className="text-sm text-muted-foreground">{rentResult.ai_insight}</p></div>
                         </CardContent>
                       </Card>
                     )}
