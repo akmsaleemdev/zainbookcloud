@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Building2, Home, Layers, DoorOpen, BedDouble,
@@ -88,9 +88,20 @@ const navGroups = [
 ];
 
 export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const { organizations, currentOrg, setCurrentOrg } = useOrganization();
   const location = useLocation();
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", JSON.stringify(next));
+      return next;
+    });
+  };
 
   return (
     <aside
@@ -160,7 +171,7 @@ export const Sidebar = () => {
 
       {/* Collapse toggle */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={toggleCollapsed}
         className="flex items-center justify-center h-14 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
       >
         {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
