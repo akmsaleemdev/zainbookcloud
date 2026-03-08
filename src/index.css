@@ -139,7 +139,7 @@
   }
 
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground transition-all duration-200 text-[13px] font-medium;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground transition-all duration-200 text-sm font-medium;
   }
 
   .sidebar-item:hover {
