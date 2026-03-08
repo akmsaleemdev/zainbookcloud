@@ -52,6 +52,7 @@ const navGroups = [
       { to: "/amenities", icon: Wifi, label: "Amenities" },
       { to: "/utilities", icon: Landmark, label: "Utilities" },
       { to: "/documents", icon: FolderOpen, label: "Documents" },
+      { to: "/uae-management", icon: Car, label: "UAE Management" },
     ],
   },
   {
