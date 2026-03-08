@@ -29,7 +29,7 @@ const Subscriptions = () => {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [upgradeDialog, setUpgradeDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("plans");
+  const [activeTab, setActiveTab] = useState("overview");
 
   const { data: plans = [] } = useQuery({
     queryKey: ["subscription-plans"],
