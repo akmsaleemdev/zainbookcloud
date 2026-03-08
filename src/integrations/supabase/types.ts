@@ -2921,6 +2921,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      onboard_organization: {
+        Args: {
+          _billing_cycle?: string
+          _emirate?: string
+          _org_email?: string
+          _org_name: string
+          _org_name_ar?: string
+          _org_phone?: string
+          _plan_id?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:

@@ -24,7 +24,7 @@ const AuthPage = () => {
   useEffect(() => {
     if (user) {
       if (selectedPlanId) {
-        navigate(`/subscriptions?plan=${selectedPlanId}`, { replace: true });
+        navigate(`/onboarding?plan=${selectedPlanId}`, { replace: true });
       } else {
         navigate("/dashboard", { replace: true });
       }
