@@ -75,14 +75,15 @@ const Organizations = () => {
 
   const createMutation = useMutation({
     mutationFn: async (formData: OrgForm) => {
+      const { vat_rate, vat_enabled, ...rest } = formData;
+      const payload = { ...rest, vat_rate: parseFloat(vat_rate) || 5, vat_enabled, created_by: user!.id };
       const { data: org, error } = await supabase
         .from("organizations")
-        .insert({ ...formData, created_by: user!.id })
+        .insert(payload as any)
         .select()
         .single();
       if (error) throw error;
 
-      // Auto-add creator as org admin
       const { error: memberError } = await supabase
         .from("organization_members")
         .insert({ organization_id: org.id, user_id: user!.id, role: "organization_admin" as any });
