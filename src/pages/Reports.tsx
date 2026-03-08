@@ -148,6 +148,7 @@ const Reports = () => {
             <TabsTrigger value="property">Property</TabsTrigger>
             <TabsTrigger value="utility">Utility</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+            <TabsTrigger value="export-all">Export All</TabsTrigger>
           </TabsList>
 
           {/* FINANCIAL */}
