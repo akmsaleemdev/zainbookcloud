@@ -5,8 +5,10 @@ import {
   Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen,
   MessageSquare, BarChart3, Brain, Zap, UserCircle, Settings,
   ChevronLeft, ChevronRight, Building, Globe, BookOpen, Bell,
-  Landmark, ShieldCheck
+  Landmark, ShieldCheck, ChevronsUpDown
 } from "lucide-react";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const navGroups = [
   {
