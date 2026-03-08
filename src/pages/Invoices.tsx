@@ -10,7 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Receipt, Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Receipt, Plus, Search, Pencil, Trash2, Download } from "lucide-react";
+import { generateInvoicePDF, generateTablePDF } from "@/lib/pdfUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
