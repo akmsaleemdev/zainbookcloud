@@ -410,6 +410,81 @@ export type Database = {
           },
         ]
       }
+      bank_transactions: {
+        Row: {
+          account_id: string | null
+          balance: number | null
+          bank_name: string | null
+          created_at: string
+          credit: number | null
+          debit: number | null
+          description: string | null
+          id: string
+          is_reconciled: boolean | null
+          notes: string | null
+          organization_id: string
+          reconciled_at: string | null
+          reconciled_with: string | null
+          reference: string | null
+          source: string | null
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          balance?: number | null
+          bank_name?: string | null
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          description?: string | null
+          id?: string
+          is_reconciled?: boolean | null
+          notes?: string | null
+          organization_id: string
+          reconciled_at?: string | null
+          reconciled_with?: string | null
+          reference?: string | null
+          source?: string | null
+          transaction_date: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          balance?: number | null
+          bank_name?: string | null
+          created_at?: string
+          credit?: number | null
+          debit?: number | null
+          description?: string | null
+          id?: string
+          is_reconciled?: boolean | null
+          notes?: string | null
+          organization_id?: string
+          reconciled_at?: string | null
+          reconciled_with?: string | null
+          reference?: string | null
+          source?: string | null
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bed_spaces: {
         Row: {
           bed_number: string
@@ -640,6 +715,75 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chart_of_accounts: {
+        Row: {
+          account_code: string
+          account_name: string
+          account_name_ar: string | null
+          account_type: string
+          created_at: string
+          currency: string | null
+          current_balance: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_group: boolean | null
+          opening_balance: number | null
+          organization_id: string
+          parent_account_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          account_name_ar?: string | null
+          account_type?: string
+          created_at?: string
+          currency?: string | null
+          current_balance?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_group?: boolean | null
+          opening_balance?: number | null
+          organization_id: string
+          parent_account_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          account_name_ar?: string | null
+          account_type?: string
+          created_at?: string
+          currency?: string | null
+          current_balance?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_group?: boolean | null
+          opening_balance?: number | null
+          organization_id?: string
+          parent_account_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chart_of_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chart_of_accounts_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1477,6 +1621,185 @@ export type Database = {
             columns: ["connection_id"]
             isOneToOne: false
             referencedRelation: "erp_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_claims: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          category: string | null
+          claim_number: string | null
+          created_at: string
+          description: string | null
+          employee_id: string
+          expense_date: string
+          id: string
+          notes: string | null
+          organization_id: string
+          paid_at: string | null
+          receipt_url: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          claim_number?: string | null
+          created_at?: string
+          description?: string | null
+          employee_id: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          paid_at?: string | null
+          receipt_url?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          claim_number?: string | null
+          created_at?: string
+          description?: string | null
+          employee_id?: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          receipt_url?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_claims_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_claims_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          account_id: string | null
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          employee_id: string | null
+          expense_date: string
+          expense_number: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          payment_method: string | null
+          property_id: string | null
+          receipt_url: string | null
+          reference_number: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          vat_amount: number | null
+          vendor_name: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          employee_id?: string | null
+          expense_date?: string
+          expense_number?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payment_method?: string | null
+          property_id?: string | null
+          receipt_url?: string | null
+          reference_number?: string | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+          vat_amount?: number | null
+          vendor_name?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          employee_id?: string | null
+          expense_date?: string
+          expense_number?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string | null
+          property_id?: string | null
+          receipt_url?: string | null
+          reference_number?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vat_amount?: number | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -3596,6 +3919,80 @@ export type Database = {
             columns: ["meter_id"]
             isOneToOne: false
             referencedRelation: "utility_meters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vat_records: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          organization_id: string
+          period_month: number | null
+          period_year: number | null
+          record_type: string
+          related_id: string | null
+          related_type: string | null
+          status: string
+          taxable_amount: number
+          total_amount: number
+          transaction_date: string
+          trn_number: string | null
+          updated_at: string
+          vat_amount: number
+          vat_rate: number
+          vendor_customer_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          organization_id: string
+          period_month?: number | null
+          period_year?: number | null
+          record_type?: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          taxable_amount?: number
+          total_amount?: number
+          transaction_date?: string
+          trn_number?: string | null
+          updated_at?: string
+          vat_amount?: number
+          vat_rate?: number
+          vendor_customer_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          organization_id?: string
+          period_month?: number | null
+          period_year?: number | null
+          record_type?: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          taxable_amount?: number
+          total_amount?: number
+          transaction_date?: string
+          trn_number?: string | null
+          updated_at?: string
+          vat_amount?: number
+          vat_rate?: number
+          vendor_customer_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vat_records_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
