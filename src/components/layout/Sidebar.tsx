@@ -88,25 +88,25 @@ const navGroups = [
 ];
 
 export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const { organizations, currentOrg, setCurrentOrg } = useOrganization();
   const location = useLocation();
 
   return (
     <aside
       className={`glass-sidebar h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        collapsed ? "w-[68px]" : "w-[250px]"
+        collapsed ? "w-[72px]" : "w-[260px]"
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <span className="text-primary-foreground font-bold text-sm">Z</span>
+      <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-5"} h-[72px] border-b border-sidebar-border`}>
+        <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shrink-0">
+          <span className="text-primary-foreground font-bold text-base">Z</span>
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-semibold text-foreground text-base tracking-tight">ZainBook</span>
-            <span className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">AI Platform</span>
+            <span className="font-bold text-foreground text-lg tracking-tight">ZainBook</span>
+            <span className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase">AI Platform</span>
           </div>
         )}
       </div>
@@ -121,12 +121,12 @@ export const Sidebar = () => {
               if (org) setCurrentOrg(org);
             }}
           >
-            <SelectTrigger className="bg-sidebar-accent/60 border-sidebar-border/50 text-sm h-9 rounded-md">
+            <SelectTrigger className="bg-sidebar-accent/60 border-sidebar-border/50 text-[15px] h-10 rounded-xl">
               <SelectValue placeholder="Select org" />
             </SelectTrigger>
             <SelectContent>
               {organizations.map((o) => (
-                <SelectItem key={o.id} value={o.id} className="text-sm">{o.name}</SelectItem>
+                <SelectItem key={o.id} value={o.id} className="text-[15px]">{o.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -134,21 +134,22 @@ export const Sidebar = () => {
       )}
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-3">
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navGroups.map((group) => (
-          <div key={group.label}>
-            {!collapsed && <div className="section-label">{group.label}</div>}
-            <div className="space-y-0.5">
+          <div key={group.label} className="mb-2">
+            {!collapsed && <div className="section-label mt-2">{group.label}</div>}
+            <div className={`${collapsed ? "flex flex-col items-center gap-1" : "space-y-0.5"}`}>
               {group.items.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className={`sidebar-item ${
-                    location.pathname === item.to ? "active" : ""
-                  }`}
+                  className={collapsed
+                    ? `sidebar-item ${location.pathname === item.to ? "active" : ""}`
+                    : `sidebar-item-expanded ${location.pathname === item.to ? "active" : ""}`
+                  }
                   title={item.label}
                 >
-                  <item.icon className="w-[18px] h-[18px] shrink-0" />
+                  <item.icon className="w-5 h-5 shrink-0" />
                   {!collapsed && <span>{item.label}</span>}
                 </NavLink>
               ))}
@@ -160,9 +161,9 @@ export const Sidebar = () => {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-center h-12 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center justify-center h-14 border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
       >
-        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
       </button>
     </aside>
   );
