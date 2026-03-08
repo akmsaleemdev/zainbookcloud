@@ -209,6 +209,98 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          expiry_date: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          lease_id: string | null
+          name: string
+          organization_id: string
+          property_id: string | null
+          related_id: string | null
+          related_type: string | null
+          status: string | null
+          tenant_id: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          expiry_date?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          lease_id?: string | null
+          name: string
+          organization_id: string
+          property_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          expiry_date?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          lease_id?: string | null
+          name?: string
+          organization_id?: string
+          property_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ejari_contracts: {
         Row: {
           annual_rent: number
