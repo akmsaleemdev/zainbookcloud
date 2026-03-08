@@ -42,6 +42,7 @@ const navGroups = [
     items: [
       { to: "/invoices", icon: Receipt, label: "Invoices" },
       { to: "/payments", icon: CreditCard, label: "Payments" },
+      { to: "/cheque-tracking", icon: Banknote, label: "Cheque Tracking" },
     ],
   },
   {
