@@ -51,6 +51,7 @@ import Notices from "./pages/Notices";
 import UAEApartmentManagement from "./pages/UAEApartmentManagement";
 import ChequeTracking from "./pages/ChequeTracking";
 import RentManagement from "./pages/RentManagement";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
