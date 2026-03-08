@@ -5,8 +5,10 @@ import {
   Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen,
   MessageSquare, BarChart3, Brain, Zap, UserCircle, Settings,
   ChevronLeft, ChevronRight, Building, Globe, BookOpen, Bell,
-  Landmark, ShieldCheck
+  Landmark, ShieldCheck, ChevronsUpDown
 } from "lucide-react";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const navGroups = [
   {
@@ -87,6 +89,7 @@ const navGroups = [
 
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const { organizations, currentOrg, setCurrentOrg } = useOrganization();
   const location = useLocation();
 
   return (
@@ -104,6 +107,28 @@ export const Sidebar = () => {
           <span className="font-semibold text-foreground text-lg">ZainBook</span>
         )}
       </div>
+
+      {/* Org Switcher */}
+      {!collapsed && organizations.length > 0 && (
+        <div className="px-3 py-3 border-b border-sidebar-border">
+          <Select
+            value={currentOrg?.id || ""}
+            onValueChange={(v) => {
+              const org = organizations.find((o) => o.id === v);
+              if (org) setCurrentOrg(org);
+            }}
+          >
+            <SelectTrigger className="bg-sidebar-accent/50 border-sidebar-border text-xs h-8">
+              <SelectValue placeholder="Select org" />
+            </SelectTrigger>
+            <SelectContent>
+              {organizations.map((o) => (
+                <SelectItem key={o.id} value={o.id} className="text-xs">{o.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-4 scrollbar-thin">
