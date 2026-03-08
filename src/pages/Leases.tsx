@@ -23,6 +23,7 @@ const Leases = () => {
   const [form, setForm] = useState({
     tenant_id: "", unit_id: "", lease_type: "fixed", start_date: "", end_date: "",
     monthly_rent: "", security_deposit: "0", payment_frequency: "monthly", ejari_number: "",
+    late_fee_rate: "0", grace_period_days: "5", rent_due_day: "1", renewal_reminder_days: "30",
   });
   const [search, setSearch] = useState("");
 
