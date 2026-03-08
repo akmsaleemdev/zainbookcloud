@@ -634,6 +634,125 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          body: string
+          channel: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          organization_id: string
+          parent_id: string | null
+          priority: string | null
+          recipient_id: string | null
+          related_id: string | null
+          related_type: string | null
+          sender_id: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          organization_id: string
+          parent_id?: string | null
+          priority?: string | null
+          recipient_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          sender_id: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          organization_id?: string
+          parent_id?: string | null
+          priority?: string | null
+          recipient_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          sender_id?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          body: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          organization_id: string
+          related_id: string | null
+          related_type: string | null
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          body?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          organization_id: string
+          related_id?: string | null
+          related_type?: string | null
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          body?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          organization_id?: string
+          related_id?: string | null
+          related_type?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
