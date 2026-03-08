@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, Pencil, Trash2, ShieldCheck, FileText } from "lucide-react";
+import { Plus, Search, Filter, Pencil, Trash2, ShieldCheck, FileText, Download } from "lucide-react";
+import { generateEjariPDF, generateTablePDF } from "@/lib/pdfUtils";
 import { format } from "date-fns";
 
 const statusColors: Record<string, string> = {
