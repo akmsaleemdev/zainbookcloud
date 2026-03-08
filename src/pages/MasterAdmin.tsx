@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { PaymentGatewaysTab } from "@/components/master-admin/PaymentGatewaysTab";
+import { EmailDomainsTab } from "@/components/master-admin/EmailDomainsTab";
 import { PlanDialog, defaultPlanForm, type PlanFormData } from "@/components/master-admin/PlanDialog";
 import { TenantsTab } from "@/components/master-admin/TenantsTab";
 import { SubscriptionsTab } from "@/components/master-admin/SubscriptionsTab";
