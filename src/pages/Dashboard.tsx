@@ -54,7 +54,7 @@ const stats = [
 
 const quickActions = [
   { label: "Add Tenant", icon: Users },
-  { label: "New Invoice", icon: Receipt },
+  { label: "New Invoice", icon: FileText },
   { label: "Maintenance", icon: Wrench },
   { label: "AI Insights", icon: Sparkles },
 ];
