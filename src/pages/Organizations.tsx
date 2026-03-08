@@ -138,6 +138,7 @@ const Organizations = () => {
       email: org.email || "", phone: org.phone || "", address: org.address || "", emirate: org.emirate || "",
       vat_number: org.vat_number || "", vat_enabled: org.vat_enabled !== false, vat_rate: String(org.vat_rate || 5),
       currency: org.currency || "AED", language: org.language || "en", country: org.country || "UAE", timezone: org.timezone || "Asia/Dubai",
+      logo_url: org.logo_url || "",
     });
     setEditingId(org.id);
     setDialogOpen(true);
