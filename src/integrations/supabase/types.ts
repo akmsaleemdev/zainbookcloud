@@ -220,6 +220,90 @@ export type Database = {
           },
         ]
       }
+      attendance_logs: {
+        Row: {
+          attendance_date: string
+          check_in_location: Json | null
+          check_in_method: string | null
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string
+          employee_id: string
+          id: string
+          is_early_leave: boolean | null
+          is_late: boolean | null
+          late_minutes: number | null
+          notes: string | null
+          organization_id: string
+          overtime_hours: number | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          shift_name: string | null
+          status: string
+          total_hours: number | null
+          updated_at: string
+        }
+        Insert: {
+          attendance_date?: string
+          check_in_location?: Json | null
+          check_in_method?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          is_early_leave?: boolean | null
+          is_late?: boolean | null
+          late_minutes?: number | null
+          notes?: string | null
+          organization_id: string
+          overtime_hours?: number | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          shift_name?: string | null
+          status?: string
+          total_hours?: number | null
+          updated_at?: string
+        }
+        Update: {
+          attendance_date?: string
+          check_in_location?: Json | null
+          check_in_method?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          is_early_leave?: boolean | null
+          is_late?: boolean | null
+          late_minutes?: number | null
+          notes?: string | null
+          organization_id?: string
+          overtime_hours?: number | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          shift_name?: string | null
+          status?: string
+          total_hours?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1010,6 +1094,224 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_documents: {
+        Row: {
+          created_at: string
+          document_number: string | null
+          document_type: string
+          employee_id: string
+          expiry_date: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          issue_date: string | null
+          issuing_authority: string | null
+          issuing_country: string | null
+          notes: string | null
+          organization_id: string
+          renewal_alert_days: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_number?: string | null
+          document_type: string
+          employee_id: string
+          expiry_date?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
+          issuing_country?: string | null
+          notes?: string | null
+          organization_id: string
+          renewal_alert_days?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_number?: string | null
+          document_type?: string
+          employee_id?: string
+          expiry_date?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
+          issuing_country?: string | null
+          notes?: string | null
+          organization_id?: string
+          renewal_alert_days?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          bank_account_number: string | null
+          bank_name: string | null
+          basic_salary: number | null
+          contract_end_date: string | null
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          department: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          employee_number: string
+          employment_type: string | null
+          first_name: string
+          first_name_ar: string | null
+          food_allowance: number | null
+          gender: string | null
+          hire_date: string
+          housing_allowance: number | null
+          iban: string | null
+          id: string
+          job_position: string | null
+          job_title: string | null
+          last_name: string
+          last_name_ar: string | null
+          marital_status: string | null
+          nationality: string | null
+          notes: string | null
+          organization_id: string
+          other_allowances: number | null
+          phone: string | null
+          phone_allowance: number | null
+          probation_end_date: string | null
+          region: string | null
+          routing_code: string | null
+          status: string
+          termination_date: string | null
+          total_salary: number | null
+          transport_allowance: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          basic_salary?: number | null
+          contract_end_date?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          department?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number: string
+          employment_type?: string | null
+          first_name: string
+          first_name_ar?: string | null
+          food_allowance?: number | null
+          gender?: string | null
+          hire_date?: string
+          housing_allowance?: number | null
+          iban?: string | null
+          id?: string
+          job_position?: string | null
+          job_title?: string | null
+          last_name: string
+          last_name_ar?: string | null
+          marital_status?: string | null
+          nationality?: string | null
+          notes?: string | null
+          organization_id: string
+          other_allowances?: number | null
+          phone?: string | null
+          phone_allowance?: number | null
+          probation_end_date?: string | null
+          region?: string | null
+          routing_code?: string | null
+          status?: string
+          termination_date?: string | null
+          total_salary?: number | null
+          transport_allowance?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          basic_salary?: number | null
+          contract_end_date?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          department?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number?: string
+          employment_type?: string | null
+          first_name?: string
+          first_name_ar?: string | null
+          food_allowance?: number | null
+          gender?: string | null
+          hire_date?: string
+          housing_allowance?: number | null
+          iban?: string | null
+          id?: string
+          job_position?: string | null
+          job_title?: string | null
+          last_name?: string
+          last_name_ar?: string | null
+          marital_status?: string | null
+          nationality?: string | null
+          notes?: string | null
+          organization_id?: string
+          other_allowances?: number | null
+          phone?: string | null
+          phone_allowance?: number | null
+          probation_end_date?: string | null
+          region?: string | null
+          routing_code?: string | null
+          status?: string
+          termination_date?: string | null
+          total_salary?: number | null
+          transport_allowance?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       erp_connections: {
         Row: {
           config: Json | null
@@ -1340,6 +1642,135 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_balances: {
+        Row: {
+          carried_over: number | null
+          created_at: string
+          employee_id: string
+          entitled_days: number
+          id: string
+          leave_type: string
+          organization_id: string
+          remaining_days: number | null
+          updated_at: string
+          used_days: number
+          year: number
+        }
+        Insert: {
+          carried_over?: number | null
+          created_at?: string
+          employee_id: string
+          entitled_days?: number
+          id?: string
+          leave_type: string
+          organization_id: string
+          remaining_days?: number | null
+          updated_at?: string
+          used_days?: number
+          year?: number
+        }
+        Update: {
+          carried_over?: number | null
+          created_at?: string
+          employee_id?: string
+          entitled_days?: number
+          id?: string
+          leave_type?: string
+          organization_id?: string
+          remaining_days?: number | null
+          updated_at?: string
+          used_days?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_balances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          attachment_url: string | null
+          created_at: string
+          employee_id: string
+          end_date: string
+          id: string
+          leave_type: string
+          notes: string | null
+          organization_id: string
+          reason: string | null
+          rejection_reason: string | null
+          start_date: string
+          status: string
+          total_days: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          employee_id: string
+          end_date: string
+          id?: string
+          leave_type?: string
+          notes?: string | null
+          organization_id: string
+          reason?: string | null
+          rejection_reason?: string | null
+          start_date: string
+          status?: string
+          total_days?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          employee_id?: string
+          end_date?: string
+          id?: string
+          leave_type?: string
+          notes?: string | null
+          organization_id?: string
+          reason?: string | null
+          rejection_reason?: string | null
+          start_date?: string
+          status?: string
+          total_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
