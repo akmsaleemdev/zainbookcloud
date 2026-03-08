@@ -19,7 +19,7 @@ import { ModulesTab } from "@/components/master-admin/ModulesTab";
 import { AuditLogsTab } from "@/components/master-admin/AuditLogsTab";
 import {
   Shield, Building2, Plus, Pencil, Trash2,
-  AlertTriangle, TrendingUp, Crown, CreditCard, FileText
+  AlertTriangle, TrendingUp, Crown, CreditCard, FileText, Mail
 } from "lucide-react";
 
 const MasterAdmin = () => {
