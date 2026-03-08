@@ -70,7 +70,7 @@ serve(async (req) => {
     const highRange = Math.round(suggestedRent * 1.1);
 
     // AI-powered insights using Google AI Studio
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     let aiInsight = "";
 
     if (GOOGLE_API_KEY && suggestedRent > 0) {
