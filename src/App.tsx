@@ -34,6 +34,9 @@ import OwnerPortal from "./pages/OwnerPortal";
 import TenantPortal from "./pages/TenantPortal";
 import PublicBooking from "./pages/PublicBooking";
 import Subscriptions from "./pages/Subscriptions";
+import MasterAdmin from "./pages/MasterAdmin";
+import SupportCenter from "./pages/SupportCenter";
+import ERPIntegrations from "./pages/ERPIntegrations";
 import UserManagement from "./pages/UserManagement";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -82,6 +85,9 @@ const App = () => (
             <Route path="/tenant-portal" element={<P><TenantPortal /></P>} />
             <Route path="/public-booking" element={<P><PublicBooking /></P>} />
             <Route path="/subscriptions" element={<P><Subscriptions /></P>} />
+            <Route path="/master-admin" element={<P><MasterAdmin /></P>} />
+            <Route path="/support" element={<P><SupportCenter /></P>} />
+            <Route path="/erp-integrations" element={<P><ERPIntegrations /></P>} />
             <Route path="/user-management" element={<P><UserManagement /></P>} />
             <Route path="/settings" element={<P><SettingsPage /></P>} />
             <Route path="*" element={<NotFound />} />
