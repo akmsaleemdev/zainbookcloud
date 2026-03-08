@@ -2906,6 +2906,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_expire_leases: { Args: never; Returns: number }
       check_plan_module_access: {
         Args: { _module_slug: string; _org_id: string }
         Returns: boolean
@@ -2934,6 +2935,7 @@ export type Database = {
         }
         Returns: Json
       }
+      refresh_usage_counts: { Args: { _org_id: string }; Returns: undefined }
     }
     Enums: {
       app_role:
