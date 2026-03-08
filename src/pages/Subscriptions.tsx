@@ -102,6 +102,24 @@ const Subscriptions = () => {
     enabled: !!currentOrg?.id,
   });
 
+  const { data: usageLimits = [] } = useQuery({
+    queryKey: ["usage-limits", currentOrg?.id],
+    queryFn: async () => {
+      if (!currentOrg?.id) return [];
+      const { data } = await supabase
+        .from("usage_limits")
+        .select("*")
+        .eq("organization_id", currentOrg.id);
+      return data || [];
+    },
+    enabled: !!currentOrg?.id,
+  });
+
+  const getUsageCount = (resource: string) => {
+    const entry = usageLimits.find((u: any) => u.resource_type === resource);
+    return entry?.current_count || 0;
+  };
+
   // Handle payment callback from Stripe
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -567,8 +585,9 @@ const Subscriptions = () => {
             {currentSub ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
-                  { label: "Users", current: 1, max: (currentSub as any)?.subscription_plans?.max_users, icon: Users },
-                  { label: "Units", current: 0, max: (currentSub as any)?.subscription_plans?.max_units, icon: Building2 },
+                  { label: "Properties", current: getUsageCount("properties"), max: (currentSub as any)?.subscription_plans?.max_properties, icon: Building2 },
+                  { label: "Tenants", current: getUsageCount("tenants"), max: (currentSub as any)?.subscription_plans?.max_tenants, icon: Users },
+                  { label: "Users", current: getUsageCount("users"), max: (currentSub as any)?.subscription_plans?.max_users, icon: Users },
                   { label: "Storage", current: 0.1, max: (currentSub as any)?.subscription_plans?.max_storage_gb, icon: HardDrive, unit: "GB" },
                   { label: "AI Queries", current: 0, max: (currentSub as any)?.subscription_plans?.ai_usage_limit, icon: Brain },
                 ].map((usage, i) => {
