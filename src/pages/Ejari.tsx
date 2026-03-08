@@ -187,9 +187,22 @@ const Ejari = () => {
             <h1 className="page-header flex items-center gap-2"><ShieldCheck className="w-6 h-6" /> Ejari Contracts</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage Ejari registrations and contract compliance</p>
           </div>
-          <Button onClick={() => { setEditId(null); setForm(defaultForm); setOpen(true); }} className="gap-2">
-            <Plus className="w-4 h-4" /> New Ejari
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => {
+              generateTablePDF({
+                title: "Ejari Contracts Report",
+                orgName: currentOrg?.name || "",
+                subtitle: `Total: ${filtered.length} contracts`,
+                columns: ["Ejari #", "Tenant", "Property", "Annual Rent", "Start", "End", "Status"],
+                rows: filtered.map((c: any) => [c.ejari_number, c.tenants?.full_name || "—", c.property_name || "—", `AED ${Number(c.annual_rent).toLocaleString()}`, new Date(c.start_date).toLocaleDateString(), new Date(c.end_date).toLocaleDateString(), c.status]),
+                filename: "ejari-report.pdf",
+              });
+              toast({ title: "PDF exported" });
+            }}><Download className="w-4 h-4" /> Export PDF</Button>
+            <Button onClick={() => { setEditId(null); setForm(defaultForm); setOpen(true); }} className="gap-2">
+              <Plus className="w-4 h-4" /> New Ejari
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
