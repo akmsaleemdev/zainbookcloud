@@ -191,8 +191,12 @@ const Organizations = () => {
             {filtered.map((org: any) => (
               <div key={org.id} className="glass-card p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {org.logo_url ? (
+                      <img src={org.logo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Building className="w-5 h-5 text-primary" />
+                    )}
                   </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(org)}>
