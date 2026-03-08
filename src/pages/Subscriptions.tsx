@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -17,13 +18,14 @@ import { format } from "date-fns";
 import {
   Check, Crown, Zap, Building2, Star, ArrowRight, Shield, Clock,
   Users, HardDrive, Brain, Globe, CreditCard, Receipt, History,
-  AlertTriangle, ArrowUpRight, Settings
+  AlertTriangle, ArrowUpRight, Settings, FileText
 } from "lucide-react";
 
 const Subscriptions = () => {
   const { currentOrg } = useOrganization();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [upgradeDialog, setUpgradeDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
@@ -82,6 +84,34 @@ const Subscriptions = () => {
     },
   });
 
+  const { data: billingHistory = [] } = useQuery({
+    queryKey: ["billing-history", currentOrg?.id],
+    queryFn: async () => {
+      if (!currentOrg?.id) return [];
+      const { data } = await supabase
+        .from("billing_history")
+        .select("*")
+        .eq("organization_id", currentOrg.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return data || [];
+    },
+    enabled: !!currentOrg?.id,
+  });
+
+  // Auto-open upgrade dialog if plan param is in URL
+  useEffect(() => {
+    const planId = searchParams.get("plan");
+    if (planId && plans.length > 0) {
+      const plan = plans.find((p: any) => p.id === planId);
+      if (plan && plan.id !== (currentSub as any)?.plan_id) {
+        setSelectedPlan(plan);
+        setUpgradeDialog(true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, plans, currentSub]);
+
   const upgradeMutation = useMutation({
     mutationFn: async (planId: string) => {
       if (!currentOrg?.id || !user?.id) throw new Error("Missing org or user");
@@ -90,6 +120,8 @@ const Subscriptions = () => {
 
       const multiplier = billingCycle === "yearly" ? 10 : 1;
       const totalAmount = plan.price * multiplier;
+      const action = currentSub ? "plan_change" : "new_subscription";
+      const prevPlan = (currentSub as any)?.subscription_plans?.name;
 
       if (currentSub) {
         const { error } = await supabase
@@ -102,6 +134,7 @@ const Subscriptions = () => {
             trial_ends_at: plan.plan_type === "trial"
               ? new Date(Date.now() + (plan.trial_days || 14) * 86400000).toISOString()
               : null,
+            next_billing_date: new Date(Date.now() + (billingCycle === "yearly" ? 365 : 30) * 86400000).toISOString().split("T")[0],
           })
           .eq("id", currentSub.id);
         if (error) throw error;
@@ -120,6 +153,20 @@ const Subscriptions = () => {
         if (error) throw error;
       }
 
+      // Log billing history
+      await supabase.from("billing_history").insert({
+        organization_id: currentOrg.id,
+        action,
+        plan_name: plan.name,
+        amount: totalAmount,
+        billing_cycle: billingCycle,
+        description: action === "plan_change"
+          ? `Changed from ${prevPlan} to ${plan.name}`
+          : `Subscribed to ${plan.name} plan`,
+        invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
+        status: plan.price === 0 ? "trial" : "completed",
+      });
+
       // Enable included modules for this plan
       const includedMods = planModules.filter((pm: any) => pm.plan_id === planId && pm.is_included);
       if (includedMods.length > 0) {
@@ -128,7 +175,7 @@ const Subscriptions = () => {
           .select("id")
           .eq("organization_id", currentOrg.id)
           .maybeSingle();
-        
+
         if (subData.data) {
           for (const pm of includedMods) {
             await supabase.from("subscription_modules").upsert({
@@ -144,6 +191,7 @@ const Subscriptions = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["current-subscription"] });
       queryClient.invalidateQueries({ queryKey: ["enabled-modules"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-history"] });
       setUpgradeDialog(false);
       toast({ title: "Plan Updated", description: "Your subscription has been updated successfully." });
     },
@@ -171,6 +219,24 @@ const Subscriptions = () => {
 
   const getModulesForPlan = (planId: string) =>
     planModules.filter((pm: any) => pm.plan_id === planId && pm.is_included);
+
+  const actionLabels: Record<string, string> = {
+    new_subscription: "New Subscription",
+    plan_change: "Plan Change",
+    payment: "Payment",
+    renewal: "Renewal",
+    cancellation: "Cancellation",
+    refund: "Refund",
+  };
+
+  const actionColors: Record<string, string> = {
+    new_subscription: "bg-emerald-500/20 text-emerald-400",
+    plan_change: "bg-blue-500/20 text-blue-400",
+    payment: "bg-primary/20 text-primary",
+    renewal: "bg-primary/20 text-primary",
+    cancellation: "bg-destructive/20 text-destructive",
+    refund: "bg-orange-500/20 text-orange-400",
+  };
 
   return (
     <AppLayout>
@@ -206,7 +272,7 @@ const Subscriptions = () => {
             ].map((stat, i) => (
               <Card key={i} className="glass-card">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center`}>
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
                     <stat.icon className={`w-5 h-5 ${stat.color}`} />
                   </div>
                   <div>
@@ -224,6 +290,7 @@ const Subscriptions = () => {
             <TabsTrigger value="plans">Plans</TabsTrigger>
             <TabsTrigger value="modules">Modules</TabsTrigger>
             <TabsTrigger value="usage">Usage & Limits</TabsTrigger>
+            <TabsTrigger value="billing">Billing History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="plans" className="space-y-6 mt-4">
@@ -297,10 +364,7 @@ const Subscriptions = () => {
                           className="w-full gap-2"
                           variant={isCurrent ? "outline" : plan.is_featured ? "default" : "secondary"}
                           disabled={isCurrent}
-                          onClick={() => {
-                            setSelectedPlan(plan);
-                            setUpgradeDialog(true);
-                          }}
+                          onClick={() => { setSelectedPlan(plan); setUpgradeDialog(true); }}
                         >
                           {isCurrent ? "Current Plan" : isDowngrade ? "Downgrade" : "Upgrade"}
                           {!isCurrent && <ArrowRight className="w-4 h-4" />}
@@ -338,9 +402,7 @@ const Subscriptions = () => {
                           {isEnabled ? "Active" : isIncluded ? "Included" : addonPrice ? `AED ${addonPrice}/mo` : "Available"}
                         </Badge>
                       </div>
-                      {mod.description && (
-                        <p className="text-xs text-muted-foreground mt-2">{mod.description}</p>
-                      )}
+                      {mod.description && <p className="text-xs text-muted-foreground mt-2">{mod.description}</p>}
                     </CardContent>
                   </Card>
                 );
@@ -368,7 +430,7 @@ const Subscriptions = () => {
                             <span className="text-sm font-medium">{usage.label}</span>
                           </div>
                           <span className="text-xs text-muted-foreground">
-                            {usage.current}{usage.unit ? usage.unit : ""} / {isUnlimited ? "∞" : `${usage.max}${usage.unit || ""}`}
+                            {usage.current}{usage.unit || ""} / {isUnlimited ? "∞" : `${usage.max}${usage.unit || ""}`}
                           </span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -394,6 +456,68 @@ const Subscriptions = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="billing" className="mt-4">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <History className="w-5 h-5 text-primary" /> Billing History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {billingHistory.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Action</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Invoice #</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {billingHistory.map((entry: any) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="text-sm">
+                            {format(new Date(entry.created_at), "dd MMM yyyy")}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className={`text-xs ${actionColors[entry.action] || ""}`}>
+                              {actionLabels[entry.action] || entry.action}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm font-medium">{entry.plan_name || "—"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                            {entry.description || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm font-mono text-muted-foreground">
+                            {entry.invoice_number || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm text-right font-medium">
+                            {entry.amount > 0 ? `${entry.currency} ${Number(entry.amount).toLocaleString()}` : "Free"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={entry.status === "completed" ? "default" : "secondary"}
+                              className={entry.status === "completed" ? "bg-emerald-500/20 text-emerald-400" : ""}>
+                              {entry.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No billing history yet. Subscribe to a plan to see your billing records here.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
