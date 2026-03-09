@@ -1,73 +1,243 @@
-# Welcome to your Lovable project
+# ZainBook Cloud Based AI SaaS System
 
-## Project info
+## Cloud-Based Property Management, HR, Payroll & Accounting System
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+ZainBook is a cloud-based multi-tenant SaaS platform designed for real
+estate companies, property managers, and businesses operating in the GCC
+region. The system combines Property Management, Tenant Management, HR,
+Payroll, and Accounting into a single scalable platform.
 
-## How can I edit this code?
+The platform is designed to support multiple organizations while
+ensuring secure data isolation between tenants.
 
-There are several ways of editing your application.
+------------------------------------------------------------------------
 
-**Use Lovable**
+# Platform Overview
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+ZainBook operates using a multi-tenant SaaS architecture where each
+subscriber creates their own organization workspace.
 
-Changes made via Lovable will be committed automatically to this repo.
+Each organization can:
 
-**Use your preferred IDE**
+-   Manage their properties and tenants
+-   Manage employees and payroll
+-   Run accounting and financial reports
+-   Control user roles and permissions
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Each organization only has access to its own data.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+------------------------------------------------------------------------
 
-Follow these steps:
+# Core Modules
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Property Management
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Features include:
 
-# Step 3: Install the necessary dependencies.
-npm i
+-   Property portfolio management
+-   Building management
+-   Unit management
+-   Tenant management
+-   Lease contract management
+-   Rent tracking
+-   Maintenance requests
+-   Complaint management
+-   Notice generation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+------------------------------------------------------------------------
 
-**Edit a file directly in GitHub**
+## Tenant Management
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Tenant profiles include:
 
-**Use GitHub Codespaces**
+-   Personal information
+-   Passport details
+-   Visa details
+-   Emirates ID tracking
+-   Lease history
+-   Payment history
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Document uploads and expiry alerts are supported.
 
-## What technologies are used for this project?
+------------------------------------------------------------------------
 
-This project is built with:
+## HR Management
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The HR module includes:
 
-## How can I deploy this project?
+-   Employee profiles
+-   Department management
+-   Job roles
+-   Contract management
+-   Employee document tracking
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Documents supported:
 
-## Can I connect a custom domain to my Lovable project?
+-   Passport
+-   Work Visa
+-   Emirates ID
+-   Iqama
+-   Employment contracts
 
-Yes, you can!
+------------------------------------------------------------------------
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Attendance System
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Attendance can be tracked using:
+
+-   Manual check-in
+-   Biometric integration
+-   Mobile check-in
+-   GPS tracking
+
+Features:
+
+-   Shift management
+-   Overtime calculation
+-   Late tracking
+-   Attendance reports
+
+------------------------------------------------------------------------
+
+## Payroll System
+
+Payroll features include:
+
+-   Salary structure
+-   Allowances
+-   Deductions
+-   Overtime calculations
+-   Payslip generation
+-   Payroll reports
+
+The system can generate WPS payroll files required in the UAE.
+
+------------------------------------------------------------------------
+
+## Accounting System
+
+Accounting features include:
+
+-   Chart of accounts
+-   Invoice generation
+-   Expense tracking
+-   Payment tracking
+-   Bank reconciliation
+-   Profit and loss reports
+-   Balance sheet reports
+-   Cash flow reports
+
+------------------------------------------------------------------------
+
+## VAT Management
+
+VAT system includes:
+
+-   5% VAT calculation
+-   VAT input tracking
+-   VAT output tracking
+-   VAT reports
+
+------------------------------------------------------------------------
+
+# Multi-Tenant Security
+
+Security is implemented using Row Level Security (RLS).
+
+Key rules:
+
+-   Users can only access their organization data
+-   Organization admins manage their users
+-   Master admin can access all organizations
+
+All tables include an organization_id column to enforce tenant
+isolation.
+
+------------------------------------------------------------------------
+
+# Technology Stack
+
+Frontend:
+
+-   React
+-   Vite
+-   TailwindCSS
+
+Backend:
+
+-   Supabase
+-   PostgreSQL
+
+Authentication:
+
+-   Supabase Auth
+
+------------------------------------------------------------------------
+
+# Project Setup
+
+Clone the repository:
+
+    git clone https://github.com/yourusername/zainbook.git
+
+Install dependencies:
+
+    npm install
+
+Run development server:
+
+    npm run dev
+
+Build production:
+
+    npm run build
+
+------------------------------------------------------------------------
+
+# Environment Variables
+
+Create a `.env` file:
+
+    VITE_SUPABASE_URL=your_supabase_project_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_public_key
+
+------------------------------------------------------------------------
+
+# Project Structure
+
+    src
+     ├── components
+     ├── pages
+     ├── modules
+     │   ├── properties
+     │   ├── tenants
+     │   ├── hr
+     │   ├── payroll
+     │   ├── accounting
+     ├── services
+     ├── hooks
+     ├── utils
+     └── layouts
+
+------------------------------------------------------------------------
+
+# Future Integrations
+
+Planned integrations include:
+
+-   Ejari API
+-   AI rent price engine
+-   Payment gateway integrations
+-   Advanced analytics dashboards
+
+------------------------------------------------------------------------
+
+# License
+
+This project is licensed under the MIT License.
+
+------------------------------------------------------------------------
+
+# Author
+
+Developed by Brand Vox Digital Agency.
