@@ -1,6 +1,8 @@
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { UpgradePrompt } from "./UpgradePrompt";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { Navigate } from "react-router-dom";
 
 interface ModuleGuardProps {
   module: string;
@@ -12,15 +14,21 @@ interface ModuleGuardProps {
  * Wraps a page component to enforce access control.
  */
 export const ModuleGuard = ({ module, children }: ModuleGuardProps) => {
-  const { canAccessModule, isSuperAdmin, loading } = usePermissions();
+  const { canAccessModule, isSuperAdmin, loading: permsLoading } = usePermissions();
   const { hasModuleAccess } = useSubscriptionAccess();
+  const { currentOrg, loading: orgLoading } = useOrganization();
 
-  if (loading) {
+  if (permsLoading || orgLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+
+  // Force onboarding if no organization exists for normal users
+  if (!currentOrg && !isSuperAdmin) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   // Super admins bypass all checks

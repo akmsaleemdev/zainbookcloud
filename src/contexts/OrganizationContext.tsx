@@ -22,9 +22,9 @@ interface OrgContextType {
 const OrgContext = createContext<OrgContextType>({
   organizations: [],
   currentOrg: null,
-  setCurrentOrg: () => {},
+  setCurrentOrg: () => { },
   loading: true,
-  refetch: () => {},
+  refetch: () => { },
 });
 
 export const useOrganization = () => useContext(OrgContext);
@@ -43,28 +43,49 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const { data: memberships } = await supabase
-      .from("organization_members")
-      .select("organization_id")
-      .eq("user_id", user.id);
+    // Check if user is master_admin (Global)
+    const { data: isMaster } = await supabase.rpc("has_role", {
+      _user_id: user.id,
+      _role: "master_admin" as any,
+    });
 
-    if (memberships && memberships.length > 0) {
-      const orgIds = memberships.map((m) => m.organization_id);
-      const { data: orgs } = await supabase
+    if (isMaster) {
+      const { data: allOrgs } = await supabase
         .from("organizations")
         .select("id, name, name_ar, emirate, email, phone")
-        .in("id", orgIds)
         .order("name");
 
-      if (orgs) {
-        setOrganizations(orgs);
-        if (!currentOrg || !orgs.find((o) => o.id === currentOrg.id)) {
-          setCurrentOrg(orgs[0] || null);
+      if (allOrgs) {
+        setOrganizations(allOrgs);
+        if (!currentOrg || !allOrgs.find((o) => o.id === currentOrg.id)) {
+          setCurrentOrg(allOrgs[0] || null);
         }
       }
     } else {
-      setOrganizations([]);
-      setCurrentOrg(null);
+      // Normal flow: only show memberships
+      const { data: memberships } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", user.id);
+
+      if (memberships && memberships.length > 0) {
+        const orgIds = memberships.map((m) => m.organization_id);
+        const { data: orgs } = await supabase
+          .from("organizations")
+          .select("id, name, name_ar, emirate, email, phone")
+          .in("id", orgIds)
+          .order("name");
+
+        if (orgs) {
+          setOrganizations(orgs);
+          if (!currentOrg || !orgs.find((o) => o.id === currentOrg.id)) {
+            setCurrentOrg(orgs[0] || null);
+          }
+        }
+      } else {
+        setOrganizations([]);
+        setCurrentOrg(null);
+      }
     }
     setLoading(false);
   };

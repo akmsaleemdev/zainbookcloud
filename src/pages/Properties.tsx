@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Building2, Plus, Search, Pencil, Trash2, MapPin, Home, Image, Upload, X, Map } from "lucide-react";
@@ -27,6 +28,7 @@ const emptyForm: PropForm = { name: "", name_ar: "", property_type: "residential
 
 const Properties = () => {
   const { currentOrg } = useOrganization();
+  const { checkUsageLimit } = useSubscriptionAccess();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -59,6 +61,11 @@ const Properties = () => {
 
   const createMutation = useMutation({
     mutationFn: async (formData: PropForm) => {
+      const usage = await checkUsageLimit("properties");
+      if (!usage.allowed) {
+        throw new Error(`Plan limit reached. You can only manage up to ${usage.max} properties on your current plan. Please upgrade to add more.`);
+      }
+
       const { latitude, longitude, ...rest } = formData;
       const { error } = await supabase.from("properties").insert({
         ...rest, organization_id: currentOrg!.id,
@@ -148,32 +155,32 @@ const Properties = () => {
         <div className="relative max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search properties..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" /></div>
 
         {isLoading ? <div className="glass-card p-12 text-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div> :
-        filtered.length === 0 ? <div className="glass-card p-12 text-center"><Home className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">No properties yet.</p><Button onClick={openCreate} className="mt-4 gap-2"><Plus className="w-4 h-4" /> Add Property</Button></div> :
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((p: any) => (
-            <div key={p.id} className="glass-card p-5 cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all" onClick={() => { setDetailProp(p); setDetailTab("gallery"); }}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Building2 className="w-5 h-5 text-primary" /></div>
-                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(p.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+          filtered.length === 0 ? <div className="glass-card p-12 text-center"><Home className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">No properties yet.</p><Button onClick={openCreate} className="mt-4 gap-2"><Plus className="w-4 h-4" /> Add Property</Button></div> :
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((p: any) => (
+                <div key={p.id} className="glass-card p-5 cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all" onClick={() => { setDetailProp(p); setDetailTab("gallery"); }}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Building2 className="w-5 h-5 text-primary" /></div>
+                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(p.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
+                  <h3 className="font-semibold text-foreground">{p.name}</h3>
+                  <span className="text-xs text-primary capitalize">{(p.property_type || "residential").replace("_", " ")}</span>
+                  <div className="space-y-1 mt-2">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="w-3 h-3" />{[p.area, p.city, p.emirate].filter(Boolean).join(", ")}</div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                    <span className="text-xs text-muted-foreground">{p.total_units || 0} units</span>
+                    {p.latitude && <span className="text-xs text-muted-foreground flex items-center gap-1"><Map className="w-3 h-3" /> GPS</span>}
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>
+                      {p.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <h3 className="font-semibold text-foreground">{p.name}</h3>
-              <span className="text-xs text-primary capitalize">{(p.property_type || "residential").replace("_", " ")}</span>
-              <div className="space-y-1 mt-2">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="w-3 h-3" />{[p.area, p.city, p.emirate].filter(Boolean).join(", ")}</div>
-              </div>
-              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
-                <span className="text-xs text-muted-foreground">{p.total_units || 0} units</span>
-                {p.latitude && <span className="text-xs text-muted-foreground flex items-center gap-1"><Map className="w-3 h-3" /> GPS</span>}
-                <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>
-                  {p.is_active ? "Active" : "Inactive"}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>}
+              ))}
+            </div>}
       </motion.div>
 
       {/* Property Detail Dialog */}

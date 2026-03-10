@@ -4104,6 +4104,7 @@ export type Database = {
     }
     Enums: {
       app_role:
+        | "master_admin"
         | "super_admin"
         | "organization_admin"
         | "property_owner"

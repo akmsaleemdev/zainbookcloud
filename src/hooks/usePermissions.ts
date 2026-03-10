@@ -36,21 +36,35 @@ export const usePermissions = () => {
     enabled: !!user && !!currentOrg,
   });
 
-  // Also check if user is super_admin via user_roles
-  const { data: isSuperAdmin } = useQuery({
-    queryKey: ["is-super-admin", user?.id],
+  // Also check if user is master_admin or super_admin via user_roles
+  const { data: globalRole } = useQuery({
+    queryKey: ["global-role", user?.id],
     queryFn: async () => {
-      if (!user) return false;
-      const { data } = await supabase.rpc("has_role", {
+      if (!user) return null;
+
+      // Check for master_admin (Absolute Power)
+      const { data: isMaster } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "master_admin" as any,
+      });
+      if (isMaster) return "master_admin";
+
+      // Check for super_admin (Regional Power)
+      const { data: isSuper } = await supabase.rpc("has_role", {
         _user_id: user.id,
         _role: "super_admin",
       });
-      return !!data;
+      if (isSuper) return "super_admin";
+
+      return null;
     },
     enabled: !!user,
   });
 
-  const userRole = isSuperAdmin ? "super_admin" : membership?.role || null;
+  const isMasterAdmin = globalRole === "master_admin";
+  const isSuperAdmin = isMasterAdmin || globalRole === "super_admin";
+
+  const userRole = globalRole || membership?.role || null;
 
   // Get role permissions
   const { data: permissions = [] } = useQuery({
@@ -88,6 +102,7 @@ export const usePermissions = () => {
 
   return {
     userRole,
+    isMasterAdmin,
     isSuperAdmin: !!isSuperAdmin,
     permissions,
     hasPermission,

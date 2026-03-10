@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const roleColors: Record<string, string> = {
 
 const UserManagement = () => {
   const { currentOrg } = useOrganization();
+  const { checkUsageLimit } = useSubscriptionAccess();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -75,6 +77,11 @@ const UserManagement = () => {
         const { error } = await supabase.from("organization_members").update({ role: form.role as any }).eq("id", editId);
         if (error) throw error;
       } else {
+        const usage = await checkUsageLimit("users");
+        if (!usage.allowed) {
+          throw new Error(`Plan limit reached. You can only manage up to ${usage.max} users. Please upgrade to add more.`);
+        }
+
         const { error } = await supabase.from("organization_members").insert({
           organization_id: orgId,
           user_id: form.user_id,
@@ -115,6 +122,11 @@ const UserManagement = () => {
 
   const inviteMutation = useMutation({
     mutationFn: async () => {
+      const usage = await checkUsageLimit("users");
+      if (!usage.allowed) {
+        throw new Error(`Plan limit reached. You can only manage up to ${usage.max} users. Please upgrade to invite more.`);
+      }
+
       // Sign up the user with email (they'll get a confirmation email)
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: inviteForm.email,

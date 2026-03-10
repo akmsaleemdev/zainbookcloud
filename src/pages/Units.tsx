@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DoorOpen, Plus, Search, Pencil, Trash2 } from "lucide-react";
@@ -17,6 +18,7 @@ const UNIT_TYPES = ["apartment", "studio", "villa", "townhouse", "penthouse", "d
 
 const Units = () => {
   const { currentOrg } = useOrganization();
+  const { checkUsageLimit } = useSubscriptionAccess();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -49,6 +51,11 @@ const Units = () => {
 
   const createMutation = useMutation({
     mutationFn: async (f: typeof form) => {
+      const usage = await checkUsageLimit("units");
+      if (!usage.allowed) {
+        throw new Error(`Plan limit reached. You can only manage up to ${usage.max} units. Please upgrade to add more.`);
+      }
+
       const { error } = await supabase.from("units").insert({
         unit_number: f.unit_number, building_id: f.building_id, floor_number: f.floor_number ? parseInt(f.floor_number) : null,
         unit_type: f.unit_type, bedrooms: parseInt(f.bedrooms) || 1, bathrooms: parseInt(f.bathrooms) || 1,
@@ -99,32 +106,32 @@ const Units = () => {
         </div>
         <div className="relative max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search units..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" /></div>
         {isLoading ? <div className="glass-card p-12 text-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div> :
-        filtered.length === 0 ? <div className="glass-card p-12 text-center"><p className="text-muted-foreground">No units yet.</p></div> :
-        <div className="glass-card overflow-hidden">
-          <table className="w-full"><thead><tr className="border-b border-border/30">
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Unit</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Building</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Type</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Floor</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Beds/Baths</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Rent</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Status</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4"></th>
-          </tr></thead><tbody>
-            {filtered.map((u: any) => (
-              <tr key={u.id} className="border-b border-border/20 hover:bg-accent/30">
-                <td className="p-4 font-medium text-sm text-foreground">{u.unit_number}</td>
-                <td className="p-4 text-sm text-muted-foreground">{u.buildings?.name}</td>
-                <td className="p-4 text-sm text-muted-foreground capitalize">{u.unit_type}</td>
-                <td className="p-4 text-sm text-muted-foreground">{u.floor_number ?? "-"}</td>
-                <td className="p-4 text-sm text-muted-foreground">{u.bedrooms}B / {u.bathrooms}B</td>
-                <td className="p-4 text-sm text-foreground">{u.monthly_rent ? `AED ${Number(u.monthly_rent).toLocaleString()}` : "-"}</td>
-                <td className="p-4"><span className={`text-xs px-2 py-0.5 rounded-full ${u.status === "available" ? "bg-success/10 text-success" : u.status === "occupied" ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"}`}>{u.status}</span></td>
-                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(u)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(u.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
-              </tr>
-            ))}
-          </tbody></table>
-        </div>}
+          filtered.length === 0 ? <div className="glass-card p-12 text-center"><p className="text-muted-foreground">No units yet.</p></div> :
+            <div className="glass-card overflow-hidden">
+              <table className="w-full"><thead><tr className="border-b border-border/30">
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Unit</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Building</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Type</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Floor</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Beds/Baths</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Rent</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Status</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4"></th>
+              </tr></thead><tbody>
+                  {filtered.map((u: any) => (
+                    <tr key={u.id} className="border-b border-border/20 hover:bg-accent/30">
+                      <td className="p-4 font-medium text-sm text-foreground">{u.unit_number}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{u.buildings?.name}</td>
+                      <td className="p-4 text-sm text-muted-foreground capitalize">{u.unit_type}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{u.floor_number ?? "-"}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{u.bedrooms}B / {u.bathrooms}B</td>
+                      <td className="p-4 text-sm text-foreground">{u.monthly_rent ? `AED ${Number(u.monthly_rent).toLocaleString()}` : "-"}</td>
+                      <td className="p-4"><span className={`text-xs px-2 py-0.5 rounded-full ${u.status === "available" ? "bg-success/10 text-success" : u.status === "occupied" ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"}`}>{u.status}</span></td>
+                      <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(u)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(u.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
+                    </tr>
+                  ))}
+                </tbody></table>
+            </div>}
       </motion.div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

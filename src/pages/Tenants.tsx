@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 
 const Tenants = () => {
   const { currentOrg } = useOrganization();
+  const { checkUsageLimit } = useSubscriptionAccess();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -42,6 +44,11 @@ const Tenants = () => {
 
   const createMutation = useMutation({
     mutationFn: async (f: typeof form) => {
+      const usage = await checkUsageLimit("tenants");
+      if (!usage.allowed) {
+        throw new Error(`Plan limit reached. You can only manage up to ${usage.max} tenants. Please upgrade to add more.`);
+      }
+
       const { error } = await supabase.from("tenants").insert({
         ...f, organization_id: currentOrg!.id,
         visa_expiry: f.visa_expiry || null,
@@ -101,38 +108,38 @@ const Tenants = () => {
         <div className="relative max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search tenants..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" /></div>
 
         {isLoading ? <div className="glass-card p-12 text-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div> :
-        filtered.length === 0 ? <div className="glass-card p-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">No tenants yet.</p><Button onClick={openCreate} className="mt-4 gap-2"><Plus className="w-4 h-4" /> Add Tenant</Button></div> :
-        <div className="glass-card overflow-hidden overflow-x-auto">
-          <table className="w-full"><thead><tr className="border-b border-border/30">
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Tenant</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Contact</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Nationality</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Emirates ID</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Visa Expiry</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4">Status</th>
-            <th className="text-left text-xs font-medium text-muted-foreground p-4"></th>
-          </tr></thead><tbody>
-            {filtered.map((t: any) => (
-              <tr key={t.id} className="border-b border-border/20 hover:bg-accent/30 transition-colors cursor-pointer">
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium">{t.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}</div>
-                    <div><span className="font-medium text-sm text-foreground">{t.full_name}</span>{t.occupation && <p className="text-xs text-muted-foreground">{t.occupation}</p>}</div>
-                  </div>
-                </td>
-                <td className="p-4 text-sm text-muted-foreground">
-                  {t.email && <div className="flex items-center gap-1"><Mail className="w-3 h-3" />{t.email}</div>}
-                  {t.phone && <div className="flex items-center gap-1"><Phone className="w-3 h-3" />{t.phone}</div>}
-                </td>
-                <td className="p-4 text-sm text-muted-foreground">{t.nationality || "-"}</td>
-                <td className="p-4 text-sm text-muted-foreground font-mono">{t.emirates_id || "-"}</td>
-                <td className="p-4 text-sm text-muted-foreground">{t.visa_expiry ? <div className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(t.visa_expiry).toLocaleDateString()}</div> : "-"}</td>
-                <td className="p-4"><Badge variant={t.status === "active" ? "default" : t.status === "notice" ? "secondary" : "destructive"}>{t.status}</Badge></td>
-                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(t.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
-              </tr>
-            ))}
-          </tbody></table>
-        </div>}
+          filtered.length === 0 ? <div className="glass-card p-12 text-center"><Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">No tenants yet.</p><Button onClick={openCreate} className="mt-4 gap-2"><Plus className="w-4 h-4" /> Add Tenant</Button></div> :
+            <div className="glass-card overflow-hidden overflow-x-auto">
+              <table className="w-full"><thead><tr className="border-b border-border/30">
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Tenant</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Contact</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Nationality</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Emirates ID</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Visa Expiry</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4">Status</th>
+                <th className="text-left text-xs font-medium text-muted-foreground p-4"></th>
+              </tr></thead><tbody>
+                  {filtered.map((t: any) => (
+                    <tr key={t.id} className="border-b border-border/20 hover:bg-accent/30 transition-colors cursor-pointer">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium">{t.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}</div>
+                          <div><span className="font-medium text-sm text-foreground">{t.full_name}</span>{t.occupation && <p className="text-xs text-muted-foreground">{t.occupation}</p>}</div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">
+                        {t.email && <div className="flex items-center gap-1"><Mail className="w-3 h-3" />{t.email}</div>}
+                        {t.phone && <div className="flex items-center gap-1"><Phone className="w-3 h-3" />{t.phone}</div>}
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">{t.nationality || "-"}</td>
+                      <td className="p-4 text-sm text-muted-foreground font-mono">{t.emirates_id || "-"}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{t.visa_expiry ? <div className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(t.visa_expiry).toLocaleDateString()}</div> : "-"}</td>
+                      <td className="p-4"><Badge variant={t.status === "active" ? "default" : t.status === "notice" ? "secondary" : "destructive"}>{t.status}</Badge></td>
+                      <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(t.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
+                    </tr>
+                  ))}
+                </tbody></table>
+            </div>}
       </motion.div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

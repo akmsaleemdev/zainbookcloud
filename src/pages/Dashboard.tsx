@@ -12,9 +12,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,6 +29,7 @@ const item = {
 
 const Dashboard = () => {
   const { currentOrg } = useOrganization();
+  const { isMasterAdmin, isSuperAdmin, loading: permsLoading } = usePermissions();
 
   // Fetch properties count
   const { data: propertiesCount = 0 } = useQuery({
@@ -120,10 +122,10 @@ const Dashboard = () => {
     queryFn: async () => {
       if (!currentOrg) return [];
       const { data } = await supabase.from("payments").select("amount, payment_date").eq("organization_id", currentOrg.id).eq("status", "completed").gte("payment_date", new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
-      
+
       const monthlyData: Record<string, number> = {};
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      
+
       data?.forEach(p => {
         const date = new Date(p.payment_date);
         const monthKey = months[date.getMonth()];
@@ -150,22 +152,22 @@ const Dashboard = () => {
         { name: "Occupied", value: 0, color: "hsl(153, 54%, 45%)" },
         { name: "Vacant", value: 100, color: "hsl(0, 0%, 18%)" },
       ];
-      
+
       const { data: props } = await supabase.from("properties").select("id").eq("organization_id", currentOrg.id);
       if (!props?.length) return [{ name: "Occupied", value: 0, color: "hsl(153, 54%, 45%)" }, { name: "Vacant", value: 100, color: "hsl(0, 0%, 18%)" }];
-      
+
       const { data: blds } = await supabase.from("buildings").select("id").in("property_id", props.map(p => p.id));
       if (!blds?.length) return [{ name: "Occupied", value: 0, color: "hsl(153, 54%, 45%)" }, { name: "Vacant", value: 100, color: "hsl(0, 0%, 18%)" }];
-      
+
       const { data: units } = await supabase.from("units").select("id, status").in("building_id", blds.map(b => b.id));
-      
+
       const total = units?.length || 0;
       const occupied = units?.filter(u => u.status === "occupied").length || 0;
       const vacant = units?.filter(u => u.status === "available").length || 0;
       const maintenance = units?.filter(u => u.status === "maintenance").length || 0;
-      
+
       if (total === 0) return [{ name: "Occupied", value: 0, color: "hsl(153, 54%, 45%)" }, { name: "Vacant", value: 100, color: "hsl(0, 0%, 18%)" }];
-      
+
       return [
         { name: "Occupied", value: Math.round((occupied / total) * 100), color: "hsl(153, 54%, 45%)" },
         { name: "Vacant", value: Math.round((vacant / total) * 100), color: "hsl(0, 0%, 18%)" },
@@ -191,19 +193,22 @@ const Dashboard = () => {
     return "Good Evening";
   })();
 
-  if (!currentOrg) {
+  if (permsLoading) {
     return (
       <AppLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-          <Building2 className="w-16 h-16 text-muted-foreground mb-4" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to ZainBook AI</h2>
-          <p className="text-muted-foreground mb-6 max-w-md">Get started by creating your first organization to manage properties, tenants, and more.</p>
-          <Button asChild size="lg">
-            <Link to="/organizations">Create Organization</Link>
-          </Button>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </AppLayout>
     );
+  }
+
+  if (isMasterAdmin) {
+    return <Navigate to="/master-admin" replace />;
+  }
+
+  if (!currentOrg && !isSuperAdmin) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return (

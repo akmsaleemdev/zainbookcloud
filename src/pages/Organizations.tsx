@@ -51,9 +51,20 @@ const Organizations = () => {
   const [form, setForm] = useState<OrgForm>(emptyForm);
   const [search, setSearch] = useState("");
 
+  const { isMasterAdmin } = usePermissions();
   const { data: orgs = [], isLoading } = useQuery({
-    queryKey: ["organizations"],
+    queryKey: ["organizations", isMasterAdmin],
     queryFn: async () => {
+      if (isMasterAdmin) {
+        // Master admins see ALL organizations in the system
+        const { data, error } = await supabase
+          .from("organizations")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+
       // Get org IDs the user is a member of
       const { data: memberships } = await supabase
         .from("organization_members")
