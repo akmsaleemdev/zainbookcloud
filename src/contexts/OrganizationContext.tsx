@@ -43,11 +43,14 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Check if user is master_admin (Global)
-    const { data: isMaster } = await supabase.rpc("has_role", {
-      _user_id: user.id,
-      _role: "master_admin" as any,
-    });
+    // Check if user is master_admin (Global) - direct table query for resilience
+    const { data: masterRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "master_admin")
+      .maybeSingle();
+    const isMaster = !!masterRole;
 
     if (isMaster) {
       const { data: allOrgs } = await supabase

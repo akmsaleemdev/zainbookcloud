@@ -42,19 +42,23 @@ export const usePermissions = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      // Check for master_admin (Absolute Power)
-      const { data: isMaster } = await supabase.rpc("has_role", {
-        _user_id: user.id,
-        _role: "master_admin" as any,
-      });
-      if (isMaster) return "master_admin";
+      // Check for master_admin (Absolute Power) - direct table query for resilience
+      const { data: masterRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "master_admin")
+        .maybeSingle();
+      if (masterRole) return "master_admin";
 
-      // Check for super_admin (Regional Power)
-      const { data: isSuper } = await supabase.rpc("has_role", {
-        _user_id: user.id,
-        _role: "super_admin",
-      });
-      if (isSuper) return "super_admin";
+      // Check for super_admin (Regional Power) - direct table query for resilience
+      const { data: superRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+      if (superRole) return "super_admin";
 
       return null;
     },
