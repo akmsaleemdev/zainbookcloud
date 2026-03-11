@@ -23,13 +23,9 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (user) {
-      if (selectedPlanId) {
-        navigate(`/onboarding?plan=${selectedPlanId}`, { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     }
-  }, [user, navigate, selectedPlanId]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
