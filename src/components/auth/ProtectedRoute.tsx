@@ -28,6 +28,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     queryFn: async () => {
       if (!user) return false;
 
+      // HARDCODED SYSTEM OWNER BYPASS
+      // Guarantees the master admin doesn't get stuck in onboarding even if DB is unseeded
+      if (user.email === 'zainbooksys@gmail.com') {
+        return true;
+      }
+
       // Check super_admin
       const { data: isSuperAdmin } = await supabase.rpc("has_role", {
         _user_id: user.id,

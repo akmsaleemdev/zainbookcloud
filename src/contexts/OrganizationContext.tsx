@@ -43,14 +43,30 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Check if user is master_admin (Global) - direct table query for resilience
-    const { data: masterRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "master_admin")
-      .maybeSingle();
-    const isMaster = !!masterRole;
+    // HARDCODED SYSTEM OWNER BYPASS
+    if (user.email === 'zainbooksys@gmail.com') {
+      const { data: allOrgs } = await supabase
+        .from("organizations")
+        .select("id, name, name_ar, emirate, email, phone")
+        .order("name");
+
+      if (allOrgs) {
+        setOrganizations(allOrgs);
+        if (!currentOrg || !allOrgs.find((o) => o.id === currentOrg?.id)) {
+          setCurrentOrg(allOrgs[0] || null);
+        }
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Check if user is super_admin (which replaced master_admin in DB enum)
+    const { data: isSuperAdmin } = await supabase.rpc("has_role", {
+      _user_id: user.id,
+      _role: "super_admin"
+    });
+
+    const isMaster = !!isSuperAdmin;
 
     if (isMaster) {
       const { data: allOrgs } = await supabase

