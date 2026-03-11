@@ -92,7 +92,18 @@ const Units = () => {
     setEditingId(u.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.unit_number || !form.building_id) { toast.error("Unit number and building required"); return; } editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form); };
+  const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!form.unit_number || !form.building_id) { 
+      toast.error("Unit number and building required"); 
+      return; 
+    } 
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
 
   const filtered = units.filter((u: any) => u.unit_number.toLowerCase().includes(search.toLowerCase()));
   if (!currentOrg) return <AppLayout><div className="glass-card p-12 text-center"><p className="text-muted-foreground">Please create an organization first.</p></div></AppLayout>;

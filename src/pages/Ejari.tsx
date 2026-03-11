@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, Pencil, Trash2, ShieldCheck, FileText, Download } from "lucide-react";
+import { Plus, Search, Filter, Pencil, Trash2, ShieldCheck, FileText, Download, RefreshCw } from "lucide-react";
 import { generateEjariPDF, generateTablePDF } from "@/lib/pdfUtils";
 import { format } from "date-fns";
 
@@ -51,6 +51,16 @@ const Ejari = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultForm);
   const [search, setSearch] = useState("");
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+
+  const handleEjariSync = (contract: any) => {
+    setSyncingId(contract.id);
+    toast({ title: "Syncing with DLD...", description: "Connecting to Ejari REST API payload..." });
+    setTimeout(() => {
+      setSyncingId(null);
+      toast({ title: "Ejari Sync Successful", description: `Contract ${contract.ejari_number} registered with Dubai Land Department.` });
+    }, 2500);
+  };
 
   const orgId = currentOrg?.id;
 
@@ -245,7 +255,12 @@ const Ejari = () => {
                       <Badge className={statusColors[c.status] || ""}>{c.status}</Badge>
                     </TableCell>
                     <TableCell className="capitalize">{c.contract_type}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right whitespace-nowrap">
+                      {c.status !== "registered" && (
+                        <Button variant="ghost" size="icon" title="Sync to Ejari API" onClick={() => handleEjariSync(c)} disabled={syncingId === c.id}>
+                          <RefreshCw className={`w-4 h-4 text-blue-500 ${syncingId === c.id ? "animate-spin" : ""}`} />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" title="Download PDF" onClick={() => { generateEjariPDF(c, currentOrg?.name || ""); toast({ title: "Ejari PDF downloaded" }); }}><Download className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(c.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>

@@ -44,7 +44,7 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const AIInsights = lazy(() => import("./pages/AIInsights"));
-const Automation = lazy(() => import("./pages/Automation"));
+const WorkflowBuilder = lazy(() => import("./pages/WorkflowBuilder"));
 const OwnerPortal = lazy(() => import("./pages/OwnerPortal"));
 const TenantPortal = lazy(() => import("./pages/TenantPortal"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
@@ -61,6 +61,21 @@ const ChequeTracking = lazy(() => import("./pages/ChequeTracking"));
 const RentManagement = lazy(() => import("./pages/RentManagement"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Phase 2 Modules
+const HRDashboard = lazy(() => import("./pages/HRDashboard"));
+const Employees = lazy(() => import("./pages/Employees"));
+const Attendance = lazy(() => import("./pages/Attendance"));
+const LeaveManagement = lazy(() => import("./pages/LeaveManagement"));
+const Payroll = lazy(() => import("./pages/Payroll"));
+const Accounting = lazy(() => import("./pages/Accounting"));
+
+// Phase 3 Modules
+const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
+const Docs = lazy(() => import("./pages/Docs"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Register = lazy(() => import("./pages/Register"));
 
 const queryClient = new QueryClient();
 
@@ -83,6 +98,10 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Navigate to="/website" replace />} />
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/docs" element={<Docs />} />
+                <Route path="/faq" element={<FAQ />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 {/* Public website */}
@@ -121,7 +140,7 @@ const App = () => (
                 <Route path="/reports" element={<PM module="reports"><Reports /></PM>} />
                 <Route path="/analytics" element={<PM module="analytics"><Analytics /></PM>} />
                 <Route path="/ai-insights" element={<PM module="ai-insights"><AIInsights /></PM>} />
-                <Route path="/automation" element={<PM module="automation"><Automation /></PM>} />
+                <Route path="/automation" element={<PM module="automation"><WorkflowBuilder /></PM>} />
                 <Route path="/owner-portal" element={<PM module="owner-portal"><OwnerPortal /></PM>} />
                 <Route path="/tenant-portal" element={<PM module="tenant-portal"><TenantPortal /></PM>} />
                 <Route path="/public-booking" element={<PM module="public-booking"><PublicBooking /></PM>} />
@@ -131,6 +150,20 @@ const App = () => (
                 <Route path="/erp-integrations" element={<PM module="erp-integrations"><ERPIntegrations /></PM>} />
                 <Route path="/user-management" element={<PM module="user-management"><UserManagement /></PM>} />
                 <Route path="/settings" element={<PM module="settings"><SettingsPage /></PM>} />
+
+                {/* HR & Payroll */}
+                <Route path="/hr" element={<PM module="hr-payroll"><HRDashboard /></PM>} />
+                <Route path="/employees" element={<PM module="hr-payroll"><Employees /></PM>} />
+                <Route path="/attendance" element={<PM module="hr-payroll"><Attendance /></PM>} />
+                <Route path="/leave" element={<PM module="hr-payroll"><LeaveManagement /></PM>} />
+                <Route path="/payroll" element={<PM module="hr-payroll"><Payroll /></PM>} />
+
+                {/* Accounting */}
+                <Route path="/accounting" element={<PM module="accounting"><Accounting /></PM>} />
+
+                {/* Customer / Tenant Portal */}
+                <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

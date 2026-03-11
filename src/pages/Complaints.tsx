@@ -144,7 +144,11 @@ const Complaints = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.subject) { toast.error("Subject is required"); return; }
-    editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form);
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
   };
 
   const filtered = complaints.filter((c: any) => {

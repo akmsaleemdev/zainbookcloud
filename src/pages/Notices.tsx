@@ -126,7 +126,11 @@ const Notices = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title) { toast.error("Title is required"); return; }
-    editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form);
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
   };
 
   const filtered = notices.filter((n: any) => {

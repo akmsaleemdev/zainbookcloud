@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
+import { RightDrawer } from "./RightDrawer";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           {children}
         </main>
       </div>
+
+      {/* Right Drawer (AI Insights, Quick Actions) */}
+      <RightDrawer />
     </div>
   );
 };

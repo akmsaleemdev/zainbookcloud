@@ -10,8 +10,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DoorOpen, Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { DoorOpen, Plus, Search, Pencil, Trash2, LayoutGrid, List } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { RoomLayoutVisualizer } from "@/components/RoomLayoutVisualizer";
 
 const ROOM_TYPES = ["single", "partition", "private", "master_bedroom", "shared", "capsule", "loft"];
 const FURNISHING = ["furnished", "semi_furnished", "unfurnished"];
@@ -24,6 +25,8 @@ const Rooms = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ room_number: "", unit_id: "", room_type: "single", max_occupancy: "1", monthly_rent: "", furnishing: "furnished" });
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   // Get all units for this org
   const { data: unitsList = [] } = useQuery({
@@ -81,7 +84,18 @@ const Rooms = () => {
     setEditingId(r.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.room_number || !form.unit_id) { toast.error("Room number and unit required"); return; } editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form); };
+  const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!form.room_number || !form.unit_id) { 
+      toast.error("Room number and unit required"); 
+      return; 
+    } 
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
 
   const filtered = rooms.filter((r: any) => r.room_number.toLowerCase().includes(search.toLowerCase()));
   if (!currentOrg) return <AppLayout><div className="glass-card p-12 text-center"><p className="text-muted-foreground">Please create an organization first.</p></div></AppLayout>;
@@ -93,9 +107,24 @@ const Rooms = () => {
           <div><h1 className="page-header">Rooms</h1><p className="text-sm text-muted-foreground mt-1">Manage rooms and assignments</p></div>
           <Button onClick={openCreate} className="gap-2" disabled={unitsList.length === 0}><Plus className="w-4 h-4" /> Add Room</Button>
         </div>
-        <div className="relative max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search rooms..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" /></div>
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search rooms..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" />
+          </div>
+          <div className="flex bg-secondary/50 p-1 rounded-xl">
+            <Button variant={viewMode === 'list' ? "default" : "ghost"} size="sm" onClick={() => setViewMode('list')} className={viewMode === 'list' ? "shadow-sm" : ""}>
+              <List className="w-4 h-4 mr-2" /> List View
+            </Button>
+            <Button variant={viewMode === 'map' ? "default" : "ghost"} size="sm" onClick={() => setViewMode('map')} className={viewMode === 'map' ? "shadow-sm" : ""}>
+              <LayoutGrid className="w-4 h-4 mr-2" /> Visual Map
+            </Button>
+          </div>
+        </div>
+
         {isLoading ? <div className="glass-card p-12 text-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div> :
         filtered.length === 0 ? <div className="glass-card p-12 text-center"><p className="text-muted-foreground">No rooms yet.</p></div> :
+        viewMode === 'list' ? (
         <div className="glass-card overflow-hidden">
           <table className="w-full"><thead><tr className="border-b border-border/30">
             <th className="text-left text-xs font-medium text-muted-foreground p-4">Room</th>
@@ -114,11 +143,49 @@ const Rooms = () => {
                 <td className="p-4 text-sm text-muted-foreground">{r.max_occupancy}</td>
                 <td className="p-4 text-sm text-foreground">{r.monthly_rent ? `AED ${Number(r.monthly_rent).toLocaleString()}` : "-"}</td>
                 <td className="p-4"><span className={`text-xs px-2 py-0.5 rounded-full ${r.status === "available" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}>{r.status}</span></td>
-                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(r)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(r.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
+                <td className="p-4"><div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/20" onClick={() => { setSelectedRoomId(r.room_number); setViewMode('map'); }}>
+                    <LayoutGrid className="w-3 h-3" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(r)}><Pencil className="w-3 h-3" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(r.id)}><Trash2 className="w-3 h-3" /></Button>
+                </div></td>
               </tr>
             ))}
           </tbody></table>
-        </div>}
+        </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[700px]">
+            {/* Rooms List for Map View */}
+            <div className="glass-card flex flex-col h-full overflow-hidden">
+              <div className="p-4 border-b border-border/50 bg-secondary/30 font-semibold">Select Room to Visualize</div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                {filtered.map((r: any) => (
+                  <div 
+                    key={r.id} 
+                    className={`p-3 rounded-xl cursor-pointer transition-all border ${selectedRoomId === r.room_number ? 'bg-primary/10 border-primary/50 text-foreground' : 'bg-secondary/20 border-border/50 text-muted-foreground hover:bg-secondary/50'}`}
+                    onClick={() => setSelectedRoomId(r.room_number)}
+                  >
+                    <div className="font-semibold">{r.room_number}</div>
+                    <div className="text-xs mt-1">{r.units?.buildings?.name}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* The Visualizer Canvas */}
+            <div className="lg:col-span-3 h-full">
+              {selectedRoomId ? (
+                <RoomLayoutVisualizer roomId={selectedRoomId} />
+              ) : (
+                <div className="glass-card h-full flex flex-col items-center justify-center text-muted-foreground p-12 border-dashed">
+                  <LayoutGrid className="w-12 h-12 mb-4 opacity-20" />
+                  <p>Select a room from the left to visualize its layout and bed spaces.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </motion.div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

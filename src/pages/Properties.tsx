@@ -132,7 +132,11 @@ const Properties = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.emirate) { toast.error("Name and emirate are required"); return; }
-    editingId ? updateMutation.mutate({ id: editingId, formData: form }) : createMutation.mutate(form);
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, formData: form });
+    } else {
+      createMutation.mutate(form);
+    }
   };
 
   const filtered = properties.filter((p: any) =>

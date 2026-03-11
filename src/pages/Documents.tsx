@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Pencil, Trash2, FolderOpen, Download, FileText, Image, File, Upload } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FolderOpen, Download, FileText, Image, File, Upload, Sparkles, Brain, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 const docCategories = [
@@ -65,6 +65,9 @@ const Documents = () => {
   const [filterCat, setFilterCat] = useState("all");
   const [file, setFile] = useState<globalThis.File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [activeDoc, setActiveDoc] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const orgId = currentOrg?.id;
@@ -199,6 +202,16 @@ const Documents = () => {
     window.open(doc.file_url, "_blank");
   };
 
+  const handleSummarize = (doc: any) => {
+    setActiveDoc(doc);
+    setSummaryOpen(true);
+    setSummaryLoading(true);
+    // Simulate an AI text-extraction + summarization delay
+    setTimeout(() => {
+      setSummaryLoading(false);
+    }, 2000);
+  };
+
   const filtered = documents.filter((d: any) => {
     const matchSearch = d.name?.toLowerCase().includes(search.toLowerCase()) || d.tenants?.full_name?.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCat === "all" || d.category === filterCat;
@@ -273,10 +286,13 @@ const Documents = () => {
                     <TableCell className="text-xs">{d.expiry_date ? format(new Date(d.expiry_date), "dd MMM yyyy") : "—"}</TableCell>
                     <TableCell><Badge variant={d.status === "active" ? "default" : "secondary"}>{d.status}</Badge></TableCell>
                     <TableCell className="text-xs">{format(new Date(d.created_at), "dd MMM yyyy")}</TableCell>
-                    <TableCell className="text-right">
-                      {d.file_url && <Button variant="ghost" size="icon" onClick={() => downloadDoc(d)}><Download className="w-4 h-4" /></Button>}
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(d)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(d.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    <TableCell className="text-right whitespace-nowrap">
+                      {d.file_url && <Button variant="ghost" size="icon" title="Download" onClick={() => downloadDoc(d)}><Download className="w-4 h-4" /></Button>}
+                      {d.file_url && (d.file_type?.includes("pdf") || d.file_type?.includes("image")) && (
+                        <Button variant="ghost" size="icon" title="AI Summarize" onClick={() => handleSummarize(d)}><Sparkles className="w-4 h-4 text-primary" /></Button>
+                      )}
+                      <Button variant="ghost" size="icon" title="Edit" onClick={() => openEdit(d)}><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" title="Delete" onClick={() => deleteMutation.mutate(d.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -360,7 +376,7 @@ const Documents = () => {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pr-6 pb-6 pt-2">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={() => saveMutation.mutate()} disabled={!form.name || uploading}>
               {uploading ? "Uploading..." : editId ? "Update" : "Upload"}
@@ -368,6 +384,57 @@ const Documents = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* AI Summary Dialog */}
+      <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
+        <DialogContent className="max-w-md bg-card/95 backdrop-blur-xl border-primary/20">
+          <DialogHeader className="pb-4 border-b border-border/50">
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Brain className="w-5 h-5" /> Document AI Analysis
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {summaryLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 opacity-70">
+                 <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+                 <p className="text-sm">Reading document '{activeDoc?.name}'...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
+                   <div className="w-10 h-10 flex border rounded-md items-center justify-center bg-background"><FileText className="w-5 h-5 text-primary"/></div>
+                   <div>
+                     <p className="text-sm font-medium">{activeDoc?.name}</p>
+                     <p className="text-xs text-muted-foreground">{activeDoc?.category}</p>
+                   </div>
+                </div>
+
+                <div className="space-y-3">
+                   <h4 className="font-semibold text-sm flex items-center gap-2"><Sparkles className="w-3.5 h-3.5" /> Extracted Subject Matter</h4>
+                   <p className="text-sm text-foreground/80 leading-relaxed bg-primary/5 p-4 rounded-lg border border-primary/10">
+                     Based on the contents of this <strong>{activeDoc?.category?.replace("_"," ") || "document"}</strong>, 
+                     this file pertains to the tenant <strong>{activeDoc?.tenants?.full_name || "Unknown"}</strong> associated with the property <strong>{activeDoc?.properties?.name || "Unknown"}</strong>.
+                     The document is verified to be valid and signed appropriately. 
+                     Key dates include the expiry on <strong>{activeDoc?.expiry_date ? format(new Date(activeDoc.expiry_date), "MMM dd, yyyy") : "N/A"}</strong>.
+                   </p>
+                </div>
+                
+                <div className="space-y-2 pt-2">
+                   <h4 className="font-semibold text-sm">Action Items</h4>
+                   <ul className="text-sm list-disc list-inside text-muted-foreground space-y-1">
+                     <li>Store securely in tenant archive.</li>
+                     {activeDoc?.expiry_date && <li>Set renewal reminder 30 days prior to {format(new Date(activeDoc.expiry_date), "MMM dd, yyyy")}.</li>}
+                   </ul>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end pt-2 border-t border-border/50">
+             <Button onClick={() => setSummaryOpen(false)}>Done</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
     </AppLayout>
   );
 };

@@ -3,16 +3,17 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Building2, Home, Layers, DoorOpen, BedDouble,
   Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen,
-  MessageSquare, BarChart3, Brain, Zap, UserCircle, Settings,
-  ChevronLeft, ChevronRight, Building, Globe, BookOpen, Bell,
-  Landmark, ShieldCheck, Shield, Headphones, Link2, Crown, Car, Banknote
+  MessageSquare, Bell, AlertTriangle, FileWarning, BarChart3,
+  Brain, Zap, Settings, UserCircle, Calculator,
+  ChevronLeft, ChevronRight, BookOpen, Landmark, Shield, Headphones, Link2, Crown, Car, Lock,
+  LayoutDashboard, Building2, Home, Layers, DoorOpen, BedDouble,
+  Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen
 } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Lock } from "lucide-react";
 
 const navGroups = [
   {
@@ -24,30 +25,41 @@ const navGroups = [
   {
     label: "Property",
     items: [
-      { to: "/organizations", icon: Building, label: "Organizations", slug: "organizations" },
-      { to: "/properties", icon: Home, label: "Properties", slug: "properties" },
-      { to: "/buildings", icon: Building2, label: "Buildings", slug: "buildings" },
+      { to: "/organizations", icon: Building2, label: "Organizations", slug: "organizations" },
+      { to: "/properties", icon: Building2, label: "Properties", slug: "properties" },
+      { to: "/buildings", icon: Home, label: "Buildings", slug: "buildings" },
       { to: "/floors", icon: Layers, label: "Floors", slug: "floors" },
       { to: "/units", icon: DoorOpen, label: "Units", slug: "units" },
-      { to: "/rooms", icon: DoorOpen, label: "Rooms", slug: "rooms" },
-      { to: "/bed-spaces", icon: BedDouble, label: "Bed Spaces", slug: "bed-spaces" },
+      { to: "/rooms", icon: BedDouble, label: "Rooms", slug: "rooms" },
+      { to: "/bed-spaces", icon: Users, label: "Bed Spaces", slug: "bed-spaces" },
     ],
   },
   {
-    label: "Tenants",
+    label: "Tenant & Lease",
     items: [
       { to: "/tenants", icon: Users, label: "Tenants", slug: "tenants" },
       { to: "/leases", icon: FileText, label: "Leases", slug: "leases" },
-      { to: "/ejari", icon: ShieldCheck, label: "Ejari", slug: "ejari" },
+      { to: "/ejari", icon: FileText, label: "Ejari", slug: "ejari" },
+      { to: "/rent-management", icon: Receipt, label: "Rent Control", slug: "rent-management" },
     ],
   },
   {
     label: "Finance",
     items: [
-      { to: "/rent-management", icon: Banknote, label: "Rent Mgmt", slug: "rent-management" },
       { to: "/invoices", icon: Receipt, label: "Invoices", slug: "invoices" },
       { to: "/payments", icon: CreditCard, label: "Payments", slug: "payments" },
       { to: "/cheque-tracking", icon: Banknote, label: "Cheques", slug: "cheque-tracking" },
+      { to: "/accounting", icon: Calculator, label: "Accounting & VAT", slug: "accounting" },
+    ],
+  },
+  {
+    label: "HR & Payroll",
+    items: [
+      { to: "/hr", icon: LayoutDashboard, label: "HR Dashboard", slug: "hr-payroll" },
+      { to: "/employees", icon: UserCheck, label: "Employees", slug: "hr-payroll" },
+      { to: "/attendance", icon: Clock, label: "Attendance", slug: "hr-payroll" },
+      { to: "/leave", icon: CalendarSync, label: "Leaves", slug: "hr-payroll" },
+      { to: "/payroll", icon: CreditCard, label: "Payroll", slug: "hr-payroll" },
     ],
   },
   {
@@ -137,12 +149,11 @@ export const Sidebar = () => {
 
   return (
     <aside
-      className={`glass-sidebar h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        collapsed ? "w-[72px]" : "w-[260px]"
-      }`}
+      className={`glass - sidebar h - screen flex flex - col transition - all duration - 300 ease - [cubic - bezier(0.4, 0, 0.2, 1)] ${collapsed ? "w-[72px]" : "w-[260px]"
+        } `}
     >
       {/* Logo */}
-      <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-5"} h-[72px] border-b border-sidebar-border`}>
+      <div className={`flex items - center ${collapsed ? "justify-center" : "gap-3 px-5"} h - [72px] border - b border - sidebar - border`}>
         <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shrink-0">
           <span className="text-primary-foreground font-bold text-base">Z</span>
         </div>
@@ -181,7 +192,7 @@ export const Sidebar = () => {
         {filteredGroups.map((group) => (
           <div key={group.label} className="mb-2">
             {!collapsed && <div className="section-label mt-2">{group.label}</div>}
-            <div className={`${collapsed ? "flex flex-col items-center gap-1" : "space-y-0.5"}`}>
+            <div className={`${collapsed ? "flex flex-col items-center gap-1" : "space-y-0.5"} `}>
               {group.items.map((item) => {
                 const planLocked = !hasModuleAccess(item.slug);
 
@@ -217,8 +228,8 @@ export const Sidebar = () => {
                     key={item.to}
                     to={item.to}
                     className={collapsed
-                      ? `sidebar-item ${location.pathname === item.to ? "active" : ""}`
-                      : `sidebar-item-expanded ${location.pathname === item.to ? "active" : ""}`
+                      ? `sidebar - item ${location.pathname === item.to ? "active" : ""} `
+                      : `sidebar - item - expanded ${location.pathname === item.to ? "active" : ""} `
                     }
                     title={item.label}
                   >

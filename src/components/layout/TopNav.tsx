@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Bell, LogOut, Sparkles, Sun, Moon, Menu } from "lucide-react";
+import { Search, Bell, LogOut, Sparkles, Sun, Moon, Menu, PlusCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAppStore } from "@/stores/useAppStore";
 
 interface TopNavProps {
   onMenuToggle?: () => void;
@@ -20,6 +21,7 @@ export const TopNav = ({ onMenuToggle }: TopNavProps) => {
   const { currentOrg } = useOrganization();
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
+  const { setRightDrawerOpen, openQuickCreate } = useAppStore();
 
   const { data: profile } = useQuery({
     queryKey: ["profile-nav", user?.id],
@@ -91,11 +93,33 @@ export const TopNav = ({ onMenuToggle }: TopNavProps) => {
         <Button variant="ghost" size="icon" className="w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary" onClick={toggleTheme}>
           {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </Button>
-        <Link to="/ai-insights">
-          <Button variant="ghost" size="icon" className="w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
-            <Sparkles className="w-5 h-5" />
-          </Button>
-        </Link>
+
+        {/* Quick Create Trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            openQuickCreate("Tenant");
+            setRightDrawerOpen(true);
+          }}
+          className="w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10"
+        >
+          <PlusCircle className="w-5 h-5" />
+        </Button>
+
+        {/* AI Insights Trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            openQuickCreate(null); // Clear quick create string to show AI insights
+            setRightDrawerOpen(true);
+          }}
+          className="w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10"
+        >
+          <Sparkles className="w-5 h-5" />
+        </Button>
+
         <Link to="/notifications">
           <Button variant="ghost" size="icon" className="relative w-10 h-10 md:w-11 md:h-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary">
             <Bell className="w-5 h-5" />

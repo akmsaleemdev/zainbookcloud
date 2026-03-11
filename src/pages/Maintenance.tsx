@@ -95,7 +95,18 @@ const Maintenance = () => {
     setEditingId(t.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.title) { toast.error("Title required"); return; } editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form); };
+  const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!form.title) { 
+        toast.error("Title required"); 
+        return; 
+    } 
+    if (editingId) {
+        updateMutation.mutate({ id: editingId, f: form });
+    } else {
+        createMutation.mutate(form);
+    }
+  };
 
   const filtered = tickets.filter((t: any) => t.title.toLowerCase().includes(search.toLowerCase()));
   if (!currentOrg) return <AppLayout><div className="glass-card p-12 text-center"><p className="text-muted-foreground">Please create an organization first.</p></div></AppLayout>;

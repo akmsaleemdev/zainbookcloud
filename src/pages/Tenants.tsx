@@ -88,7 +88,18 @@ const Tenants = () => {
     setEditingId(t.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.full_name) { toast.error("Full name required"); return; } editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form); };
+  const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!form.full_name) { 
+      toast.error("Full name required"); 
+      return; 
+    } 
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
 
   const filtered = tenants.filter((t: any) =>
     t.full_name.toLowerCase().includes(search.toLowerCase()) ||

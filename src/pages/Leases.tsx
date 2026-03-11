@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { FileText, Plus, Search, Pencil, Trash2, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { LeaseTemplateEditor } from "@/components/LeaseTemplateEditor";
 
 const Leases = () => {
   const { currentOrg } = useOrganization();
@@ -26,6 +27,7 @@ const Leases = () => {
     late_fee_rate: "0", grace_period_days: "5", rent_due_day: "1", renewal_reminder_days: "30",
   });
   const [search, setSearch] = useState("");
+  const [editorLeaseId, setEditorLeaseId] = useState<string | null>(null);
 
   const { data: tenantsList = [] } = useQuery({
     queryKey: ["tenants-list", currentOrg?.id],
@@ -107,7 +109,18 @@ const Leases = () => {
     setEditingId(l.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.tenant_id || !form.start_date || !form.end_date || !form.monthly_rent) { toast.error("Fill required fields"); return; } editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form); };
+  const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!form.tenant_id || !form.start_date || !form.end_date || !form.monthly_rent) { 
+      toast.error("Fill required fields"); 
+      return; 
+    } 
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
 
   const filtered = leases.filter((l: any) => (l.tenants?.full_name || "").toLowerCase().includes(search.toLowerCase()) || (l.ejari_number || "").includes(search));
   if (!currentOrg) return <AppLayout><div className="glass-card p-12 text-center"><p className="text-muted-foreground">Please create an organization first.</p></div></AppLayout>;
@@ -141,7 +154,13 @@ const Leases = () => {
                 <td className="p-4 text-sm font-medium text-foreground">AED {Number(l.monthly_rent).toLocaleString()}</td>
                 <td className="p-4 text-sm text-muted-foreground font-mono">{l.ejari_number || "-"}</td>
                 <td className="p-4"><Badge variant={l.status === "active" ? "default" : l.status === "expired" ? "destructive" : "secondary"}>{l.status}</Badge></td>
-                <td className="p-4"><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Pencil className="w-3 h-3" /></Button><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(l.id)}><Trash2 className="w-3 h-3" /></Button></div></td>
+                <td className="p-4"><div className="flex gap-1 flex-wrap justify-end">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/20" onClick={() => setEditorLeaseId(l.id)}>
+                    <FileText className="w-3 h-3" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Pencil className="w-3 h-3" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(l.id)}><Trash2 className="w-3 h-3" /></Button>
+                </div></td>
               </tr>
             ))}
           </tbody></table>
@@ -184,6 +203,16 @@ const Leases = () => {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-card border-border"><AlertDialogHeader><AlertDialogTitle>Delete Lease?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
+
+      {/* Editor Modal Overlay */}
+      {editorLeaseId && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <LeaseTemplateEditor 
+            leaseId={editorLeaseId} 
+            onClose={() => setEditorLeaseId(null)} 
+          />
+        </div>
+      )}
     </AppLayout>
   );
 };

@@ -89,7 +89,11 @@ const Buildings = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.property_id) { toast.error("Name and property are required"); return; }
-    editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form);
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
   };
 
   const filtered = buildings.filter((b: any) => b.name.toLowerCase().includes(search.toLowerCase()));

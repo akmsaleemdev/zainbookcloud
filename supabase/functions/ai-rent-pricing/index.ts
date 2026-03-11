@@ -70,31 +70,28 @@ serve(async (req) => {
 
     if (GEMINI_API_KEY && suggestedRent > 0) {
       try {
-        const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+        const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${GEMINI_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "gemini-2.5-flash",
-            messages: [
-              {
-                role: "system",
-                content: "You are a UAE real estate expert. Give a brief 2-3 sentence rental pricing insight. Be concise and data-driven."
-              },
-              {
-                role: "user",
-                content: `Property: ${property_type || "residential"} in ${emirate || "Dubai"}, ${area_sqft || "N/A"} sqft, ${bedrooms || "N/A"} bedrooms, ${furnishing || "unfurnished"}, community: ${community || "N/A"}. Based on ${rents.length} comparable leases, avg rent is AED ${avgRent.toFixed(0)}/mo (range: ${minRent}-${maxRent}). Suggested: AED ${suggestedRent}/mo. Give a brief market insight.`
-              }
-            ],
-            max_tokens: 150,
+            systemInstruction: {
+              parts: [{ text: "You are a UAE real estate expert. Give a brief 2-3 sentence rental pricing insight. Be concise and data-driven." }]
+            },
+            contents: [{
+              role: "user",
+              parts: [{ text: `Property: ${property_type || "residential"} in ${emirate || "Dubai"}, ${area_sqft || "N/A"} sqft, ${bedrooms || "N/A"} bedrooms, ${furnishing || "unfurnished"}, community: ${community || "N/A"}. Based on ${rents.length} comparable leases, avg rent is AED ${avgRent.toFixed(0)}/mo (range: ${minRent}-${maxRent}). Suggested: AED ${suggestedRent}/mo. Give a brief market insight.` }]
+            }],
+            generationConfig: {
+              maxOutputTokens: 150,
+            }
           }),
         });
 
         if (aiResponse.ok) {
           const aiData = await aiResponse.json();
-          aiInsight = aiData.choices?.[0]?.message?.content || "";
+          aiInsight = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
         }
       } catch (e) {
         console.error("AI insight error:", e);

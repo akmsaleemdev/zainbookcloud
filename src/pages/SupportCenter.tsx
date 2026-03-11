@@ -115,7 +115,7 @@ const SupportCenter = () => {
           if (jsonStr === "[DONE]") break;
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
+            const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             if (content) {
               assistantContent += content;
               setChatMessages(prev => {
@@ -140,7 +140,7 @@ const SupportCenter = () => {
           if (jsonStr === "[DONE]") continue;
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
+            const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             if (content) {
               assistantContent += content;
               setChatMessages(prev => {

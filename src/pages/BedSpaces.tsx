@@ -78,7 +78,18 @@ const BedSpaces = () => {
   const openCreate = () => { setForm({ bed_number: "", room_id: "", bed_type: "single", monthly_rent: "" }); setEditingId(null); setDialogOpen(true); };
   const openEdit = (b: any) => { setForm({ bed_number: b.bed_number, room_id: b.room_id, bed_type: b.bed_type, monthly_rent: b.monthly_rent ? String(b.monthly_rent) : "" }); setEditingId(b.id); setDialogOpen(true); };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.bed_number || !form.room_id) { toast.error("Bed number and room required"); return; } editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form); };
+  const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!form.bed_number || !form.room_id) { 
+      toast.error("Bed number and room required"); 
+      return; 
+    } 
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
 
   const filtered = bedSpaces.filter((b: any) => b.bed_number.toLowerCase().includes(search.toLowerCase()));
   if (!currentOrg) return <AppLayout><div className="glass-card p-12 text-center"><p className="text-muted-foreground">Please create an organization first.</p></div></AppLayout>;

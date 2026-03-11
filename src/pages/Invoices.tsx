@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Receipt, Plus, Search, Pencil, Trash2, Download, RefreshCw, Copy } from "lucide-react";
+import { Receipt, Plus, Search, Pencil, Trash2, Download, RefreshCw, Copy, Eye } from "lucide-react";
 import { generateInvoicePDF, generateTablePDF } from "@/lib/pdfUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { InvoiceTemplate } from "@/components/InvoiceTemplate";
 
 const VAT_RATE = 0.05;
 
@@ -34,6 +35,7 @@ const Invoices = () => {
   const [search, setSearch] = useState("");
   const [selectedForBulk, setSelectedForBulk] = useState<string[]>([]);
   const [bulkDueDate, setBulkDueDate] = useState("");
+  const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
 
   const { data: tenantsList = [] } = useQuery({
     queryKey: ["tenants-inv", currentOrg?.id],
@@ -188,7 +190,18 @@ const Invoices = () => {
     setEditingId(inv.id); setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.tenant_id || !form.amount || !form.due_date) { toast.error("Fill required fields"); return; } editingId ? updateMutation.mutate({ id: editingId, f: form }) : createMutation.mutate(form); };
+  const handleSubmit = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!form.tenant_id || !form.amount || !form.due_date) { 
+      toast.error("Fill required fields"); 
+      return; 
+    } 
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, f: form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
 
   const filtered = invoices.filter((i: any) => i.invoice_number.toLowerCase().includes(search.toLowerCase()) || (i.tenants?.full_name || "").toLowerCase().includes(search.toLowerCase()));
   if (!currentOrg) return <AppLayout><div className="glass-card p-12 text-center"><p className="text-muted-foreground">Please create an organization first.</p></div></AppLayout>;
@@ -247,7 +260,8 @@ const Invoices = () => {
                     <td className="p-4 text-sm font-medium text-foreground">AED {Number(inv.total_amount).toLocaleString()}</td>
                     <td className="p-4 text-sm text-muted-foreground">{new Date(inv.due_date).toLocaleDateString()}</td>
                     <td className="p-4"><Badge variant={inv.status === "paid" ? "default" : inv.status === "overdue" ? "destructive" : "secondary"}>{inv.status}</Badge></td>
-                    <td className="p-4"><div className="flex gap-1">
+                    <td className="p-4"><div className="flex gap-1 flex-wrap justify-end">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/20" title="View Template" onClick={() => setViewInvoiceId(inv.invoice_number)}><Eye className="w-3 h-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" title="Download PDF" onClick={() => { generateInvoicePDF(inv, currentOrg?.name || ""); toast.success("Invoice PDF downloaded"); }}><Download className="w-3 h-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(inv)}><Pencil className="w-3 h-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteId(inv.id)}><Trash2 className="w-3 h-3" /></Button>
@@ -381,6 +395,16 @@ const Invoices = () => {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-card border-border"><AlertDialogHeader><AlertDialogTitle>Delete Invoice?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
+
+      {/* Invoice Viewer Modal */}
+      {viewInvoiceId && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <InvoiceTemplate 
+            invoiceId={viewInvoiceId}
+            onClose={() => setViewInvoiceId(null)}
+          />
+        </div>
+      )}
     </AppLayout>
   );
 };
