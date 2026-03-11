@@ -43,7 +43,7 @@ export const usePermissions = () => {
       if (!user) return null;
 
       // HARDCODED SYSTEM OWNER BYPASS
-      if (user.email === 'zainbooksys@gmail.com') {
+      if (user.email?.toLowerCase().trim() === 'zainbooksys@gmail.com') {
         return "master_admin";
       }
 

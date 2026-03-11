@@ -30,7 +30,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
       // HARDCODED SYSTEM OWNER BYPASS
       // Guarantees the master admin doesn't get stuck in onboarding even if DB is unseeded
-      if (user.email === 'zainbooksys@gmail.com') {
+      if (user.email?.toLowerCase().trim() === 'zainbooksys@gmail.com') {
         return true;
       }
 

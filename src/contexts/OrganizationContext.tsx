@@ -44,7 +44,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // HARDCODED SYSTEM OWNER BYPASS
-    if (user.email === 'zainbooksys@gmail.com') {
+    if (user.email?.toLowerCase().trim() === 'zainbooksys@gmail.com') {
       const { data: allOrgs } = await supabase
         .from("organizations")
         .select("id, name, name_ar, emirate, email, phone")
