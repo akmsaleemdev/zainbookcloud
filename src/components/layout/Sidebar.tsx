@@ -6,8 +6,7 @@ import {
   MessageSquare, Bell, AlertTriangle, FileWarning, BarChart3,
   Brain, Zap, Settings, UserCircle, Calculator,
   ChevronLeft, ChevronRight, BookOpen, Landmark, Shield, Headphones, Link2, Crown, Car, Lock,
-  LayoutDashboard, Building2, Home, Layers, DoorOpen, BedDouble,
-  Users, FileText, Receipt, CreditCard, Wrench, Wifi, FolderOpen
+  Banknote, UserCheck, Clock, CalendarSync, Globe, ShieldCheck,
 } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
