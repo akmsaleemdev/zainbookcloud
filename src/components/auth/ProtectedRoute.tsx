@@ -22,18 +22,19 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     enabled: !!user,
   });
 
-  // Check if user is any kind of admin (super_admin or master_admin)
-  const { data: isAdmin, isLoading: checkingAdmin } = useQuery({
-    queryKey: ["is-admin-protected", user?.id],
+  // Check if super_admin using the SECURITY DEFINER RPC function (bypasses RLS)
+  const { data: isSuperAdmin, isLoading: checkingAdmin } = useQuery({
+    queryKey: ["is-super-admin-check", user?.id],
     queryFn: async () => {
       if (!user) return false;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .in("role", ["super_admin", "master_admin"])
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "super_admin",
+      });
+      if (error) {
+        console.error("has_role check failed:", error);
+        return false;
+      }
       return !!data;
     },
     enabled: !!user,
@@ -49,8 +50,13 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  // If user has no org and is not an admin, redirect to onboarding
-  if (!hasMembership && !isAdmin) {
+  // Super admins always go through — no org membership needed
+  if (isSuperAdmin) {
+    return <>{children}</>;
+  }
+
+  // Regular users without org membership → onboarding
+  if (!hasMembership) {
     return <Navigate to="/onboarding" replace />;
   }
 

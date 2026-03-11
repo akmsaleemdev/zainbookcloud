@@ -36,39 +36,29 @@ export const usePermissions = () => {
     enabled: !!user && !!currentOrg,
   });
 
-  // Also check if user is master_admin or super_admin via user_roles
-  const { data: globalRole } = useQuery({
-    queryKey: ["global-role", user?.id],
+  // Check if user is super_admin using SECURITY DEFINER RPC (bypasses RLS)
+  const { data: isSuperAdminResult } = useQuery({
+    queryKey: ["is-super-admin-perm", user?.id],
     queryFn: async () => {
-      if (!user) return null;
-
-      // Check for master_admin (Absolute Power) - direct table query for resilience
-      const { data: masterRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "master_admin")
-        .maybeSingle();
-      if (masterRole) return "master_admin";
-
-      // Check for super_admin (Regional Power) - direct table query for resilience
-      const { data: superRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "super_admin")
-        .maybeSingle();
-      if (superRole) return "super_admin";
-
-      return null;
+      if (!user) return false;
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "super_admin",
+      });
+      if (error) {
+        console.error("has_role check failed:", error);
+        return false;
+      }
+      return !!data;
     },
     enabled: !!user,
   });
 
-  const isMasterAdmin = globalRole === "master_admin";
-  const isSuperAdmin = isMasterAdmin || globalRole === "super_admin";
+  const isSuperAdmin = !!isSuperAdminResult;
+  // master_admin concept maps to super_admin in the database
+  const isMasterAdmin = isSuperAdmin;
 
-  const userRole = globalRole || membership?.role || null;
+  const userRole = isSuperAdmin ? "super_admin" : membership?.role || null;
 
   // Get role permissions
   const { data: permissions = [] } = useQuery({
@@ -107,7 +97,7 @@ export const usePermissions = () => {
   return {
     userRole,
     isMasterAdmin,
-    isSuperAdmin: !!isSuperAdmin,
+    isSuperAdmin,
     permissions,
     hasPermission,
     canAccessModule,

@@ -11,25 +11,38 @@ import { supabase } from "@/integrations/supabase/client";
 const PricingPage = () => {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
-  const { data: plans = [] } = useQuery({
+  // Hardcoded fallback plans — used when DB RLS blocks anonymous access
+  const fallbackPlans = [
+    { id: "trial", name: "Free Trial", description: "Try all features free for 14 days", plan_type: "trial", price: 0, max_users: 2, max_units: 10, max_properties: 2, max_storage_gb: 1, max_api_calls: 1000, ai_usage_limit: 10, ai_features_access: true, report_access: false, trial_days: 14, is_featured: false, is_active: true, sort_order: 1 },
+    { id: "starter", name: "Starter", description: "Perfect for small property managers", plan_type: "monthly", price: 199, max_users: 5, max_units: 50, max_properties: 5, max_storage_gb: 5, max_api_calls: 5000, ai_usage_limit: 50, ai_features_access: true, report_access: true, trial_days: 0, is_featured: false, is_active: true, sort_order: 2 },
+    { id: "professional", name: "Professional", description: "For growing property businesses", plan_type: "monthly", price: 499, max_users: 20, max_units: 200, max_properties: 20, max_storage_gb: 25, max_api_calls: 25000, ai_usage_limit: 200, ai_features_access: true, report_access: true, trial_days: 0, is_featured: true, is_active: true, sort_order: 3 },
+    { id: "enterprise", name: "Enterprise", description: "Unlimited everything for large teams", plan_type: "monthly", price: 999, max_users: -1, max_units: -1, max_properties: -1, max_storage_gb: -1, max_api_calls: -1, ai_usage_limit: -1, ai_features_access: true, report_access: true, trial_days: 0, is_featured: false, is_active: true, sort_order: 4 },
+  ];
+
+  const { data: dbPlans = [] } = useQuery({
     queryKey: ["website-plans"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("subscription_plans")
         .select("*")
         .eq("is_active", true)
         .order("sort_order");
+      if (error) console.warn("Plans query error (RLS):", error.message);
       return data || [];
     },
   });
 
+  // Use DB plans if available, otherwise fallback
+  const plans = dbPlans.length > 0 ? dbPlans : fallbackPlans;
+
   const { data: planModules = [] } = useQuery({
     queryKey: ["website-plan-modules"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("plan_modules")
         .select("*, platform_modules(name, slug, category)")
         .eq("is_included", true);
+      if (error) console.warn("Plan modules query error (RLS):", error.message);
       return data || [];
     },
   });
@@ -37,11 +50,12 @@ const PricingPage = () => {
   const { data: modules = [] } = useQuery({
     queryKey: ["website-modules"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("platform_modules")
         .select("*")
         .eq("is_active", true)
         .order("sort_order");
+      if (error) console.warn("Modules query error (RLS):", error.message);
       return data || [];
     },
   });
