@@ -22,20 +22,31 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     enabled: !!user,
   });
 
-  // Check if super_admin using the SECURITY DEFINER RPC function (bypasses RLS)
-  const { data: isSuperAdmin, isLoading: checkingAdmin } = useQuery({
-    queryKey: ["is-super-admin-check", user?.id],
+  // Check if user is ANY admin type using SECURITY DEFINER RPCs (bypasses RLS)
+  const { data: isAdmin, isLoading: checkingAdmin } = useQuery({
+    queryKey: ["is-any-admin-check", user?.id],
     queryFn: async () => {
       if (!user) return false;
-      const { data, error } = await supabase.rpc("has_role", {
+
+      // Check super_admin
+      const { data: isSuperAdmin } = await supabase.rpc("has_role", {
         _user_id: user.id,
         _role: "super_admin",
       });
-      if (error) {
-        console.error("has_role check failed:", error);
-        return false;
+      if (isSuperAdmin) return true;
+
+      // Check master_admin (added to enum via ALTER TYPE)
+      try {
+        const { data: isMasterAdmin } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "master_admin",
+        });
+        if (isMasterAdmin) return true;
+      } catch {
+        // master_admin may not exist in enum yet — that's fine
       }
-      return !!data;
+
+      return false;
     },
     enabled: !!user,
   });
@@ -50,8 +61,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Super admins always go through — no org membership needed
-  if (isSuperAdmin) {
+  // Any admin type bypasses org membership requirement
+  if (isAdmin) {
     return <>{children}</>;
   }
 

@@ -36,35 +36,47 @@ export const usePermissions = () => {
     enabled: !!user && !!currentOrg,
   });
 
-  // Check if user is super_admin using SECURITY DEFINER RPC (bypasses RLS)
-  const { data: isSuperAdminResult } = useQuery({
-    queryKey: ["is-super-admin-perm", user?.id],
+  // Check if user is ANY admin type using SECURITY DEFINER RPCs
+  const { data: adminRole } = useQuery({
+    queryKey: ["admin-role-check", user?.id],
     queryFn: async () => {
-      if (!user) return false;
-      const { data, error } = await supabase.rpc("has_role", {
+      if (!user) return null;
+
+      // Check super_admin first
+      const { data: isSuperAdmin } = await supabase.rpc("has_role", {
         _user_id: user.id,
         _role: "super_admin",
       });
-      if (error) {
-        console.error("has_role check failed:", error);
-        return false;
+      if (isSuperAdmin) return "super_admin";
+
+      // Check master_admin
+      try {
+        const { data: isMasterAdmin } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "master_admin",
+        });
+        if (isMasterAdmin) return "master_admin";
+      } catch {
+        // master_admin may not be in enum
       }
-      return !!data;
+
+      return null;
     },
     enabled: !!user,
   });
 
-  const isSuperAdmin = !!isSuperAdminResult;
-  // master_admin concept maps to super_admin in the database
-  const isMasterAdmin = isSuperAdmin;
+  const isMasterAdmin = adminRole === "master_admin";
+  const isSuperAdmin = adminRole === "super_admin" || adminRole === "master_admin";
 
-  const userRole = isSuperAdmin ? "super_admin" : membership?.role || null;
+  const userRole = adminRole || membership?.role || null;
 
   // Get role permissions
   const { data: permissions = [] } = useQuery({
     queryKey: ["role-permissions", userRole],
     queryFn: async () => {
       if (!userRole) return [];
+      // For admin roles, skip permission table (they have full access anyway)
+      if (userRole === "super_admin" || userRole === "master_admin") return [];
       const { data } = await supabase
         .from("role_permissions")
         .select("*")
