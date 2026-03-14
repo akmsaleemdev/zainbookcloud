@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building, Plus, Search, Filter, Pencil, Trash2, MapPin, Mail, Phone, MoreHorizontal, Globe, DollarSign, Upload, X } from "lucide-react";
+import { Building, Plus, Search, Pencil, Trash2, MapPin, Mail, Phone, Globe, DollarSign, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -39,10 +40,15 @@ interface OrgForm {
   logo_url: string;
 }
 
-const emptyForm: OrgForm = { name: "", name_ar: "", trade_license: "", email: "", phone: "", address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5", currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai", logo_url: "" };
+const emptyForm: OrgForm = {
+  name: "", name_ar: "", trade_license: "", email: "", phone: "",
+  address: "", emirate: "", vat_number: "", vat_enabled: true, vat_rate: "5",
+  currency: "AED", language: "en", country: "UAE", timezone: "Asia/Dubai", logo_url: "",
+};
 
 const Organizations = () => {
   const { user } = useAuth();
+  const { isMasterAdmin } = usePermissions();
   const { refetch: refetchContext } = useOrganization();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -51,12 +57,10 @@ const Organizations = () => {
   const [form, setForm] = useState<OrgForm>(emptyForm);
   const [search, setSearch] = useState("");
 
-  const { isMasterAdmin } = usePermissions();
   const { data: orgs = [], isLoading } = useQuery({
     queryKey: ["organizations", isMasterAdmin],
     queryFn: async () => {
       if (isMasterAdmin) {
-        // Master admins see ALL organizations in the system
         const { data, error } = await supabase
           .from("organizations")
           .select("*")
@@ -65,7 +69,6 @@ const Organizations = () => {
         return data || [];
       }
 
-      // Get org IDs the user is a member of
       const { data: memberships } = await supabase
         .from("organization_members")
         .select("organization_id")
@@ -76,7 +79,7 @@ const Organizations = () => {
       const { data, error } = await supabase
         .from("organizations")
         .select("*")
-        .in("id", memberships.map(m => m.organization_id))
+        .in("id", memberships.map((m) => m.organization_id))
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -146,9 +149,11 @@ const Organizations = () => {
   const openEdit = (org: any) => {
     setForm({
       name: org.name, name_ar: org.name_ar || "", trade_license: org.trade_license || "",
-      email: org.email || "", phone: org.phone || "", address: org.address || "", emirate: org.emirate || "",
-      vat_number: org.vat_number || "", vat_enabled: org.vat_enabled !== false, vat_rate: String(org.vat_rate || 5),
-      currency: org.currency || "AED", language: org.language || "en", country: org.country || "UAE", timezone: org.timezone || "Asia/Dubai",
+      email: org.email || "", phone: org.phone || "", address: org.address || "",
+      emirate: org.emirate || "", vat_number: org.vat_number || "",
+      vat_enabled: org.vat_enabled !== false, vat_rate: String(org.vat_rate || 5),
+      currency: org.currency || "AED", language: org.language || "en",
+      country: org.country || "UAE", timezone: org.timezone || "Asia/Dubai",
       logo_url: org.logo_url || "",
     });
     setEditingId(org.id);
@@ -177,25 +182,38 @@ const Organizations = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="page-header">Organizations</h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage your organizations and companies</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isMasterAdmin ? "All organizations on the platform" : "Manage your organizations and companies"}
+            </p>
           </div>
-          <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Add Organization</Button>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="w-4 h-4" /> Add Organization
+          </Button>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search organizations..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" />
+            <Input
+              placeholder="Search organizations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 bg-secondary/50 border-border/50"
+            />
           </div>
         </div>
 
         {isLoading ? (
-          <div className="glass-card p-12 text-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div>
+          <div className="glass-card p-12 text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="glass-card p-12 text-center">
             <Building className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No organizations yet. Create your first organization to get started.</p>
-            <Button onClick={openCreate} className="mt-4 gap-2"><Plus className="w-4 h-4" /> Create Organization</Button>
+            <p className="text-muted-foreground">No organizations found.</p>
+            <Button onClick={openCreate} className="mt-4 gap-2">
+              <Plus className="w-4 h-4" /> Create Organization
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -210,10 +228,18 @@ const Organizations = () => {
                     )}
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(org)}>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => openEdit(org)}
+                    >
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(org.id)}>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteId(org.id)}
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
@@ -221,15 +247,35 @@ const Organizations = () => {
                 <h3 className="font-semibold text-foreground">{org.name}</h3>
                 {org.name_ar && <p className="text-sm text-muted-foreground" dir="rtl">{org.name_ar}</p>}
                 <div className="space-y-1 mt-3">
-                  {org.emirate && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="w-3 h-3" />{org.emirate}</div>}
-                  {org.email && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Mail className="w-3 h-3" />{org.email}</div>}
-                  {org.phone && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="w-3 h-3" />{org.phone}</div>}
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><DollarSign className="w-3 h-3" />{org.currency || "AED"}</div>
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Globe className="w-3 h-3" />{org.country || "UAE"} • {org.timezone || "Asia/Dubai"}</div>
+                  {org.emirate && (
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <MapPin className="w-3 h-3" />{org.emirate}
+                    </div>
+                  )}
+                  {org.email && (
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Mail className="w-3 h-3" />{org.email}
+                    </div>
+                  )}
+                  {org.phone && (
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Phone className="w-3 h-3" />{org.phone}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <DollarSign className="w-3 h-3" />{org.currency || "AED"}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Globe className="w-3 h-3" />{org.country || "UAE"} • {org.timezone || "Asia/Dubai"}
+                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
-                  {org.trade_license && <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>}
-                  <span className="text-xs text-muted-foreground">VAT: {org.vat_enabled !== false ? `${org.vat_rate || 5}%` : "Disabled"}</span>
+                  {org.trade_license && (
+                    <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    VAT: {org.vat_enabled !== false ? `${org.vat_rate || 5}%` : "Disabled"}
+                  </span>
                 </div>
               </div>
             ))}
@@ -237,19 +283,26 @@ const Organizations = () => {
         )}
       </motion.div>
 
-      {/* Create/Edit Dialog */}
+      {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Logo Upload */}
+
+            {/* Logo */}
             <div className="space-y-2">
               <Label>Company Logo</Label>
               <div className="flex items-center gap-4">
                 {form.logo_url ? (
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
                     <img src={form.logo_url} alt="Logo" className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => setForm({ ...form, logo_url: "" })} className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, logo_url: "" })}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                    >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -266,7 +319,7 @@ const Organizations = () => {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const ext = file.name.split('.').pop();
+                      const ext = file.name.split(".").pop();
                       const path = `logos/${Date.now()}.${ext}`;
                       const { error } = await supabase.storage.from("documents").upload(path, file);
                       if (error) { toast.error("Upload failed"); return; }
@@ -289,6 +342,7 @@ const Organizations = () => {
                 <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} placeholder="اسم الشركة" dir="rtl" />
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Trade License</Label>
@@ -304,6 +358,7 @@ const Organizations = () => {
                 </Select>
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Email</Label>
@@ -314,13 +369,14 @@ const Organizations = () => {
                 <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+971 XX XXX XXXX" />
               </div>
             </div>
+
             <div className="space-y-2">
               <Label>Address</Label>
               <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Full address" />
             </div>
 
-            {/* Advanced Settings */}
-            <div className="border-t border-border/30 pt-4 mt-2">
+            {/* VAT Settings */}
+            <div className="border-t border-border/30 pt-4">
               <p className="text-sm font-medium text-foreground mb-3">Business Settings</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -332,13 +388,14 @@ const Organizations = () => {
                   <Input type="number" value={form.vat_rate} onChange={(e) => setForm({ ...form, vat_rate: e.target.value })} />
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center justify-between mt-3 p-3 rounded-lg bg-secondary/20">
                 <Label>Enable VAT</Label>
                 <Switch checked={form.vat_enabled} onCheckedChange={(v) => setForm({ ...form, vat_enabled: v })} />
               </div>
             </div>
 
-            <div className="border-t border-border/30 pt-4 mt-2">
+            {/* Regional Settings */}
+            <div className="border-t border-border/30 pt-4">
               <p className="text-sm font-medium text-foreground mb-3">Regional Settings</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -371,10 +428,13 @@ const Organizations = () => {
                 </div>
               </div>
             </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                {createMutation.isPending || updateMutation.isPending ? "Saving..." : editingId ? "Update" : "Create"}
+                {createMutation.isPending || updateMutation.isPending
+                  ? "Saving..."
+                  : editingId ? "Update" : "Create"}
               </Button>
             </DialogFooter>
           </form>
@@ -386,11 +446,16 @@ const Organizations = () => {
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Organization?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete the organization and all associated data. This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>
+              This will permanently delete the organization and all associated data. This action cannot be undone.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
