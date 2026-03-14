@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useMasterAdmin } from "@/hooks/useMasterAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,16 @@ const Onboarding = () => {
   const [searchParams] = useSearchParams();
   const preselectedPlanId = searchParams.get("plan");
 
+  // ── MASTER ADMIN REDIRECT ────────────────────────────────────
+  // Must be at the top — before any other logic
+  const { isMasterAdmin, loading: adminLoading } = useMasterAdmin();
+
+  useEffect(() => {
+    if (!adminLoading && isMasterAdmin) {
+      navigate("/master-admin", { replace: true });
+    }
+  }, [isMasterAdmin, adminLoading, navigate]);
+
   const [step, setStep] = useState<Step>("plan");
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(preselectedPlanId);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
@@ -32,7 +43,7 @@ const Onboarding = () => {
   const [orgEmail, setOrgEmail] = useState("");
   const [orgPhone, setOrgPhone] = useState("");
 
-  // Check if user already has an org — redirect to dashboard
+  // Check if normal user already has an org — redirect to dashboard
   const { data: existingOrg, isLoading: checkingOrg } = useQuery({
     queryKey: ["onboarding-check-org", user?.id],
     queryFn: async () => {
@@ -45,7 +56,8 @@ const Onboarding = () => {
         .maybeSingle();
       return data;
     },
-    enabled: !!user,
+    // Only run for confirmed non-admin users
+    enabled: !!user && !adminLoading && !isMasterAdmin,
   });
 
   useEffect(() => {
@@ -71,9 +83,9 @@ const Onboarding = () => {
         .order("sort_order");
       return data || [];
     },
+    enabled: !isMasterAdmin,
   });
 
-  // Set preselected plan
   useEffect(() => {
     if (preselectedPlanId && plans.length > 0) {
       setSelectedPlanId(preselectedPlanId);
@@ -89,12 +101,12 @@ const Onboarding = () => {
         .eq("is_included", true);
       return data || [];
     },
+    enabled: !isMasterAdmin,
   });
 
   const createOrgMutation = useMutation({
     mutationFn: async () => {
       if (!user || !selectedPlanId) throw new Error("Missing user or plan");
-
       const { data, error } = await supabase.rpc("onboard_organization", {
         _user_id: user.id,
         _org_name: orgName,
@@ -105,7 +117,6 @@ const Onboarding = () => {
         _plan_id: selectedPlanId,
         _billing_cycle: billingCycle,
       });
-
       if (error) throw error;
       return data;
     },
@@ -119,6 +130,15 @@ const Onboarding = () => {
 
   const selectedPlan = plans.find((p: any) => p.id === selectedPlanId);
   const planIcon = [Shield, Zap, Crown, Building2];
+
+  // Show spinner while checking admin status or if master admin (redirect in progress)
+  if (adminLoading || isMasterAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (checkingOrg) {
     return (
@@ -188,7 +208,6 @@ const Onboarding = () => {
                 <p className="text-muted-foreground mt-1">Start with a free trial or pick the plan that fits your needs.</p>
               </div>
 
-              {/* Billing toggle */}
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setBillingCycle("monthly")}
@@ -213,7 +232,6 @@ const Onboarding = () => {
                   const Icon = planIcon[i % planIcon.length];
                   const isSelected = selectedPlanId === plan.id;
                   const price = plan.price === 0 ? "Free" : `AED ${(plan.price * (billingCycle === "yearly" ? 10 : 1)).toLocaleString()}`;
-
                   return (
                     <Card
                       key={plan.id}
@@ -263,12 +281,7 @@ const Onboarding = () => {
               </div>
 
               <div className="flex justify-end">
-                <Button
-                  onClick={() => setStep("organization")}
-                  disabled={!selectedPlanId}
-                  className="gap-2"
-                  size="lg"
-                >
+                <Button onClick={() => setStep("organization")} disabled={!selectedPlanId} className="gap-2" size="lg">
                   Continue <ArrowRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -285,81 +298,44 @@ const Onboarding = () => {
             >
               <div>
                 <h2 className="text-2xl font-bold text-foreground">Create Your Workspace</h2>
-                <p className="text-muted-foreground mt-1">
-                  Set up your organization to start managing properties.
-                </p>
+                <p className="text-muted-foreground mt-1">Set up your organization to start managing properties.</p>
               </div>
 
               {selectedPlan && (
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
                   <Crown className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {(selectedPlan as any).name} Plan
-                    </p>
+                    <p className="text-sm font-medium text-foreground">{(selectedPlan as any).name} Plan</p>
                     <p className="text-xs text-muted-foreground">
                       {(selectedPlan as any).price === 0
                         ? `${(selectedPlan as any).trial_days || 14}-day free trial`
                         : `AED ${((selectedPlan as any).price * (billingCycle === "yearly" ? 10 : 1)).toLocaleString()}/${billingCycle === "yearly" ? "yr" : "mo"}`}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setStep("plan")}
-                    className="ml-auto text-xs text-primary hover:underline"
-                  >
-                    Change
-                  </button>
+                  <button onClick={() => setStep("plan")} className="ml-auto text-xs text-primary hover:underline">Change</button>
                 </div>
               )}
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Organization Name *</Label>
-                  <Input
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="e.g. Al Fattan Properties LLC"
-                    className="h-11 bg-secondary/50 border-border/30"
-                    required
-                  />
+                  <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="e.g. Al Fattan Properties LLC" className="h-11 bg-secondary/50 border-border/30" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Organization Name (Arabic)</Label>
-                  <Input
-                    value={orgNameAr}
-                    onChange={(e) => setOrgNameAr(e.target.value)}
-                    placeholder="الاسم بالعربي"
-                    className="h-11 bg-secondary/50 border-border/30"
-                    dir="rtl"
-                  />
+                  <Input value={orgNameAr} onChange={(e) => setOrgNameAr(e.target.value)} placeholder="الاسم بالعربي" className="h-11 bg-secondary/50 border-border/30" dir="rtl" />
                 </div>
                 <div className="space-y-2">
                   <Label>Email *</Label>
-                  <Input
-                    type="email"
-                    value={orgEmail}
-                    onChange={(e) => setOrgEmail(e.target.value)}
-                    placeholder="contact@company.com"
-                    className="h-11 bg-secondary/50 border-border/30"
-                    required
-                  />
+                  <Input type="email" value={orgEmail} onChange={(e) => setOrgEmail(e.target.value)} placeholder="contact@company.com" className="h-11 bg-secondary/50 border-border/30" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Phone</Label>
-                  <Input
-                    value={orgPhone}
-                    onChange={(e) => setOrgPhone(e.target.value)}
-                    placeholder="+971 50 123 4567"
-                    className="h-11 bg-secondary/50 border-border/30"
-                  />
+                  <Input value={orgPhone} onChange={(e) => setOrgPhone(e.target.value)} placeholder="+971 50 123 4567" className="h-11 bg-secondary/50 border-border/30" />
                 </div>
                 <div className="space-y-2">
                   <Label>Emirate *</Label>
-                  <select
-                    value={emirate}
-                    onChange={(e) => setEmirate(e.target.value)}
-                    className="w-full h-11 rounded-md border border-border/30 bg-secondary/50 px-3 text-sm text-foreground"
-                  >
+                  <select value={emirate} onChange={(e) => setEmirate(e.target.value)} className="w-full h-11 rounded-md border border-border/30 bg-secondary/50 px-3 text-sm text-foreground">
                     {["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain"].map((e) => (
                       <option key={e} value={e}>{e}</option>
                     ))}
@@ -371,20 +347,11 @@ const Onboarding = () => {
                 <Button variant="ghost" onClick={() => setStep("plan")} className="gap-2">
                   <ArrowLeft className="w-4 h-4" /> Back
                 </Button>
-                <Button
-                  onClick={() => createOrgMutation.mutate()}
-                  disabled={!orgName.trim() || !orgEmail.trim() || createOrgMutation.isPending}
-                  className="gap-2"
-                  size="lg"
-                >
+                <Button onClick={() => createOrgMutation.mutate()} disabled={!orgName.trim() || !orgEmail.trim() || createOrgMutation.isPending} className="gap-2" size="lg">
                   {createOrgMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Creating...
-                    </>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</>
                   ) : (
-                    <>
-                      Create Workspace <ArrowRight className="w-4 h-4" />
-                    </>
+                    <>Create Workspace <ArrowRight className="w-4 h-4" /></>
                   )}
                 </Button>
               </div>
@@ -392,12 +359,7 @@ const Onboarding = () => {
           )}
 
           {step === "complete" && (
-            <motion.div
-              key="complete"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-16 space-y-6"
-            >
+            <motion.div key="complete" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16 space-y-6">
               <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-10 h-10 text-primary" />
               </div>
@@ -408,14 +370,7 @@ const Onboarding = () => {
                   <strong>{(selectedPlan as any)?.name}</strong> plan.
                 </p>
               </div>
-              <Button
-                size="lg"
-                className="gap-2"
-                onClick={() => {
-                  // Force refetch org context
-                  window.location.href = "/dashboard";
-                }}
-              >
+              <Button size="lg" className="gap-2" onClick={() => { window.location.href = "/dashboard"; }}>
                 Go to Dashboard <ArrowRight className="w-4 h-4" />
               </Button>
             </motion.div>
