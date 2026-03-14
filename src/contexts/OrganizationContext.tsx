@@ -1,6 +1,13 @@
+// src/contexts/OrganizationContext.tsx
+// FIX: Master admin with no organizations no longer gets stuck.
+// isMasterAdminEmail check is synchronous — sets loading=false immediately
+// so ModuleGuard and ProtectedRoute never see orgLoading=true for long.
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+
+const MASTER_ADMIN_EMAIL = "zainbooksys@gmail.com";
 
 interface Organization {
   id: string;
@@ -17,14 +24,16 @@ interface OrgContextType {
   setCurrentOrg: (org: Organization | null) => void;
   loading: boolean;
   refetch: () => void;
+  isMasterAdminContext: boolean;
 }
 
 const OrgContext = createContext<OrgContextType>({
   organizations: [],
   currentOrg: null,
-  setCurrentOrg: () => { },
+  setCurrentOrg: () => {},
   loading: true,
-  refetch: () => { },
+  refetch: () => {},
+  isMasterAdminContext: false,
 });
 
 export const useOrganization = () => useContext(OrgContext);
@@ -35,6 +44,11 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Synchronous email check — known before any DB query
+  const isMasterAdminEmail =
+    !!user?.email &&
+    user.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
+
   const fetchOrgs = async () => {
     if (!user) {
       setOrganizations([]);
@@ -43,78 +57,105 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // HARDCODED SYSTEM OWNER BYPASS
-    if (user.email?.toLowerCase().trim() === 'zainbooksys@gmail.com') {
+    // ── MASTER ADMIN (email match) ──────────────────────────
+    if (isMasterAdminEmail) {
       const { data: allOrgs } = await supabase
         .from("organizations")
         .select("id, name, name_ar, emirate, email, phone")
         .order("name");
 
-      if (allOrgs) {
-        setOrganizations(allOrgs);
-        if (!currentOrg || !allOrgs.find((o) => o.id === currentOrg?.id)) {
-          setCurrentOrg(allOrgs[0] || null);
-        }
-      }
+      const orgs = allOrgs || [];
+      setOrganizations(orgs);
+
+      // Master admin: set first org if available, but null is also fine
+      // ModuleGuard will NOT redirect to /onboarding for master admin
+      // regardless of whether currentOrg is null
+      setCurrentOrg((prev) => {
+        if (prev && orgs.find((o) => o.id === prev.id)) return prev;
+        return orgs[0] || null;
+      });
       setLoading(false);
       return;
     }
 
-    // Check if user is super_admin (which replaced master_admin in DB enum)
-    const { data: isSuperAdmin } = await supabase.rpc("has_role", {
-      _user_id: user.id,
-      _role: "super_admin"
-    });
+    // ── Check super_admin or master_admin role via RPC ──────
+    let isAdminRole = false;
+    try {
+      const { data: isSuperAdmin } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "super_admin",
+      });
+      if (isSuperAdmin) isAdminRole = true;
+    } catch {}
 
-    const isMaster = !!isSuperAdmin;
+    if (!isAdminRole) {
+      try {
+        const { data: isMasterAdmin } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "master_admin",
+        });
+        if (isMasterAdmin) isAdminRole = true;
+      } catch {}
+    }
 
-    if (isMaster) {
+    if (isAdminRole) {
       const { data: allOrgs } = await supabase
         .from("organizations")
         .select("id, name, name_ar, emirate, email, phone")
         .order("name");
-
-      if (allOrgs) {
-        setOrganizations(allOrgs);
-        if (!currentOrg || !allOrgs.find((o) => o.id === currentOrg.id)) {
-          setCurrentOrg(allOrgs[0] || null);
-        }
-      }
-    } else {
-      // Normal flow: only show memberships
-      const { data: memberships } = await supabase
-        .from("organization_members")
-        .select("organization_id")
-        .eq("user_id", user.id);
-
-      if (memberships && memberships.length > 0) {
-        const orgIds = memberships.map((m) => m.organization_id);
-        const { data: orgs } = await supabase
-          .from("organizations")
-          .select("id, name, name_ar, emirate, email, phone")
-          .in("id", orgIds)
-          .order("name");
-
-        if (orgs) {
-          setOrganizations(orgs);
-          if (!currentOrg || !orgs.find((o) => o.id === currentOrg.id)) {
-            setCurrentOrg(orgs[0] || null);
-          }
-        }
-      } else {
-        setOrganizations([]);
-        setCurrentOrg(null);
-      }
+      const orgs = allOrgs || [];
+      setOrganizations(orgs);
+      setCurrentOrg((prev) => {
+        if (prev && orgs.find((o) => o.id === prev.id)) return prev;
+        return orgs[0] || null;
+      });
+      setLoading(false);
+      return;
     }
+
+    // ── Normal org user ─────────────────────────────────────
+    const { data: memberships } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id);
+
+    if (memberships && memberships.length > 0) {
+      const orgIds = memberships.map((m) => m.organization_id);
+      const { data: orgs } = await supabase
+        .from("organizations")
+        .select("id, name, name_ar, emirate, email, phone")
+        .in("id", orgIds)
+        .order("name");
+
+      const orgList = orgs || [];
+      setOrganizations(orgList);
+      setCurrentOrg((prev) => {
+        if (prev && orgList.find((o) => o.id === prev.id)) return prev;
+        return orgList[0] || null;
+      });
+    } else {
+      setOrganizations([]);
+      setCurrentOrg(null);
+    }
+
     setLoading(false);
   };
 
   useEffect(() => {
     fetchOrgs();
-  }, [user]);
+  }, [user?.id]);
 
   return (
-    <OrgContext.Provider value={{ organizations, currentOrg, setCurrentOrg, loading, refetch: fetchOrgs }}>
+    <OrgContext.Provider
+      value={{
+        organizations,
+        currentOrg,
+        setCurrentOrg,
+        loading,
+        refetch: fetchOrgs,
+        isMasterAdminContext: isMasterAdminEmail,
+      }}
+    >
       {children}
     </OrgContext.Provider>
   );
