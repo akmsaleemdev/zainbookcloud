@@ -1,9 +1,20 @@
+// src/hooks/usePermissions.ts
+// FIXED:
+//   1. loading state is now stable — never flickers to false before adminRole resolves
+//   2. Master admin email hardcode returns instantly (synchronous)
+//   3. isSuperAdmin = true for both master_admin AND super_admin roles
+//   4. canAccessModule always returns true for master admin
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
-export type Permission = "can_create" | "can_read" | "can_update" | "can_delete" | "can_approve" | "can_export" | "can_manage";
+const MASTER_ADMIN_EMAIL = "zainbooksys@gmail.com";
+
+export type Permission =
+  | "can_create" | "can_read" | "can_update" | "can_delete"
+  | "can_approve" | "can_export" | "can_manage";
 
 interface RolePermission {
   module_slug: string;
@@ -17,10 +28,50 @@ interface RolePermission {
 }
 
 export const usePermissions = () => {
-  const { user } = useAuth();
+  const { user }       = useAuth();
   const { currentOrg } = useOrganization();
 
-  // Get user's role in current org
+  // Synchronous email check — instant, no DB needed
+  const isEmailMasterAdmin =
+    !!user?.email &&
+    user.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
+
+  // Admin role check via RPC — skipped if email already matches
+  const { data: adminRole, isLoading: adminRoleLoading } = useQuery({
+    queryKey: ["admin-role-check", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+
+      // Email match = instant master_admin, skip DB
+      if (isEmailMasterAdmin) return "master_admin";
+
+      // Check master_admin role
+      try {
+        const { data: isMaster } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "master_admin",
+        });
+        if (isMaster) return "master_admin";
+      } catch { /* enum may not exist yet */ }
+
+      // Check super_admin role
+      try {
+        const { data: isSuper } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "super_admin",
+        });
+        if (isSuper) return "super_admin";
+      } catch { /* ignore */ }
+
+      return null;
+    },
+    enabled: !!user,
+    staleTime: Infinity,   // role doesn't change mid-session
+    gcTime: Infinity,
+    retry: 1,
+  });
+
+  // Org membership role (for non-admin users)
   const { data: membership } = useQuery({
     queryKey: ["user-membership", user?.id, currentOrg?.id],
     queryFn: async () => {
@@ -33,54 +84,21 @@ export const usePermissions = () => {
         .maybeSingle();
       return data;
     },
-    enabled: !!user && !!currentOrg,
+    enabled: !!user && !!currentOrg && !isEmailMasterAdmin,
   });
 
-  // Check if user is ANY admin type using SECURITY DEFINER RPCs
-  const { data: adminRole } = useQuery({
-    queryKey: ["admin-role-check", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
+  // If email matches, we know instantly — no loading needed
+  const effectiveAdminRole = isEmailMasterAdmin ? "master_admin" : adminRole;
 
-      // HARDCODED SYSTEM OWNER BYPASS
-      if (user.email?.toLowerCase().trim() === 'zainbooksys@gmail.com') {
-        return "master_admin";
-      }
+  const isMasterAdmin = effectiveAdminRole === "master_admin";
+  const isSuperAdmin  = effectiveAdminRole === "super_admin" || effectiveAdminRole === "master_admin";
+  const userRole      = effectiveAdminRole || membership?.role || null;
 
-      // Check super_admin first
-      const { data: isSuperAdmin } = await supabase.rpc("has_role", {
-        _user_id: user.id,
-        _role: "super_admin",
-      });
-      if (isSuperAdmin) return "super_admin";
-
-      // Check master_admin
-      try {
-        const { data: isMasterAdmin } = await supabase.rpc("has_role", {
-          _user_id: user.id,
-          _role: "master_admin",
-        });
-        if (isMasterAdmin) return "master_admin";
-      } catch {
-        // master_admin may not be in enum
-      }
-
-      return null;
-    },
-    enabled: !!user,
-  });
-
-  const isMasterAdmin = adminRole === "master_admin";
-  const isSuperAdmin = adminRole === "super_admin" || adminRole === "master_admin";
-
-  const userRole = adminRole || membership?.role || null;
-
-  // Get role permissions
+  // Role permissions (skipped for admins — they have full access)
   const { data: permissions = [] } = useQuery({
     queryKey: ["role-permissions", userRole],
     queryFn: async () => {
       if (!userRole) return [];
-      // For admin roles, skip permission table (they have full access anyway)
       if (userRole === "super_admin" || userRole === "master_admin") return [];
       const { data } = await supabase
         .from("role_permissions")
@@ -88,7 +106,7 @@ export const usePermissions = () => {
         .eq("role", userRole);
       return (data || []) as RolePermission[];
     },
-    enabled: !!userRole,
+    enabled: !!userRole && !isSuperAdmin,
   });
 
   const hasPermission = (moduleSlug: string, permission: Permission): boolean => {
@@ -106,10 +124,17 @@ export const usePermissions = () => {
 
   const getModulePermissions = (moduleSlug: string) => {
     if (isSuperAdmin) {
-      return { can_create: true, can_read: true, can_update: true, can_delete: true, can_approve: true, can_export: true, can_manage: true };
+      return {
+        can_create: true, can_read: true, can_update: true,
+        can_delete: true, can_approve: true, can_export: true, can_manage: true,
+      };
     }
     return permissions.find((p) => p.module_slug === moduleSlug) || null;
   };
+
+  // FIXED loading: only true when admin check is still in-flight AND email didn't match
+  // If email matches → loading is always false (we know instantly)
+  const loading = !isEmailMasterAdmin && adminRoleLoading && !effectiveAdminRole && !!user;
 
   return {
     userRole,
@@ -119,6 +144,6 @@ export const usePermissions = () => {
     hasPermission,
     canAccessModule,
     getModulePermissions,
-    loading: !userRole && !!user,
+    loading,
   };
 };
