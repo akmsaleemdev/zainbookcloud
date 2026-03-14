@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useMasterAdmin } from "@/hooks/useMasterAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Building, Plus, Search, Pencil, Trash2, MapPin, Mail, Phone, Globe, DollarSign, X } from "lucide-react";
@@ -16,28 +17,17 @@ import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-const EMIRATES = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Umm Al Quwain", "Fujairah"];
+const EMIRATES  = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Umm Al Quwain", "Fujairah"];
 const CURRENCIES = ["AED", "USD", "EUR", "GBP", "SAR", "QAR", "BHD", "KWD", "OMR"];
-const LANGUAGES = [{ value: "en", label: "English" }, { value: "ar", label: "Arabic" }];
-const COUNTRIES = ["UAE", "Saudi Arabia", "Qatar", "Bahrain", "Kuwait", "Oman", "Egypt", "Jordan"];
-const TIMEZONES = ["Asia/Dubai", "Asia/Riyadh", "Asia/Qatar", "Asia/Bahrain", "Asia/Kuwait", "Asia/Muscat", "Africa/Cairo"];
+const LANGUAGES  = [{ value: "en", label: "English" }, { value: "ar", label: "Arabic" }];
+const COUNTRIES  = ["UAE", "Saudi Arabia", "Qatar", "Bahrain", "Kuwait", "Oman", "Egypt", "Jordan"];
+const TIMEZONES  = ["Asia/Dubai", "Asia/Riyadh", "Asia/Qatar", "Asia/Bahrain", "Asia/Kuwait", "Asia/Muscat", "Africa/Cairo"];
 
 interface OrgForm {
-  name: string;
-  name_ar: string;
-  trade_license: string;
-  email: string;
-  phone: string;
-  address: string;
-  emirate: string;
-  vat_number: string;
-  vat_enabled: boolean;
-  vat_rate: string;
-  currency: string;
-  language: string;
-  country: string;
-  timezone: string;
-  logo_url: string;
+  name: string; name_ar: string; trade_license: string; email: string;
+  phone: string; address: string; emirate: string; vat_number: string;
+  vat_enabled: boolean; vat_rate: string; currency: string; language: string;
+  country: string; timezone: string; logo_url: string;
 }
 
 const emptyForm: OrgForm = {
@@ -47,18 +37,25 @@ const emptyForm: OrgForm = {
 };
 
 const Organizations = () => {
-  const { user } = useAuth();
-  const { isMasterAdmin } = usePermissions();
+  const { user }                    = useAuth();
+  const { isMasterAdmin }           = useMasterAdmin();   // synchronous — no RPC delay
+  const { isSuperAdmin }            = usePermissions();
   const { refetch: refetchContext } = useOrganization();
-  const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<OrgForm>(emptyForm);
-  const [search, setSearch] = useState("");
+  const queryClient                 = useQueryClient();
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteId,   setDeleteId]   = useState<string | null>(null);
+  const [editingId,  setEditingId]  = useState<string | null>(null);
+  const [form,       setForm]       = useState<OrgForm>(emptyForm);
+  const [search,     setSearch]     = useState("");
+
+  const isAdmin = isMasterAdmin || isSuperAdmin;
+
+  // ─── Fetch organizations ────────────────────────────────────
+  // isMasterAdmin from useMasterAdmin is SYNCHRONOUS (email match)
+  // so query key is stable from the first render — no double-fetch
   const { data: orgs = [], isLoading } = useQuery({
-    queryKey: ["organizations", isMasterAdmin],
+    queryKey: ["organizations-list", isMasterAdmin],
     queryFn: async () => {
       if (isMasterAdmin) {
         const { data, error } = await supabase
@@ -68,30 +65,29 @@ const Organizations = () => {
         if (error) throw error;
         return data || [];
       }
-
       const { data: memberships } = await supabase
         .from("organization_members")
         .select("organization_id")
         .eq("user_id", user!.id);
-
       if (!memberships || memberships.length === 0) return [];
-
       const { data, error } = await supabase
         .from("organizations")
         .select("*")
         .in("id", memberships.map((m) => m.organization_id))
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return data || [];
     },
     enabled: !!user,
+    staleTime: 30_000,
   });
 
+  // ─── Create ─────────────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async (formData: OrgForm) => {
       const { vat_rate, vat_enabled, ...rest } = formData;
       const payload = { ...rest, vat_rate: parseFloat(vat_rate) || 5, vat_enabled, created_by: user!.id };
+
       const { data: org, error } = await supabase
         .from("organizations")
         .insert(payload as any)
@@ -99,15 +95,19 @@ const Organizations = () => {
         .single();
       if (error) throw error;
 
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .insert({ organization_id: org.id, user_id: user!.id, role: "organization_admin" as any });
-      if (memberError) throw memberError;
-
+      // ⭐ CRITICAL FIX: Master admin = platform owner, NOT an org member
+      // Never insert master admin into organization_members
+      // This was causing "permission denied for table organization_members"
+      if (!isAdmin) {
+        const { error: memberError } = await supabase
+          .from("organization_members")
+          .insert({ organization_id: org.id, user_id: user!.id, role: "organization_admin" as any });
+        if (memberError) throw memberError;
+      }
       return org;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["organizations-list"] });
       refetchContext();
       toast.success("Organization created successfully");
       closeDialog();
@@ -115,15 +115,18 @@ const Organizations = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
+  // ─── Update ─────────────────────────────────────────────────
   const updateMutation = useMutation({
     mutationFn: async ({ id, formData }: { id: string; formData: OrgForm }) => {
       const { vat_rate, vat_enabled, ...rest } = formData;
-      const payload = { ...rest, vat_rate: parseFloat(vat_rate) || 5, vat_enabled };
-      const { error } = await supabase.from("organizations").update(payload as any).eq("id", id);
+      const { error } = await supabase
+        .from("organizations")
+        .update({ ...rest, vat_rate: parseFloat(vat_rate) || 5, vat_enabled } as any)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["organizations-list"] });
       refetchContext();
       toast.success("Organization updated");
       closeDialog();
@@ -131,13 +134,14 @@ const Organizations = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
+  // ─── Delete ─────────────────────────────────────────────────
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("organizations").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["organizations-list"] });
       refetchContext();
       toast.success("Organization deleted");
       setDeleteId(null);
@@ -145,8 +149,8 @@ const Organizations = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const openCreate = () => { setForm(emptyForm); setEditingId(null); setDialogOpen(true); };
-  const openEdit = (org: any) => {
+  const openCreate  = () => { setForm(emptyForm); setEditingId(null); setDialogOpen(true); };
+  const openEdit    = (org: any) => {
     setForm({
       name: org.name, name_ar: org.name_ar || "", trade_license: org.trade_license || "",
       email: org.email || "", phone: org.phone || "", address: org.address || "",
@@ -160,15 +164,11 @@ const Organizations = () => {
     setDialogOpen(true);
   };
   const closeDialog = () => { setDialogOpen(false); setEditingId(null); setForm(emptyForm); };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { toast.error("Organization name is required"); return; }
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, formData: form });
-    } else {
-      createMutation.mutate(form);
-    }
+    if (editingId) updateMutation.mutate({ id: editingId, formData: form });
+    else           createMutation.mutate(form);
   };
 
   const filtered = orgs.filter((o: any) =>
@@ -183,37 +183,29 @@ const Organizations = () => {
           <div>
             <h1 className="page-header">Organizations</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {isMasterAdmin ? "All organizations on the platform" : "Manage your organizations and companies"}
+              {isMasterAdmin
+                ? `All platform organizations (${orgs.length} total)`
+                : "Manage your organizations and companies"}
             </p>
           </div>
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="w-4 h-4" /> Add Organization
-          </Button>
+          <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Add Organization</Button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search organizations..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-secondary/50 border-border/50"
-            />
-          </div>
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search organizations..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50 border-border/50" />
         </div>
 
         {isLoading ? (
           <div className="glass-card p-12 text-center">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-muted-foreground mt-3">Loading organizations...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="glass-card p-12 text-center">
             <Building className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No organizations found.</p>
-            <Button onClick={openCreate} className="mt-4 gap-2">
-              <Plus className="w-4 h-4" /> Create Organization
-            </Button>
+            <Button onClick={openCreate} className="mt-4 gap-2"><Plus className="w-4 h-4" /> Create Organization</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -221,61 +213,25 @@ const Organizations = () => {
               <div key={org.id} className="glass-card p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
-                    {org.logo_url ? (
-                      <img src={org.logo_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <Building className="w-5 h-5 text-primary" />
-                    )}
+                    {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : <Building className="w-5 h-5 text-primary" />}
                   </div>
                   <div className="flex gap-1">
-                    <Button
-                      variant="ghost" size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => openEdit(org)}
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost" size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => setDeleteId(org.id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(org)}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(org.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>
                 </div>
                 <h3 className="font-semibold text-foreground">{org.name}</h3>
                 {org.name_ar && <p className="text-sm text-muted-foreground" dir="rtl">{org.name_ar}</p>}
                 <div className="space-y-1 mt-3">
-                  {org.emirate && (
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="w-3 h-3" />{org.emirate}
-                    </div>
-                  )}
-                  {org.email && (
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Mail className="w-3 h-3" />{org.email}
-                    </div>
-                  )}
-                  {org.phone && (
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Phone className="w-3 h-3" />{org.phone}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <DollarSign className="w-3 h-3" />{org.currency || "AED"}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Globe className="w-3 h-3" />{org.country || "UAE"} • {org.timezone || "Asia/Dubai"}
-                  </div>
+                  {org.emirate && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="w-3 h-3" />{org.emirate}</div>}
+                  {org.email   && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Mail className="w-3 h-3" />{org.email}</div>}
+                  {org.phone   && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="w-3 h-3" />{org.phone}</div>}
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><DollarSign className="w-3 h-3" />{org.currency || "AED"}</div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Globe className="w-3 h-3" />{org.country || "UAE"} • {org.timezone || "Asia/Dubai"}</div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
-                  {org.trade_license && (
-                    <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    VAT: {org.vat_enabled !== false ? `${org.vat_rate || 5}%` : "Disabled"}
-                  </span>
+                  {org.trade_license && <span className="text-xs text-muted-foreground">License: {org.trade_license}</span>}
+                  <span className="text-xs text-muted-foreground">VAT: {org.vat_enabled !== false ? `${org.vat_rate || 5}%` : "Disabled"}</span>
                 </div>
               </div>
             ))}
@@ -283,181 +239,93 @@ const Organizations = () => {
         )}
       </motion.div>
 
-      {/* Create / Edit Dialog */}
+      {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editingId ? "Edit Organization" : "Create Organization"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-
-            {/* Logo */}
             <div className="space-y-2">
               <Label>Company Logo</Label>
               <div className="flex items-center gap-4">
                 {form.logo_url ? (
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
                     <img src={form.logo_url} alt="Logo" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, logo_url: "" })}
-                      className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                    <button type="button" onClick={() => setForm({ ...form, logo_url: "" })} className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"><X className="w-3 h-3" /></button>
                   </div>
                 ) : (
-                  <div className="w-16 h-16 rounded-lg border-2 border-dashed border-border flex items-center justify-center">
-                    <Building className="w-6 h-6 text-muted-foreground" />
-                  </div>
+                  <div className="w-16 h-16 rounded-lg border-2 border-dashed border-border flex items-center justify-center"><Building className="w-6 h-6 text-muted-foreground" /></div>
                 )}
                 <div>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="text-xs"
+                  <Input type="file" accept="image/*" className="text-xs"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const ext = file.name.split(".").pop();
-                      const path = `logos/${Date.now()}.${ext}`;
+                      const path = `logos/${Date.now()}.${file.name.split(".").pop()}`;
                       const { error } = await supabase.storage.from("documents").upload(path, file);
                       if (error) { toast.error("Upload failed"); return; }
-                      const { data: urlData } = supabase.storage.from("documents").getPublicUrl(path);
-                      setForm({ ...form, logo_url: urlData.publicUrl });
+                      const { data: u } = supabase.storage.from("documents").getPublicUrl(path);
+                      setForm({ ...form, logo_url: u.publicUrl });
                     }}
                   />
                   <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 2MB</p>
                 </div>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Name (English) *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Company Name" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Name (Arabic)</Label>
-                <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} placeholder="اسم الشركة" dir="rtl" />
-              </div>
+              <div className="space-y-2"><Label>Name (English) *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Company Name" required /></div>
+              <div className="space-y-2"><Label>Name (Arabic)</Label><Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} placeholder="اسم الشركة" dir="rtl" /></div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Trade License</Label>
-                <Input value={form.trade_license} onChange={(e) => setForm({ ...form, trade_license: e.target.value })} placeholder="License number" />
-              </div>
+              <div className="space-y-2"><Label>Trade License</Label><Input value={form.trade_license} onChange={(e) => setForm({ ...form, trade_license: e.target.value })} placeholder="License number" /></div>
               <div className="space-y-2">
                 <Label>Emirate</Label>
                 <Select value={form.emirate} onValueChange={(v) => setForm({ ...form, emirate: v })}>
                   <SelectTrigger><SelectValue placeholder="Select emirate" /></SelectTrigger>
-                  <SelectContent>
-                    {EMIRATES.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{EMIRATES.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="info@company.com" />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+971 XX XXX XXXX" />
-              </div>
+              <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="info@company.com" /></div>
+              <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+971 XX XXX XXXX" /></div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Full address" />
-            </div>
-
-            {/* VAT Settings */}
+            <div className="space-y-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Full address" /></div>
             <div className="border-t border-border/30 pt-4">
-              <p className="text-sm font-medium text-foreground mb-3">Business Settings</p>
+              <p className="text-sm font-medium mb-3">Business Settings</p>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>VAT Registration Number</Label>
-                  <Input value={form.vat_number} onChange={(e) => setForm({ ...form, vat_number: e.target.value })} placeholder="TRN 100..." />
-                </div>
-                <div className="space-y-2">
-                  <Label>VAT Rate (%)</Label>
-                  <Input type="number" value={form.vat_rate} onChange={(e) => setForm({ ...form, vat_rate: e.target.value })} />
-                </div>
+                <div className="space-y-2"><Label>VAT Number</Label><Input value={form.vat_number} onChange={(e) => setForm({ ...form, vat_number: e.target.value })} placeholder="TRN 100..." /></div>
+                <div className="space-y-2"><Label>VAT Rate (%)</Label><Input type="number" value={form.vat_rate} onChange={(e) => setForm({ ...form, vat_rate: e.target.value })} /></div>
               </div>
-              <div className="flex items-center justify-between mt-3 p-3 rounded-lg bg-secondary/20">
-                <Label>Enable VAT</Label>
-                <Switch checked={form.vat_enabled} onCheckedChange={(v) => setForm({ ...form, vat_enabled: v })} />
-              </div>
+              <div className="flex items-center justify-between mt-3 p-3 rounded-lg bg-secondary/20"><Label>Enable VAT</Label><Switch checked={form.vat_enabled} onCheckedChange={(v) => setForm({ ...form, vat_enabled: v })} /></div>
             </div>
-
-            {/* Regional Settings */}
             <div className="border-t border-border/30 pt-4">
-              <p className="text-sm font-medium text-foreground mb-3">Regional Settings</p>
+              <p className="text-sm font-medium mb-3">Regional Settings</p>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Currency</Label>
-                  <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Country</Label>
-                  <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Timezone</Label>
-                  <Select value={form.timezone} onValueChange={(v) => setForm({ ...form, timezone: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{TIMEZONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
+                <div className="space-y-2"><Label>Currency</Label><Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+                <div className="space-y-2"><Label>Language</Label><Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent></Select></div>
+                <div className="space-y-2"><Label>Country</Label><Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+                <div className="space-y-2"><Label>Timezone</Label><Select value={form.timezone} onValueChange={(v) => setForm({ ...form, timezone: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TIMEZONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select></div>
               </div>
             </div>
-
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                {createMutation.isPending || updateMutation.isPending
-                  ? "Saving..."
-                  : editingId ? "Update" : "Create"}
+                {createMutation.isPending || updateMutation.isPending ? "Saving..." : editingId ? "Update" : "Create"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirm */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Organization?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the organization and all associated data. This action cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This will permanently delete the organization and all associated data. This cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
