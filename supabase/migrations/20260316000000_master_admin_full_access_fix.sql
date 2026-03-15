@@ -65,6 +65,7 @@ CREATE POLICY "Platform admins manage org members" ON public.organization_member
 -- 2. Roles & Permissions: platform admins can manage role_permissions
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "Super admins manage role_permissions" ON public.role_permissions;
+DROP POLICY IF EXISTS "Platform admins manage role_permissions" ON public.role_permissions;
 CREATE POLICY "Platform admins manage role_permissions" ON public.role_permissions
   FOR ALL TO authenticated
   USING (public.is_platform_admin(auth.uid()))
