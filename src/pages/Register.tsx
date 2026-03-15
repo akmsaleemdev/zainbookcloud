@@ -69,7 +69,7 @@ export default function Register() {
       if (authData.session) {
         toast.success("Account created!");
         if (isMasterAdminEmail(authData.user?.email)) {
-          navigate("/master-admin", { replace: true });
+          navigate("/admin/dashboard", { replace: true });
         } else {
           navigate("/onboarding", { replace: true });
         }

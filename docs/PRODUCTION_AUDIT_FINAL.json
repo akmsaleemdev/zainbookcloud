@@ -1,0 +1,118 @@
+{
+  "auditVersion": "1.0",
+  "completedAt": "2025-03-15",
+  "executiveSummary": {
+    "primaryIssue": "Master Admin was sent to onboarding instead of platform Admin Dashboard due to race between auth, role resolution, and membership check.",
+    "rootCauses": [
+      "ProtectedRoute membership query ran before async Master Admin check settled",
+      "No synchronous 'never onboarding' check for Master Admin email",
+      "AuthPage already-logged-in redirect waited for async role",
+      "user_roles query only checked super_admin, not master_admin",
+      "Onboarding existingOrg query ran for Master Admin",
+      "Register always sent to onboarding; no /admin/dashboard route"
+    ],
+    "architectureGapsAddressed": [
+      "Centralized Master Admin in @/lib/auth-constants.ts with optional VITE_MASTER_ADMIN_EMAIL",
+      "Canonical platform dashboard URL: /admin/dashboard (redirects to /master-admin)",
+      "DB: master_admin in app_role; is_platform_admin() for RLS"
+    ],
+    "highestPriorityFixesApplied": [
+      "ProtectedRoute: sync isMasterAdminByEmail first; membership enabled includes !isMasterAdminByEmail",
+      "AuthPage: redirect to /admin/dashboard; sync isMasterAdminByEmail for already-logged-in; check user_roles for super_admin and master_admin",
+      "Onboarding: redirect to /admin/dashboard; existingOrg enabled includes !isMasterAdminByEmail",
+      "Register: Master Admin email → /admin/dashboard",
+      "Dashboard: isMasterAdmin → Navigate to /admin/dashboard",
+      "App: route /admin/dashboard → Navigate to /master-admin",
+      "DB migration: 20260315000000_add_master_admin_role.sql"
+    ]
+  },
+  "authFlow": {
+    "loginRedirect": {
+      "masterAdminByEmail": "/admin/dashboard",
+      "superAdminOrMasterAdminByRole": "/admin/dashboard",
+      "hasOrgMembership": "/dashboard",
+      "noMembership": "/onboarding"
+    },
+    "alreadyLoggedInOnAuth": {
+      "masterAdminByEmail": "/admin/dashboard",
+      "isMasterAdminAfterLoad": "/admin/dashboard",
+      "else": "/dashboard"
+    },
+    "protectedRouteOrder": [
+      "authLoading → spinner",
+      "!user → /auth",
+      "isMasterAdminByEmail → render children",
+      "adminLoading → spinner",
+      "isMasterAdmin → render children",
+      "membershipLoading → spinner",
+      "!hasMembership → /onboarding",
+      "else → render children"
+    ],
+    "onboardingRedirect": "/admin/dashboard",
+    "registerMasterAdminRedirect": "/admin/dashboard",
+    "dashboardMasterAdminRedirect": "/admin/dashboard",
+    "canonicalAdminRoute": "/admin/dashboard",
+    "canonicalAdminRedirectsTo": "/master-admin"
+  },
+  "filesModified": [
+    { "path": "src/lib/auth-constants.ts", "issue": "Single source for Master Admin", "fix": "MASTER_ADMIN_EMAIL with env override; isMasterAdminEmail()" },
+    { "path": "src/components/auth/ProtectedRoute.tsx", "issue": "Onboarding redirect race", "fix": "Sync isMasterAdminByEmail; membership enabled !isMasterAdminByEmail" },
+    { "path": "src/pages/AuthPage.tsx", "issue": "Redirect target; already-logged-in delay; role check", "fix": "ADMIN_DASHBOARD_PATH; sync isMasterAdminByEmail; user_roles super_admin + master_admin" },
+    { "path": "src/pages/Onboarding.tsx", "issue": "Master Admin could see onboarding; query ran for admin", "fix": "Redirect /admin/dashboard; existingOrg enabled !isMasterAdminByEmail" },
+    { "path": "src/pages/Register.tsx", "issue": "Master Admin sent to onboarding", "fix": "Master Admin email → /admin/dashboard" },
+    { "path": "src/pages/Dashboard.tsx", "issue": "Redirect to /master-admin", "fix": "Navigate to /admin/dashboard" },
+    { "path": "src/App.tsx", "issue": "No admin dashboard route", "fix": "Route /admin/dashboard → Navigate to /master-admin" },
+    { "path": "src/pages/Attendance.tsx", "issue": "Button asChild + span", "fix": "Remove asChild; content in Button" },
+    { "path": "src/index.css", "issue": "@import order", "fix": "Move @import to top" },
+    { "path": "supabase/migrations/20260315000000_add_master_admin_role.sql", "issue": "DB role and RLS", "fix": "Add master_admin; is_platform_admin(); RLS user_roles and organizations" }
+  ],
+  "database": {
+    "migration": "supabase/migrations/20260315000000_add_master_admin_role.sql",
+    "changes": [
+      "Add master_admin to app_role (DO block idempotent)",
+      "Create is_platform_admin(uuid)",
+      "Replace RLS 'Admins can manage roles' (user_roles) with is_platform_admin(auth.uid())",
+      "Replace RLS 'Admins can manage orgs' (organizations) with is_platform_admin(auth.uid())"
+    ],
+    "optionalSeed": "INSERT INTO public.user_roles (user_id, role) VALUES ('<auth.users.id>', 'master_admin') ON CONFLICT (user_id, role) DO NOTHING;"
+  },
+  "environment": {
+    "required": [
+      { "key": "VITE_SUPABASE_URL", "description": "Supabase project URL" },
+      { "key": "VITE_SUPABASE_PUBLISHABLE_KEY", "description": "Supabase anon/public key" }
+    ],
+    "optional": [
+      { "key": "VITE_MASTER_ADMIN_EMAIL", "description": "Override default Master Admin email (default: zainbooksys@gmail.com)" }
+    ],
+    "templateFile": ".env.example"
+  },
+  "deployChecklist": [
+    "Clone repo and run npm install",
+    "Copy .env.example to .env and set VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY (and optionally VITE_MASTER_ADMIN_EMAIL)",
+    "Run npm run build; fix any errors",
+    "Apply migration 20260315000000_add_master_admin_role.sql (e.g. supabase db push or Supabase SQL editor)",
+    "Optional: Seed Master Admin in user_roles",
+    "Deploy dist/ or connect host with env vars set"
+  ],
+  "postDeployVerification": [
+    { "id": "master-admin-login", "description": "Master Admin sign-in lands on /admin/dashboard (not onboarding)", "expected": true },
+    { "id": "onboarding-redirect", "description": "Visiting /onboarding as Master Admin redirects to /admin/dashboard", "expected": true },
+    { "id": "tenant-onboarding", "description": "New tenant signup can complete onboarding and reach dashboard", "expected": true },
+    { "id": "protected-routes", "description": "Unauthenticated user on protected route redirects to /auth", "expected": true },
+    { "id": "build", "description": "npm run build succeeds with production env vars", "expected": true }
+  ],
+  "e2eScenarios": [
+    { "id": "1", "name": "Master Admin login", "steps": "Sign in with Master Admin email", "expected": "Land on /admin/dashboard then /master-admin, never onboarding" },
+    { "id": "2", "name": "Direct /onboarding as Master Admin", "steps": "Open /onboarding while logged in as Master Admin", "expected": "Redirect to /admin/dashboard" },
+    { "id": "3", "name": "Direct /dashboard as Master Admin", "steps": "Open /dashboard while logged in as Master Admin", "expected": "Redirect to /admin/dashboard" },
+    { "id": "4", "name": "Register as Master Admin", "steps": "Sign up with Master Admin email (instant session)", "expected": "Redirect to /admin/dashboard" },
+    { "id": "5", "name": "Protected route unauthenticated", "steps": "Visit protected route without login", "expected": "Redirect to /auth" }
+  ],
+  "deliverables": {
+    "code": "Auth constants, ProtectedRoute, AuthPage, Onboarding, Register, Dashboard, App route, Attendance, index.css",
+    "sql": "Migration 20260315000000_add_master_admin_role.sql; optional seed in docs",
+    "config": ".env.example; no placeholders in critical auth logic",
+    "docs": ["AUDIT_AND_MASTER_ADMIN_FIX.md", "PRODUCTION_AUDIT_FINAL.md", "PRODUCTION_AUDIT_FINAL.json"]
+  },
+  "status": "complete"
+}

@@ -33,7 +33,8 @@ const Leases = () => {
     queryKey: ["tenants-list", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("tenants").select("id, full_name").eq("organization_id", currentOrg.id).order("full_name");
+      const { data, error } = await supabase.from("tenants").select("id, full_name").eq("organization_id", currentOrg.id).order("full_name");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg,
@@ -43,11 +44,14 @@ const Leases = () => {
     queryKey: ["units-for-lease", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data: props } = await supabase.from("properties").select("id").eq("organization_id", currentOrg.id);
+      const { data: props, error: e1 } = await supabase.from("properties").select("id").eq("organization_id", currentOrg.id);
+      if (e1) throw e1;
       if (!props?.length) return [];
-      const { data: blds } = await supabase.from("buildings").select("id").in("property_id", props.map((p: any) => p.id));
+      const { data: blds, error: e2 } = await supabase.from("buildings").select("id").in("property_id", props.map((p: any) => p.id));
+      if (e2) throw e2;
       if (!blds?.length) return [];
-      const { data } = await supabase.from("units").select("id, unit_number, buildings(name)").in("building_id", blds.map((b: any) => b.id)).order("unit_number");
+      const { data, error: e3 } = await supabase.from("units").select("id, unit_number, buildings(name)").in("building_id", blds.map((b: any) => b.id)).order("unit_number");
+      if (e3) throw e3;
       return data || [];
     },
     enabled: !!currentOrg,

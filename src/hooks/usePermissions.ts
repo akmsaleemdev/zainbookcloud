@@ -72,12 +72,13 @@ export const usePermissions = () => {
     queryKey: ["user-membership", user?.id, currentOrg?.id],
     queryFn: async () => {
       if (!user || !currentOrg) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("organization_members")
         .select("role")
         .eq("user_id", user.id)
         .eq("organization_id", currentOrg.id)
         .maybeSingle();
+      if (error) throw error;
       return data;
     },
     enabled: !!user && !!currentOrg && !isEmailMasterAdmin,
@@ -96,10 +97,11 @@ export const usePermissions = () => {
     queryFn: async () => {
       if (!userRole) return [];
       if (userRole === "super_admin" || userRole === "master_admin") return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("role_permissions")
         .select("*")
         .eq("role", userRole);
+      if (error) throw error;
       return (data || []) as RolePermission[];
     },
     enabled: !!userRole && !isSuperAdmin,

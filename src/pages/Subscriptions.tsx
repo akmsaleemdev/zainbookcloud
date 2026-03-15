@@ -56,11 +56,12 @@ const Subscriptions = () => {
     queryKey: ["current-subscription", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg?.id) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("customer_subscriptions")
         .select("*, subscription_plans(*)")
         .eq("organization_id", currentOrg.id)
         .maybeSingle();
+      if (error) throw error;
       return data;
     },
     enabled: !!currentOrg?.id,
@@ -70,10 +71,11 @@ const Subscriptions = () => {
     queryKey: ["enabled-modules", currentSub?.id],
     queryFn: async () => {
       if (!currentSub?.id) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("subscription_modules")
         .select("*, platform_modules(*)")
         .eq("subscription_id", currentSub.id);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentSub?.id,
@@ -82,7 +84,8 @@ const Subscriptions = () => {
   const { data: planModules = [] } = useQuery({
     queryKey: ["plan-modules"],
     queryFn: async () => {
-      const { data } = await supabase.from("plan_modules").select("*, platform_modules(*)");
+      const { data, error } = await supabase.from("plan_modules").select("*, platform_modules(*)");
+      if (error) throw error;
       return data || [];
     },
   });
@@ -91,12 +94,13 @@ const Subscriptions = () => {
     queryKey: ["billing-history", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg?.id) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("billing_history")
         .select("*")
         .eq("organization_id", currentOrg.id)
         .order("created_at", { ascending: false })
         .limit(50);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg?.id,
@@ -106,10 +110,11 @@ const Subscriptions = () => {
     queryKey: ["usage-limits", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg?.id) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("usage_limits")
         .select("*")
         .eq("organization_id", currentOrg.id);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg?.id,

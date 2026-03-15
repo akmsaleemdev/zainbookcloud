@@ -92,11 +92,9 @@ export default function Attendance() {
                             onChange={(e) => setDateTo(e.target.value)}
                             className="h-11 rounded-xl border border-border/50 bg-secondary/50 px-3 text-sm"
                         />
-                        <Button variant="outline" className="glass-input rounded-xl h-11" asChild>
-                            <span>
-                                <CalendarIcon className="w-4 h-4 mr-2 inline" />
-                                Date range
-                            </span>
+                        <Button variant="outline" className="glass-input rounded-xl h-11">
+                            <CalendarIcon className="w-4 h-4 mr-2" />
+                            Date range
                         </Button>
                         <Button className="btn-premium rounded-xl h-11 px-6">
                             <ArrowRight className="w-4 h-4 mr-2" />

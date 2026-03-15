@@ -17,10 +17,11 @@ const Analytics = () => {
     queryKey: ["analytics-units", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("units")
         .select("id, status, unit_type, monthly_rent, building_id, buildings!inner(property_id, properties!inner(organization_id))")
         .eq("buildings.properties.organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -30,10 +31,11 @@ const Analytics = () => {
     queryKey: ["analytics-rooms", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("rooms")
         .select("id, status, room_type, monthly_rent, unit_id, units!inner(building_id, buildings!inner(property_id, properties!inner(organization_id)))")
         .eq("units.buildings.properties.organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -43,10 +45,11 @@ const Analytics = () => {
     queryKey: ["analytics-beds", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("bed_spaces")
         .select("id, status, monthly_rent, room_id, rooms!inner(unit_id, units!inner(building_id, buildings!inner(property_id, properties!inner(organization_id))))")
         .eq("rooms.units.buildings.properties.organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -56,7 +59,8 @@ const Analytics = () => {
     queryKey: ["analytics-leases", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase.from("leases").select("id, monthly_rent, status, start_date, end_date").eq("organization_id", orgId);
+      const { data, error } = await supabase.from("leases").select("id, monthly_rent, status, start_date, end_date").eq("organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,

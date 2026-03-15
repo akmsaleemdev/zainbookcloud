@@ -66,7 +66,8 @@ const ERPIntegrations = () => {
       if (!orgId) return [];
       const connectionIds = connections.map((c: any) => c.id);
       if (connectionIds.length === 0) return [];
-      const { data } = await supabase.from("erp_sync_logs").select("*").in("connection_id", connectionIds).order("created_at", { ascending: false }).limit(20);
+      const { data, error } = await supabase.from("erp_sync_logs").select("*").in("connection_id", connectionIds).order("created_at", { ascending: false }).limit(20);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId && connections.length > 0,

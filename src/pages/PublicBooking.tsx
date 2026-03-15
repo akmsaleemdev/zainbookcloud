@@ -31,11 +31,12 @@ const PublicBooking = () => {
     queryKey: ["booking-units", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("units")
         .select("*, buildings!inner(name, property_id, properties!inner(name, organization_id, emirate, community))")
         .eq("buildings.properties.organization_id", orgId)
         .eq("status", "available");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -45,11 +46,12 @@ const PublicBooking = () => {
     queryKey: ["booking-beds", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("bed_spaces")
         .select("*, rooms!inner(room_number, units!inner(unit_number, buildings!inner(name, properties!inner(name, organization_id, emirate))))")
         .eq("rooms.units.buildings.properties.organization_id", orgId)
         .eq("status", "available");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -59,7 +61,8 @@ const PublicBooking = () => {
     queryKey: ["booking-leads", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase.from("leads").select("*").eq("organization_id", orgId).order("created_at", { ascending: false }).limit(50);
+      const { data, error } = await supabase.from("leads").select("*").eq("organization_id", orgId).order("created_at", { ascending: false }).limit(50);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,

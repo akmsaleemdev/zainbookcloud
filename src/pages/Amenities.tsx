@@ -69,7 +69,8 @@ const Amenities = () => {
     queryKey: ["properties-list", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase.from("properties").select("id, name").eq("organization_id", orgId);
+      const { data, error } = await supabase.from("properties").select("id, name").eq("organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,

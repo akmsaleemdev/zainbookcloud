@@ -83,7 +83,8 @@ const Ejari = () => {
     queryKey: ["tenants-list", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase.from("tenants").select("id, full_name").eq("organization_id", orgId);
+      const { data, error } = await supabase.from("tenants").select("id, full_name").eq("organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -93,7 +94,8 @@ const Ejari = () => {
     queryKey: ["leases-list", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase.from("leases").select("id, monthly_rent, tenant_id").eq("organization_id", orgId);
+      const { data, error } = await supabase.from("leases").select("id, monthly_rent, tenant_id").eq("organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,

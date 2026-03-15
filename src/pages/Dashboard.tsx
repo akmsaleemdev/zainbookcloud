@@ -110,7 +110,8 @@ const Dashboard = () => {
     queryKey: ["dashboard-payments", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("payments").select("*, tenants(full_name)").eq("organization_id", currentOrg.id).order("created_at", { ascending: false }).limit(5);
+      const { data, error } = await supabase.from("payments").select("*, tenants(full_name)").eq("organization_id", currentOrg.id).order("created_at", { ascending: false }).limit(5);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg,
@@ -121,7 +122,8 @@ const Dashboard = () => {
     queryKey: ["dashboard-revenue", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("payments").select("amount, payment_date").eq("organization_id", currentOrg.id).eq("status", "completed").gte("payment_date", new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+      const { data, error } = await supabase.from("payments").select("amount, payment_date").eq("organization_id", currentOrg.id).eq("status", "completed").gte("payment_date", new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+      if (error) throw error;
 
       const monthlyData: Record<string, number> = {};
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -204,7 +206,7 @@ const Dashboard = () => {
   }
 
   if (isMasterAdmin) {
-    return <Navigate to="/master-admin" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   if (!currentOrg && !isSuperAdmin) {

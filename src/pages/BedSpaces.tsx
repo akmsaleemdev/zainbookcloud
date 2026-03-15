@@ -28,13 +28,17 @@ const BedSpaces = () => {
     queryKey: ["rooms-list", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data: props } = await supabase.from("properties").select("id").eq("organization_id", currentOrg.id);
+      const { data: props, error: e1 } = await supabase.from("properties").select("id").eq("organization_id", currentOrg.id);
+      if (e1) throw e1;
       if (!props?.length) return [];
-      const { data: blds } = await supabase.from("buildings").select("id").in("property_id", props.map((p: any) => p.id));
+      const { data: blds, error: e2 } = await supabase.from("buildings").select("id").in("property_id", props.map((p: any) => p.id));
+      if (e2) throw e2;
       if (!blds?.length) return [];
-      const { data: units } = await supabase.from("units").select("id").in("building_id", blds.map((b: any) => b.id));
+      const { data: units, error: e3 } = await supabase.from("units").select("id").in("building_id", blds.map((b: any) => b.id));
+      if (e3) throw e3;
       if (!units?.length) return [];
-      const { data } = await supabase.from("rooms").select("id, room_number, units(unit_number, buildings(name))").in("unit_id", units.map((u: any) => u.id)).order("room_number");
+      const { data, error: e4 } = await supabase.from("rooms").select("id, room_number, units(unit_number, buildings(name))").in("unit_id", units.map((u: any) => u.id)).order("room_number");
+      if (e4) throw e4;
       return data || [];
     },
     enabled: !!currentOrg,

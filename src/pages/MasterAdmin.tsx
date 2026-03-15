@@ -57,7 +57,8 @@ const MasterAdmin = () => {
   const { data: totalRevenue = 0 } = useQuery({
     queryKey: ["master-revenue"],
     queryFn: async () => {
-      const { data } = await supabase.from("customer_subscriptions").select("total_amount");
+      const { data, error } = await supabase.from("customer_subscriptions").select("total_amount");
+      if (error) throw error;
       return (data || []).reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0);
     },
   });
@@ -66,7 +67,8 @@ const MasterAdmin = () => {
   const { data: plans = [] } = useQuery({
     queryKey: ["master-plans"],
     queryFn: async () => {
-      const { data } = await supabase.from("subscription_plans").select("*").order("sort_order");
+      const { data, error } = await supabase.from("subscription_plans").select("*").order("sort_order");
+      if (error) throw error;
       return data || [];
     },
   });

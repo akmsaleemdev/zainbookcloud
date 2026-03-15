@@ -11,6 +11,9 @@ import { useMasterAdmin } from "@/hooks/useMasterAdmin";
 import { isMasterAdminEmail } from "@/lib/auth-constants";
 import { motion } from "framer-motion";
 
+/** Platform admin dashboard — canonical URL for Master/Super Admin (redirects to /master-admin in App). */
+const ADMIN_DASHBOARD_PATH = "/admin/dashboard";
+
 const AuthPage = () => {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
@@ -24,18 +27,22 @@ const AuthPage = () => {
   const { isMasterAdmin, loading: adminLoading } = useMasterAdmin();
   const selectedPlanId = searchParams.get("plan");
 
-  // ── ROLE-BASED REDIRECT ─────────────────────────────────────
-  // This runs when user is already logged in (page refresh / direct visit)
-  // Wait for admin check to complete before redirecting
+  // ── ROLE-BASED REDIRECT (already logged in: refresh / direct visit to /auth)
+  // Sync email check first so Master Admin never waits for async role
+  const isMasterAdminByEmail = isMasterAdminEmail(user?.email);
   useEffect(() => {
-    if (!user || adminLoading) return;
-
+    if (!user) return;
+    if (isMasterAdminByEmail) {
+      navigate(ADMIN_DASHBOARD_PATH, { replace: true });
+      return;
+    }
+    if (adminLoading) return;
     if (isMasterAdmin) {
-      navigate("/master-admin", { replace: true });
+      navigate(ADMIN_DASHBOARD_PATH, { replace: true });
     } else {
       navigate("/dashboard", { replace: true });
     }
-  }, [user, isMasterAdmin, adminLoading, navigate]);
+  }, [user, isMasterAdminByEmail, isMasterAdmin, adminLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,13 +62,13 @@ const AuthPage = () => {
         const uid = authData.user?.id;
         const userEmail = authData.user?.email ?? email?.trim()?.toLowerCase();
         if (uid) {
-          // Master Admin (by email) → always platform dashboard, never onboarding
+          // Master Admin (by email) → platform admin dashboard, never onboarding
           if (isMasterAdminEmail(userEmail)) {
-            navigate("/master-admin", { replace: true });
+            navigate(ADMIN_DASHBOARD_PATH, { replace: true });
             return;
           }
 
-          // Super Admin / Master Admin by DB role (migration adds master_admin to app_role)
+          // Super Admin / Master Admin by DB role
           const { data: roleRow } = await supabase
             .from("user_roles")
             .select("role")
@@ -70,7 +77,7 @@ const AuthPage = () => {
             .limit(1)
             .maybeSingle();
           if (roleRow) {
-            navigate("/master-admin", { replace: true });
+            navigate(ADMIN_DASHBOARD_PATH, { replace: true });
             return;
           }
 

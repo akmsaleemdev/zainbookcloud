@@ -29,7 +29,8 @@ const Payments = () => {
     queryKey: ["tenants-pay", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("tenants").select("id, full_name").eq("organization_id", currentOrg.id).order("full_name");
+      const { data, error } = await supabase.from("tenants").select("id, full_name").eq("organization_id", currentOrg.id).order("full_name");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg,
@@ -39,7 +40,8 @@ const Payments = () => {
     queryKey: ["invoices-pay", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("invoices").select("id, invoice_number, total_amount, tenants(full_name)").eq("organization_id", currentOrg.id).in("status", ["pending", "overdue"]);
+      const { data, error } = await supabase.from("invoices").select("id, invoice_number, total_amount, tenants(full_name)").eq("organization_id", currentOrg.id).in("status", ["pending", "overdue"]);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg,

@@ -29,12 +29,13 @@ const RentManagement = () => {
     queryKey: ["rent-leases", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("leases")
         .select("*, tenants(full_name), units(unit_number, buildings(name))")
         .eq("organization_id", orgId)
         .eq("status", "active")
         .order("end_date");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -44,12 +45,13 @@ const RentManagement = () => {
     queryKey: ["rent-schedules", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("rent_schedules")
         .select("*, tenants(full_name), leases(monthly_rent, units(unit_number))")
         .eq("organization_id", orgId)
         .order("due_date", { ascending: false })
         .limit(200);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,
@@ -59,7 +61,8 @@ const RentManagement = () => {
     queryKey: ["rent-invoices", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase.from("invoices").select("id, status, total_amount, due_date").eq("organization_id", orgId);
+      const { data, error } = await supabase.from("invoices").select("id, status, total_amount, due_date").eq("organization_id", orgId);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!orgId,

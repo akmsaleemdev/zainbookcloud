@@ -62,7 +62,8 @@ const UserManagement = () => {
   const { data: profiles = [] } = useQuery({
     queryKey: ["all-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, full_name, phone");
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name, phone");
+      if (error) throw error;
       return data || [];
     },
   });

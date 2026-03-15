@@ -41,7 +41,8 @@ const Invoices = () => {
     queryKey: ["tenants-inv", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("tenants").select("id, full_name").eq("organization_id", currentOrg.id).order("full_name");
+      const { data, error } = await supabase.from("tenants").select("id, full_name").eq("organization_id", currentOrg.id).order("full_name");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg,
@@ -51,7 +52,8 @@ const Invoices = () => {
     queryKey: ["leases-inv", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("leases").select("id, tenant_id, monthly_rent, tenants(full_name)").eq("organization_id", currentOrg.id).eq("status", "active");
+      const { data, error } = await supabase.from("leases").select("id, tenant_id, monthly_rent, tenants(full_name)").eq("organization_id", currentOrg.id).eq("status", "active");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg,
@@ -72,7 +74,8 @@ const Invoices = () => {
     queryKey: ["recurring-invoices", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg) return [];
-      const { data } = await supabase.from("recurring_invoices").select("*, tenants(full_name)").eq("organization_id", currentOrg.id).order("next_generate_date");
+      const { data, error } = await supabase.from("recurring_invoices").select("*, tenants(full_name)").eq("organization_id", currentOrg.id).order("next_generate_date");
+      if (error) throw error;
       return data || [];
     },
     enabled: !!currentOrg,

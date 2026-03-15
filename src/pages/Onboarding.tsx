@@ -31,7 +31,7 @@ const Onboarding = () => {
   const isMasterAdminByEmail = isMasterAdminEmail(user?.email);
   useEffect(() => {
     if (isMasterAdminByEmail || (!adminLoading && isMasterAdmin))
-      navigate("/master-admin", { replace: true });
+      navigate("/admin/dashboard", { replace: true });
   }, [isMasterAdminByEmail, isMasterAdmin, adminLoading, navigate]);
 
   const [step, setStep] = useState<Step>("plan");
@@ -46,12 +46,13 @@ const Onboarding = () => {
     queryKey: ["onboarding-check-org", user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("organization_members").select("organization_id")
         .eq("user_id", user.id).limit(1).maybeSingle();
+      if (error) throw error;
       return data;
     },
-    enabled: !!user && !adminLoading && !isMasterAdmin,
+    enabled: !!user && !adminLoading && !isMasterAdmin && !isMasterAdminByEmail,
   });
 
   useEffect(() => { if (existingOrg) navigate("/dashboard", { replace: true }); }, [existingOrg, navigate]);

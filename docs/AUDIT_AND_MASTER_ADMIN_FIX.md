@@ -23,9 +23,11 @@
 1. **Sync Master Admin check in ProtectedRoute** so that email-based Master Admin never hits the membership check and never goes to onboarding.
 2. **Centralized auth constant** (`@/lib/auth-constants.ts`) and use it everywhere.
 3. **AuthPage**: Post-login redirect uses `authData.user?.email` and `isMasterAdminEmail()`; only `super_admin` in DB for role-based redirect (no invalid `master_admin` RPC).
-4. **Onboarding**: Sync + async Master Admin check; redirect to `/master-admin` immediately when Master Admin.
-5. **Register**: If new user email is Master Admin, redirect to `/master-admin` instead of `/onboarding`.
-6. **Route**: Added `/admin/dashboard` → redirect to `/master-admin`.
+4. **Onboarding**: Sync + async Master Admin check; redirect to `/admin/dashboard` immediately when Master Admin.
+5. **Register**: If new user email is Master Admin, redirect to `/admin/dashboard` instead of `/onboarding`.
+6. **Route**: Added `/admin/dashboard` → redirect to `/master-admin` (canonical platform dashboard URL).
+7. **AuthPage (already logged in)**: Sync `isMasterAdminByEmail` so Master Admin redirects to `/admin/dashboard` without waiting for async role; all admin redirects use `/admin/dashboard`.
+8. **Dashboard**: Master Admin redirects to `/admin/dashboard` (not `/master-admin`) for consistency.
 7. **DB migration**: Add `master_admin` to `app_role`, add `is_platform_admin()`, and update key RLS policies to use it.
 
 ---
@@ -56,8 +58,8 @@ In **ProtectedRoute**:
 ### Corrected logic
 1. **ProtectedRoute**: Before any async membership check, if `user?.email` matches the Master Admin email (via `isMasterAdminEmail(user?.email)`), render children and do not run the membership query or redirect to onboarding.
 2. **Membership query**: `enabled` also requires `!isMasterAdminByEmail` so it never runs for the Master Admin email.
-3. **Onboarding**: Sync check `isMasterAdminEmail(user?.email)`; if true, show loading and redirect to `/master-admin` (no onboarding UI).
-4. **AuthPage**: Use `authData.user?.email` (fallback to form email) and `isMasterAdminEmail()` for redirect; use only `super_admin` from `user_roles` for DB-based admin redirect.
+3. **Onboarding**: Sync check `isMasterAdminEmail(user?.email)`; if true, show loading and redirect to `/admin/dashboard` (no onboarding UI).
+4. **AuthPage**: Use `authData.user?.email` (fallback to form email) and `isMasterAdminEmail()`; redirect Master/Super Admin to `/admin/dashboard`. For already-logged-in visit to /auth, sync `isMasterAdminByEmail` redirects immediately to `/admin/dashboard` without waiting for async role.
 5. **Single constant**: `MASTER_ADMIN_EMAIL` and `isMasterAdminEmail()` in `@/lib/auth-constants.ts` used everywhere.
 
 ---
@@ -109,9 +111,9 @@ In **ProtectedRoute**:
 | `src/hooks/useMasterAdmin.ts` | Duplicate email string | Use `isMasterAdminEmail(user?.email)` from auth-constants. |
 | `src/contexts/OrganizationContext.tsx` | Duplicate email string | Use `isMasterAdminEmail(user?.email)`; rename local to `isMasterAdminByEmail`. |
 | `src/hooks/usePermissions.ts` | Duplicate email string | Use `isMasterAdminEmail(user?.email)`. |
-| `src/pages/AuthPage.tsx` | Redirect used form email; checked `user_roles` for `master_admin` | Use `authData.user?.email` and `isMasterAdminEmail()`; check only `super_admin` in `user_roles`. |
+| `src/pages/AuthPage.tsx` | Redirect used form email; role check incomplete | Use `authData.user?.email` and `isMasterAdminEmail()`; check both `super_admin` and `master_admin` in `user_roles`. |
 | `src/pages/Onboarding.tsx` | Master Admin could see onboarding briefly | Sync `isMasterAdminByEmail`; redirect in effect and in enabled flags; show loading while redirecting. |
-| `src/pages/Register.tsx` | Always onboarding after signup | If `isMasterAdminEmail(authData.user?.email)`, redirect to `/master-admin`. |
+| `src/pages/Register.tsx` | Always onboarding after signup | If `isMasterAdminEmail(authData.user?.email)`, redirect to `/admin/dashboard`. |
 | `src/App.tsx` | No `/admin/dashboard` | Added route `/admin/dashboard` → `<Navigate to="/master-admin" replace />`. |
 | `supabase/migrations/20260315000000_add_master_admin_role.sql` | (new) | Add `master_admin` to `app_role`; add `is_platform_admin()`; update user_roles and organizations RLS. |
 
@@ -142,17 +144,18 @@ ON CONFLICT (user_id, role) DO NOTHING;
 
 ## 6. AUTH + ROLE FIXES (SUMMARY)
 
-- **Login** → AuthPage uses `authData.user?.email` and `isMasterAdminEmail()`; if true → `/master-admin`; else if `user_roles.super_admin` → `/master-admin`; else if org membership → `/dashboard`; else → `/onboarding`.
+- **Login** → AuthPage uses `authData.user?.email` and `isMasterAdminEmail()`; if true → `/admin/dashboard`; else if `user_roles` has `super_admin` or `master_admin` → `/admin/dashboard`; else if org membership → `/dashboard`; else → `/onboarding`. Already logged in on /auth: sync `isMasterAdminByEmail` → `/admin/dashboard`; else when `adminLoading` false, `isMasterAdmin` → `/admin/dashboard`.
 - **ProtectedRoute**: Sync Master Admin email → render; else wait for admin loading; if Master/Super Admin → render; else wait for membership; if no membership → `/onboarding`.
-- **Onboarding**: Sync Master Admin email (or async isMasterAdmin) → redirect to `/master-admin`, no onboarding UI.
-- **Register**: After signup with session, Master Admin email → `/master-admin`, others → `/onboarding`.
+- **Onboarding**: Sync Master Admin email (or async isMasterAdmin) → redirect to `/admin/dashboard`, no onboarding UI.
+- **Register**: After signup with session, Master Admin email → `/admin/dashboard`, others → `/onboarding`.
+- **Dashboard**: If `isMasterAdmin` → `<Navigate to="/admin/dashboard" />`.
 - **Single source of truth**: `@/lib/auth-constants.ts` for Master Admin email and helper.
 
 ---
 
 ## 7. MODULE-BY-MODULE (Master Admin only)
 
-- **Dashboard**: Already redirects `isMasterAdmin` to `/master-admin` (unchanged).
+- **Dashboard**: Redirects `isMasterAdmin` to `/admin/dashboard` (which then loads `/master-admin`).
 - **Master Admin page**: Wrapped in ProtectedRoute + ModuleGuard; Master Admin bypasses ModuleGuard (unchanged).
 - **Onboarding**: Now redirects Master Admin immediately (sync + async).
 - **Sidebar**: Already shows Master Admin nav for `isMasterAdmin` (unchanged).
@@ -162,30 +165,47 @@ ON CONFLICT (user_id, role) DO NOTHING;
 ## 8. E2E TEST PLAN (Master Admin)
 
 1. **Master Admin login**
-   - Sign in with `zainbooksys@gmail.com` → must land on `/master-admin` (or `/admin/dashboard` → then `/master-admin`), never on onboarding.
+   - Sign in with Master Admin email → must land on `/admin/dashboard` (then `/master-admin`), never on onboarding.
 2. **Direct visit to /onboarding**
-   - While logged in as Master Admin, open `/onboarding` → must redirect to `/master-admin`.
+   - While logged in as Master Admin, open `/onboarding` → must redirect to `/admin/dashboard`.
 3. **Direct visit to /dashboard**
-   - While logged in as Master Admin → must redirect to `/master-admin` (Dashboard logic).
+   - While logged in as Master Admin → must redirect to `/admin/dashboard` (Dashboard logic).
 4. **Register as Master Admin**
-   - If signup creates session and email is Master Admin → redirect to `/master-admin`, not `/onboarding`.
+   - If signup creates session and email is Master Admin → redirect to `/admin/dashboard`, not `/onboarding`.
+
+### Post-deploy verification
+
+- [ ] Master Admin can sign in and lands on `/admin/dashboard` / platform dashboard (not onboarding).
+- [ ] Visiting `/onboarding` while logged in as Master Admin redirects to `/admin/dashboard`.
+- [ ] New tenant signup can complete onboarding and reach dashboard.
+- [ ] Protected routes require login; unauthenticated users redirect to `/auth`.
+- [ ] Build and env: `npm run build` succeeds with production env vars set.
 
 ---
 
 ## 9. PRODUCTION HARDENING (brief)
 
-- Keep Master Admin email in env in production if you want (e.g. `VITE_MASTER_ADMIN_EMAIL`) and use it in `auth-constants.ts`; otherwise constant is fine for single-tenant platform owner.
-- Ensure migration order: run `20260315000000_add_master_admin_role.sql` after all existing migrations.
-- Run `npm install` and `npm run build` before deploy.
+- **Master Admin email:** `auth-constants.ts` reads `VITE_MASTER_ADMIN_EMAIL` (optional). If unset, falls back to the default. Set in production to override.
+- **Migration order:** Run `supabase/migrations/20260315000000_add_master_admin_role.sql` after all existing migrations (e.g. `supabase db push` or run the SQL in the Supabase SQL editor).
+- **Build:** Run `npm install` and `npm run build` before deploy.
 
 ---
 
 ## 10. DEPLOYMENT PACKAGE
 
 - **Code**: All changes in `src/` and new migration as above.
-- **Env**: No new env vars required for the fix; optional `VITE_MASTER_ADMIN_EMAIL` for configurable Master Admin email.
+- **Env**: Copy `.env.example` to `.env` and set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`; optional `VITE_MASTER_ADMIN_EMAIL` for configurable Master Admin email.
 - **Build**: `npm install && npm run build`.
 - **DB**: Apply migration; optionally seed `user_roles` with `master_admin` for the platform owner user.
+
+### Quick deploy checklist
+
+1. Clone repo and run `npm install`.
+2. Copy `.env.example` to `.env` and set Supabase URL and anon key (and optionally `VITE_MASTER_ADMIN_EMAIL`).
+3. Run `npm run build`; fix any errors.
+4. Apply DB migration `20260315000000_add_master_admin_role.sql` (e.g. `supabase db push` or Supabase SQL editor).
+5. (Optional) Seed Master Admin in `user_roles`: `INSERT INTO public.user_roles (user_id, role) VALUES ('<auth.users.id>', 'master_admin') ON CONFLICT (user_id, role) DO NOTHING;`
+6. Deploy the `dist/` output (or connect your host to the repo and set env vars in the dashboard).
 
 ---
 
