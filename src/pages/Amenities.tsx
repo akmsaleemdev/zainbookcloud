@@ -85,7 +85,7 @@ const Amenities = () => {
         category: form.category,
         description: form.description || null,
         is_paid: form.is_paid,
-        price: form.is_paid && form.price ? parseFloat(form.price) : 0,
+        price: form.is_paid && form.price ? parseFloat(form.price) : null,
         billing_frequency: form.billing_frequency,
         status: form.status,
         property_id: form.property_id || null,

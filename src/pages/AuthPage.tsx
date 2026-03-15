@@ -61,12 +61,12 @@ const AuthPage = () => {
             return;
           }
 
-          // Super Admin / Master Admin by DB role (if enum exists)
+          // Super Admin / Master Admin by DB role (migration adds master_admin to app_role)
           const { data: roleRow } = await supabase
             .from("user_roles")
             .select("role")
             .eq("user_id", uid)
-            .in("role", ["super_admin"])
+            .in("role", ["super_admin", "master_admin"])
             .limit(1)
             .maybeSingle();
           if (roleRow) {
