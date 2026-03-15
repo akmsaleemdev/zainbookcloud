@@ -6,8 +6,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-
-const MASTER_ADMIN_EMAIL = "zainbooksys@gmail.com";
+import { isMasterAdminEmail } from "@/lib/auth-constants";
 
 interface Organization {
   id: string;
@@ -44,10 +43,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Synchronous email check — known before any DB query
-  const isMasterAdminEmail =
-    !!user?.email &&
-    user.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
+  const isMasterAdminByEmail = isMasterAdminEmail(user?.email);
 
   const fetchOrgs = async () => {
     if (!user) {
@@ -57,8 +53,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // ── MASTER ADMIN (email match) ──────────────────────────
-    if (isMasterAdminEmail) {
+    if (isMasterAdminByEmail) {
       const { data: allOrgs } = await supabase
         .from("organizations")
         .select("id, name, name_ar, emirate, email, phone")
@@ -153,7 +148,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         setCurrentOrg,
         loading,
         refetch: fetchOrgs,
-        isMasterAdminContext: isMasterAdminEmail,
+        isMasterAdminContext: isMasterAdminByEmail,
       }}
     >
       {children}

@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useMasterAdmin } from "@/hooks/useMasterAdmin";
+import { isMasterAdminEmail } from "@/lib/auth-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,9 +27,12 @@ const Onboarding = () => {
   const preselectedPlanId = searchParams.get("plan");
   const { isMasterAdmin, loading: adminLoading } = useMasterAdmin();
 
+  // Master Admin must never see onboarding — redirect immediately (sync + async)
+  const isMasterAdminByEmail = isMasterAdminEmail(user?.email);
   useEffect(() => {
-    if (!adminLoading && isMasterAdmin) navigate("/master-admin", { replace: true });
-  }, [isMasterAdmin, adminLoading, navigate]);
+    if (isMasterAdminByEmail || (!adminLoading && isMasterAdmin))
+      navigate("/master-admin", { replace: true });
+  }, [isMasterAdminByEmail, isMasterAdmin, adminLoading, navigate]);
 
   const [step, setStep] = useState<Step>("plan");
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(preselectedPlanId);
@@ -62,7 +66,7 @@ const Onboarding = () => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !isMasterAdmin,
+    enabled: !isMasterAdmin && !isMasterAdminByEmail,
   });
 
   useEffect(() => {
@@ -102,7 +106,7 @@ const Onboarding = () => {
   const getMaxLabel = (val: number, unit: string) =>
     val === -1 ? `Unlimited ${unit}` : `${val} ${unit}`;
 
-  if (adminLoading || isMasterAdmin) {
+  if (isMasterAdminByEmail || adminLoading || isMasterAdmin) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
   if (checkingOrg) {

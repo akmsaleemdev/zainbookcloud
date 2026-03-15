@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMasterAdmin } from "@/hooks/useMasterAdmin";
+import { isMasterAdminEmail } from "@/lib/auth-constants";
 import { motion } from "framer-motion";
 
 const AuthPage = () => {
@@ -51,41 +52,39 @@ const AuthPage = () => {
         toast.success("Welcome back!");
 
         // ── ROLE-BASED REDIRECT AFTER LOGIN ─────────────────
-        // Check role immediately after auth — don't wait for useEffect
-        const userId = authData.user?.id;
-        if (userId) {
-          // Check if master admin by email first (instant)
-          if (email.trim().toLowerCase() === "zainbooksys@gmail.com") {
+        const uid = authData.user?.id;
+        const userEmail = authData.user?.email ?? email?.trim()?.toLowerCase();
+        if (uid) {
+          // Master Admin (by email) → always platform dashboard, never onboarding
+          if (isMasterAdminEmail(userEmail)) {
             navigate("/master-admin", { replace: true });
             return;
           }
 
-          // Check via DB for other potential admins
-          const { data: roleData } = await supabase
+          // Super Admin / Master Admin by DB role (if enum exists)
+          const { data: roleRow } = await supabase
             .from("user_roles")
             .select("role")
-            .eq("user_id", userId)
-            .in("role", ["master_admin", "super_admin"])
+            .eq("user_id", uid)
+            .in("role", ["super_admin"])
             .limit(1)
             .maybeSingle();
-
-          if (roleData) {
+          if (roleRow) {
             navigate("/master-admin", { replace: true });
             return;
           }
 
-          // Check org membership for normal users
+          // Normal user: org membership
           const { data: membership } = await supabase
             .from("organization_members")
             .select("id")
-            .eq("user_id", userId)
+            .eq("user_id", uid)
             .limit(1)
             .maybeSingle();
 
           if (membership) {
             navigate("/dashboard", { replace: true });
           } else {
-            // No org yet → onboarding
             const dest = selectedPlanId
               ? `/onboarding?plan=${selectedPlanId}`
               : "/onboarding";

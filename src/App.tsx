@@ -103,6 +103,7 @@ const App = () => (
                 <Route path="/docs" element={<Docs />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/admin/dashboard" element={<Navigate to="/master-admin" replace />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 {/* Public website */}
                 <Route path="/website" element={<HomePage />} />

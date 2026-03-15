@@ -1,21 +1,16 @@
 // src/hooks/useMasterAdmin.ts
 // Single source of truth for master admin detection.
-// Uses email hardcode as instant synchronous check +
-// RPC as async verification. Cached for entire session.
+// Uses email (auth-constants) as instant sync check + RPC for super_admin.
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
-
-const MASTER_ADMIN_EMAIL = "zainbooksys@gmail.com";
+import { isMasterAdminEmail } from "@/lib/auth-constants";
 
 export const useMasterAdmin = () => {
   const { user, loading: authLoading } = useAuth();
 
-  // Synchronous instant check — works before any DB query
-  const isEmailMatch =
-    !!user?.email &&
-    user.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
+  const isEmailMatch = isMasterAdminEmail(user?.email);
 
   // Async DB verification via RPC
   const { data: dbConfirmed, isLoading: dbLoading } = useQuery({

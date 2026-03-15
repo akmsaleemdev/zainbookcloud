@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { isMasterAdminEmail } from "@/lib/auth-constants";
 import { toast } from "sonner";
 
 export default function Register() {
@@ -64,12 +65,14 @@ export default function Register() {
 
       if (profileError) console.error("Profile create error:", profileError.message);
 
-      // 3. If email confirmation is disabled (instant login), go to onboarding
-      // If email confirmation is enabled, show success screen
+      // 3. If email confirmation is disabled (instant login), redirect by role
       if (authData.session) {
-        // Logged in immediately — go to onboarding to select plan
-        toast.success("Account created! Let's set up your workspace.");
-        navigate("/onboarding", { replace: true });
+        toast.success("Account created!");
+        if (isMasterAdminEmail(authData.user?.email)) {
+          navigate("/master-admin", { replace: true });
+        } else {
+          navigate("/onboarding", { replace: true });
+        }
       } else {
         // Email confirmation required — show step 3
         setStep(3);

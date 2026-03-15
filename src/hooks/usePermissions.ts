@@ -9,8 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
-
-const MASTER_ADMIN_EMAIL = "zainbooksys@gmail.com";
+import { isMasterAdminEmail } from "@/lib/auth-constants";
 
 export type Permission =
   | "can_create" | "can_read" | "can_update" | "can_delete"
@@ -31,10 +30,7 @@ export const usePermissions = () => {
   const { user }       = useAuth();
   const { currentOrg } = useOrganization();
 
-  // Synchronous email check — instant, no DB needed
-  const isEmailMasterAdmin =
-    !!user?.email &&
-    user.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
+  const isEmailMasterAdmin = isMasterAdminEmail(user?.email);
 
   // Admin role check via RPC — skipped if email already matches
   const { data: adminRole, isLoading: adminRoleLoading } = useQuery({
