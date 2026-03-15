@@ -40,7 +40,7 @@ export default function Register() {
     try {
       // 1. Create auth user
       const postConfirmRedirect = isMasterAdminEmail(email.trim().toLowerCase())
-        ? `${window.location.origin}/admin/dashboard`
+        ? `${window.location.origin}/master-admin`
         : `${window.location.origin}/onboarding`;
 
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -73,7 +73,7 @@ export default function Register() {
       if (authData.session) {
         toast.success("Account created!");
         if (isMasterAdminEmail(authData.user?.email)) {
-          navigate("/admin/dashboard", { replace: true });
+          navigate("/master-admin", { replace: true });
         } else {
           navigate("/onboarding", { replace: true });
         }
@@ -301,7 +301,7 @@ export default function Register() {
                     onClick={async () => {
                       const normalizedEmail = email.trim().toLowerCase();
                       const redirectUrl = isMasterAdminEmail(normalizedEmail)
-                        ? `${window.location.origin}/admin/dashboard`
+                        ? `${window.location.origin}/master-admin`
                         : `${window.location.origin}/onboarding`;
                       const { error } = await supabase.auth.resend({
                         type: "signup",
