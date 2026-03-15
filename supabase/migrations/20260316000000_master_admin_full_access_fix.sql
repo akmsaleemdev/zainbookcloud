@@ -32,13 +32,16 @@ CREATE POLICY "Org admins can insert members" ON public.organization_members
   WITH CHECK (
     public.is_platform_admin(auth.uid())
     OR public.is_org_admin(organization_members.organization_id, auth.uid())
-    OR auth.uid() = user_id
   );
 
 DROP POLICY IF EXISTS "Org admins can update members" ON public.organization_members;
 CREATE POLICY "Org admins can update members" ON public.organization_members
   FOR UPDATE TO authenticated
   USING (
+    public.is_platform_admin(auth.uid())
+    OR public.is_org_admin(organization_members.organization_id, auth.uid())
+  )
+  WITH CHECK (
     public.is_platform_admin(auth.uid())
     OR public.is_org_admin(organization_members.organization_id, auth.uid())
   );
@@ -77,13 +80,29 @@ CREATE POLICY "Admins manage plans" ON public.subscription_plans
   WITH CHECK (public.is_platform_admin(auth.uid()));
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- Helper: is_org_member (avoids RLS recursion)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.is_org_member(_org_id uuid, _user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.organization_members
+    WHERE organization_id = _org_id AND user_id = _user_id
+  )
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 5. usage_limits: platform admins can view and manage any org (for usage refresh / admin)
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "Members can view own org usage" ON public.usage_limits;
 CREATE POLICY "Members can view own org usage" ON public.usage_limits
   FOR SELECT TO authenticated
   USING (
-    organization_id IN (SELECT organization_id FROM public.organization_members WHERE user_id = auth.uid())
+    public.is_org_member(usage_limits.organization_id, auth.uid())
     OR public.is_platform_admin(auth.uid())
   );
 
@@ -91,19 +110,11 @@ DROP POLICY IF EXISTS "System manages usage" ON public.usage_limits;
 CREATE POLICY "System manages usage" ON public.usage_limits
   FOR ALL TO authenticated
   USING (
-    EXISTS (
-      SELECT 1 FROM public.organization_members om
-      WHERE om.organization_id = usage_limits.organization_id AND om.user_id = auth.uid()
-        AND om.role IN ('organization_admin', 'property_owner')
-    )
+    public.is_org_admin(usage_limits.organization_id, auth.uid())
     OR public.is_platform_admin(auth.uid())
   )
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.organization_members om
-      WHERE om.organization_id = usage_limits.organization_id AND om.user_id = auth.uid()
-        AND om.role IN ('organization_admin', 'property_owner')
-    )
+    public.is_org_admin(usage_limits.organization_id, auth.uid())
     OR public.is_platform_admin(auth.uid())
   );
 

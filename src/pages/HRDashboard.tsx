@@ -55,7 +55,9 @@ export default function HRDashboard() {
   });
 
   const formatAgo = (iso: string) => {
+    if (!iso) return "—";
     const d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
     const now = new Date();
     const days = Math.floor((now.getTime() - d.getTime()) / (24 * 60 * 60 * 1000));
     if (days === 0) return "Today";
