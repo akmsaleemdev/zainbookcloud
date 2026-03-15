@@ -1,8 +1,8 @@
 // src/hooks/useSubscriptionAccess.ts
 // FIXED:
-//   Master admin always returns true for hasModuleAccess
-//   regardless of currentOrg or subscription status.
-//   This prevents any UpgradePrompt from showing to master admin.
+//   1. Master admin always returns true for ALL modules
+//   2. Slug matching handles both underscore and hyphen formats
+//      DB: property_management | Sidebar: properties, buildings etc.
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,21 +10,57 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "./usePermissions";
 import { useMasterAdmin } from "./useMasterAdmin";
 
-interface UsageInfo {
-  current: number;
-  max: number;
-  allowed: boolean;
-}
+interface UsageInfo { current: number; max: number; allowed: boolean; }
+
+// Maps sidebar route slugs → all DB module slugs that cover them
+const SLUG_MAP: Record<string, string[]> = {
+  "dashboard":        ["dashboard"],
+  "organizations":    ["organizations","property_management"],
+  "properties":       ["properties","property_management"],
+  "buildings":        ["buildings","property_management"],
+  "floors":           ["floors","property_management"],
+  "units":            ["units","property_management","unit_management"],
+  "rooms":            ["rooms","property_management","unit_management"],
+  "bed-spaces":       ["bed_spaces","bed-spaces","unit_management"],
+  "tenants":          ["tenants","tenant_management"],
+  "leases":           ["leases","lease_management"],
+  "ejari":            ["ejari","lease_management"],
+  "rent-management":  ["rent_management","rent-management","lease_management"],
+  "invoices":         ["invoices","financial_reports"],
+  "payments":         ["payments","financial_reports"],
+  "cheque-tracking":  ["cheque_tracking","cheque-tracking","financial_reports"],
+  "maintenance":      ["maintenance"],
+  "amenities":        ["amenities"],
+  "utilities":        ["utilities"],
+  "documents":        ["documents"],
+  "uae-management":   ["uae_management","uae-management"],
+  "messaging":        ["messaging"],
+  "notifications":    ["notifications"],
+  "complaints":       ["complaints"],
+  "notices":          ["notices"],
+  "reports":          ["reports","financial_reports"],
+  "analytics":        ["analytics"],
+  "ai-insights":      ["ai_insights","ai-insights"],
+  "automation":       ["automation"],
+  "owner-portal":     ["owner_portal","owner-portal"],
+  "tenant-portal":    ["tenant_portal","tenant-portal"],
+  "public-booking":   ["public_booking","public-booking"],
+  "hr-payroll":       ["hr_payroll","hr-payroll"],
+  "accounting":       ["accounting"],
+  "erp-integrations": ["erp_integrations","erp-integrations"],
+  "support":          ["support"],
+  "subscriptions":    ["subscriptions"],
+  "master-admin":     ["master_admin","master-admin"],
+  "user-management":  ["user_management","user-management"],
+  "settings":         ["settings"],
+};
 
 export const useSubscriptionAccess = () => {
   const { currentOrg }    = useOrganization();
   const { isSuperAdmin }  = usePermissions();
   const { isMasterAdmin } = useMasterAdmin();
+  const isFullAccess      = isMasterAdmin || isSuperAdmin;
 
-  // Master admin bypasses all subscription checks
-  const isFullAccess = isMasterAdmin || isSuperAdmin;
-
-  // Subscription query — skip for master admin (no org required)
   const { data: subscription } = useQuery({
     queryKey: ["org-subscription", currentOrg?.id],
     queryFn: async () => {
@@ -33,14 +69,14 @@ export const useSubscriptionAccess = () => {
         .from("customer_subscriptions")
         .select("*, subscription_plans(*)")
         .eq("organization_id", currentOrg.id)
-        .in("status", ["active", "trialing"])
+        .in("status", ["active","trialing"])
         .maybeSingle();
       return data;
     },
     enabled: !!currentOrg && !isFullAccess,
+    staleTime: 60_000,
   });
 
-  // Plan modules — skip for master admin
   const { data: planModules = [] } = useQuery({
     queryKey: ["plan-modules", (subscription as any)?.plan_id],
     queryFn: async () => {
@@ -53,45 +89,32 @@ export const useSubscriptionAccess = () => {
       return data || [];
     },
     enabled: !!(subscription as any)?.plan_id && !isFullAccess,
+    staleTime: 60_000,
   });
 
   const hasModuleAccess = (moduleSlug: string): boolean => {
-    // Master admin + super admin: FULL access to every module always
     if (isFullAccess) return true;
-
-    // No subscription = only dashboard
     if (!subscription) return moduleSlug === "dashboard";
-
-    // No plan modules configured = allow all (grace period)
     if (planModules.length === 0) return true;
-
-    return planModules.some((pm: any) => pm.platform_modules?.slug === moduleSlug);
+    const possible = SLUG_MAP[moduleSlug] || [moduleSlug, moduleSlug.replace(/-/g,"_")];
+    return planModules.some((pm: any) => {
+      const s = pm.platform_modules?.slug;
+      return s && possible.includes(s);
+    });
   };
 
   const checkUsageLimit = async (resource: string): Promise<UsageInfo> => {
-    // Master admin has unlimited usage
-    if (isFullAccess || !currentOrg) {
-      return { current: 0, max: 999999, allowed: true };
-    }
-    const { data } = await supabase.rpc("check_usage_limit", {
-      _org_id: currentOrg.id,
-      _resource: resource,
-    });
-    if (data) return data as unknown as UsageInfo;
-    return { current: 0, max: 999999, allowed: true };
+    if (isFullAccess || !currentOrg) return { current: 0, max: 999999, allowed: true };
+    const { data } = await supabase.rpc("check_usage_limit", { _org_id: currentOrg.id, _resource: resource });
+    return (data as unknown as UsageInfo) || { current: 0, max: 999999, allowed: true };
   };
 
   const plan = (subscription as any)?.subscription_plans as any;
-
   return {
-    subscription,
-    plan,
-    planModules,
-    hasModuleAccess,
-    checkUsageLimit,
-    isTrialing: (subscription as any)?.status === "trialing",
+    subscription, plan, planModules, hasModuleAccess, checkUsageLimit,
+    isTrialing:            (subscription as any)?.status === "trialing",
     hasActiveSubscription: !!subscription || isFullAccess,
-    hasAiAccess: isFullAccess || !!plan?.ai_features_access,
-    hasReportAccess: isFullAccess || !!plan?.report_access,
+    hasAiAccess:           isFullAccess || !!plan?.ai_features_access,
+    hasReportAccess:       isFullAccess || !!plan?.report_access,
   };
 };
