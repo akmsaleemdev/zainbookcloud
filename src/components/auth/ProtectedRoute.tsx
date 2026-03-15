@@ -1,13 +1,13 @@
 // src/components/auth/ProtectedRoute.tsx
-// COMPLETE REWRITE using useMasterAdmin hook.
-// Master admin check is SYNCHRONOUS (email match) — zero latency.
-// Membership query only runs AFTER master admin is confirmed false.
+// Master Admin and Super Admin NEVER go to onboarding.
+// Sync email check runs first; membership query only for non-admin users.
 
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useMasterAdmin } from "@/hooks/useMasterAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isMasterAdminEmail } from "@/lib/auth-constants";
 
 const Spinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -19,8 +19,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: authLoading } = useAuth();
   const { isMasterAdmin, loading: adminLoading } = useMasterAdmin();
 
-  // Org membership — only checked for non-admin users
-  // enabled gate ensures this NEVER runs until admin=false is confirmed
+  // Synchronous: Master Admin email never goes to onboarding (no race)
+  const isMasterAdminByEmail = isMasterAdminEmail(user?.email);
+
+  // Org membership — only for non-admin users; never run for master admin email
   const { data: hasMembership, isLoading: membershipLoading } = useQuery({
     queryKey: ["has-org-membership", user?.id],
     queryFn: async () => {
@@ -33,8 +35,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
       return !!data;
     },
-    // KEY: only run when auth is settled AND user is confirmed NOT master admin
-    enabled: !!user && !authLoading && !adminLoading && !isMasterAdmin,
+    enabled: !!user && !authLoading && !adminLoading && !isMasterAdmin && !isMasterAdminByEmail,
     staleTime: 30_000,
   });
 
@@ -44,18 +45,20 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // 2. Not logged in
   if (!user) return <Navigate to="/auth" replace />;
 
-  // 3. Still checking if master admin
+  // 3. MASTER ADMIN (sync email) — bypass everything, never onboarding
+  if (isMasterAdminByEmail) return <>{children}</>;
+
+  // 4. Still resolving async admin check (e.g. super_admin via DB)
   if (adminLoading) return <Spinner />;
 
-  // 4. MASTER ADMIN — bypass everything, render immediately
+  // 5. Super Admin / Master Admin (DB) — bypass
   if (isMasterAdmin) return <>{children}</>;
 
-  // 5. Normal user — wait for membership check
+  // 6. Normal user — wait for membership
   if (membershipLoading) return <Spinner />;
 
-  // 6. No org membership → onboarding
+  // 7. No org membership → onboarding (only for non-admin)
   if (!hasMembership) return <Navigate to="/onboarding" replace />;
 
-  // 7. Normal org user — render
   return <>{children}</>;
 };
