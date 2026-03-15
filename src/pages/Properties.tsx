@@ -213,7 +213,7 @@ const Properties = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {images.map((img: any) => (
                     <div key={img.id} className="relative group rounded-lg overflow-hidden aspect-video bg-muted">
-                      <img src={img.image_url} alt={img.caption || "Property"} className="w-full h-full object-cover" />
+                      <img src={img.image_url} alt={img.caption || "Property"} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150' viewBox='0 0 200 150'%3E%3Crect fill='%23e5e7eb' width='200' height='150'/%3E%3Ctext fill='%239ca3af' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3EImage%3C/text%3E%3C/svg%3E"; }} />
                       <button onClick={() => deleteImage(img.id)} className="absolute top-2 right-2 w-6 h-6 bg-destructive/80 text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <X className="w-3.5 h-3.5" />
                       </button>

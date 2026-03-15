@@ -213,7 +213,14 @@ const Organizations = () => {
               <div key={org.id} className="glass-card p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
-                    {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : <Building className="w-5 h-5 text-primary" />}
+                    {org.logo_url ? (
+                      <>
+                        <img src={org.logo_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden"); }} />
+                        <Building className="w-5 h-5 text-primary hidden" />
+                      </>
+                    ) : (
+                      <Building className="w-5 h-5 text-primary" />
+                    )}
                   </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(org)}><Pencil className="w-3.5 h-3.5" /></Button>
@@ -249,7 +256,7 @@ const Organizations = () => {
               <div className="flex items-center gap-4">
                 {form.logo_url ? (
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
-                    <img src={form.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                    <img src={form.logo_url} alt="Logo" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     <button type="button" onClick={() => setForm({ ...form, logo_url: "" })} className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"><X className="w-3 h-3" /></button>
                   </div>
                 ) : (
@@ -260,6 +267,10 @@ const Organizations = () => {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
+                      if (file.size > 2 * 1024 * 1024) {
+                        toast.error("File must be <= 2MB");
+                        return;
+                      }
                       const path = `logos/${Date.now()}.${file.name.split(".").pop()}`;
                       const { error } = await supabase.storage.from("documents").upload(path, file);
                       if (error) { toast.error("Upload failed"); return; }

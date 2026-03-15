@@ -114,24 +114,39 @@ CREATE POLICY "View sync logs" ON public.erp_sync_logs
 -- organization_members: platform admins can view all (for User Management / tenant listing)
 DROP POLICY IF EXISTS "Members can view org members" ON public.organization_members;
 CREATE POLICY "Members can view org members" ON public.organization_members
-  FOR SELECT USING (user_id = auth.uid() OR public.is_platform_admin(auth.uid()));
+  FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_platform_admin(auth.uid()));
 
 -- Platform admins full access to org-scoped tables (bypass tenant restriction for Master Admin)
 -- These policies OR with existing org-member policies so platform admins see and manage all data.
+DROP POLICY IF EXISTS "Platform admins properties" ON public.properties;
 CREATE POLICY "Platform admins properties" ON public.properties FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins tenants" ON public.tenants;
 CREATE POLICY "Platform admins tenants" ON public.tenants FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins leases" ON public.leases;
 CREATE POLICY "Platform admins leases" ON public.leases FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins invoices" ON public.invoices;
 CREATE POLICY "Platform admins invoices" ON public.invoices FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins payments" ON public.payments;
 CREATE POLICY "Platform admins payments" ON public.payments FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins maintenance" ON public.maintenance_requests;
 CREATE POLICY "Platform admins maintenance" ON public.maintenance_requests FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins audit_logs" ON public.audit_logs;
 CREATE POLICY "Platform admins audit_logs" ON public.audit_logs FOR SELECT TO authenticated USING (public.is_platform_admin(auth.uid()));
 
 -- Child/related tables so Master Admin can access full hierarchy
+DROP POLICY IF EXISTS "Platform admins buildings" ON public.buildings;
 CREATE POLICY "Platform admins buildings" ON public.buildings FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins units" ON public.units;
 CREATE POLICY "Platform admins units" ON public.units FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins rooms" ON public.rooms;
 CREATE POLICY "Platform admins rooms" ON public.rooms FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins bed_spaces" ON public.bed_spaces;
 CREATE POLICY "Platform admins bed_spaces" ON public.bed_spaces FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins amenities" ON public.amenities;
 CREATE POLICY "Platform admins amenities" ON public.amenities FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins documents" ON public.documents;
 CREATE POLICY "Platform admins documents" ON public.documents FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins messages" ON public.messages;
 CREATE POLICY "Platform admins messages" ON public.messages FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));
+DROP POLICY IF EXISTS "Platform admins notifications" ON public.notifications;
 CREATE POLICY "Platform admins notifications" ON public.notifications FOR ALL TO authenticated USING (public.is_platform_admin(auth.uid())) WITH CHECK (public.is_platform_admin(auth.uid()));

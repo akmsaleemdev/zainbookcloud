@@ -104,8 +104,8 @@ const Onboarding = () => {
     if (plan.plan_type === "trial" || plan.price === 0) return "";
     return plan.plan_type === "yearly" ? "/yr" : "/mo";
   };
-  const getMaxLabel = (val: number, unit: string) =>
-    val === -1 ? `Unlimited ${unit}` : `${val} ${unit}`;
+  const getMaxLabel = (val: number | null | undefined, unit: string) =>
+    val == null || val === -1 ? `Unlimited ${unit}` : `${val} ${unit}`;
 
   if (isMasterAdminByEmail || adminLoading || isMasterAdmin) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -216,7 +216,7 @@ const Onboarding = () => {
                   <div>
                     <p className="text-sm font-medium text-foreground">{selectedPlan.name} Plan</p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedPlan.plan_type === "trial" ? `${selectedPlan.trial_days || 14}-day free trial — full access` : `AED ${Number(selectedPlan.price).toLocaleString()}/mo`}
+                      {selectedPlan.plan_type === "trial" ? `${selectedPlan.trial_days || 14}-day free trial — full access` : `AED ${Number(selectedPlan.price).toLocaleString()}${getPriceSuffix(selectedPlan)}`}
                     </p>
                   </div>
                   <button onClick={() => setStep("plan")} className="ml-auto text-xs text-primary hover:underline">Change</button>
@@ -269,7 +269,7 @@ const Onboarding = () => {
                   <p className="text-sm text-green-400 mt-2">🎉 Your {selectedPlan.trial_days || 14}-day free trial starts now!</p>
                 )}
               </div>
-              <Button size="lg" className="gap-2" onClick={() => { window.location.href = "/dashboard"; }}>
+              <Button size="lg" className="gap-2" onClick={() => navigate("/dashboard", { replace: true })}>
                 Go to Dashboard <ArrowRight className="w-4 h-4" />
               </Button>
             </motion.div>
