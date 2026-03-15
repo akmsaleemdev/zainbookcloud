@@ -14,24 +14,24 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 const stats = [
   { value: "500+", label: "Properties Managed" },
   { value: "10K+", label: "Tenants Served" },
-  { value: "98%", label: "Customer Satisfaction" },
-  { value: "7", label: "Emirates Covered" },
+  { value: "98%",  label: "Customer Satisfaction" },
+  { value: "7",    label: "Emirates Covered" },
 ];
 
 const features = [
-  { icon: Building2, title: "Property Management", desc: "Complete building, unit, room & bed space hierarchy with floor plans" },
-  { icon: Users, title: "Tenant Management", desc: "Emirates ID, visa tracking, family registration with document expiry alerts" },
-  { icon: FileText, title: "Ejari Integration", desc: "Dubai REST API for contract registration & automated compliance verification" },
-  { icon: Brain, title: "AI Insights", desc: "Market rent pricing, occupancy forecasting, and tenant risk scoring" },
-  { icon: Shield, title: "Enterprise Security", desc: "RBAC with 8 role types, audit logs, encrypted data, and SOC2-ready" },
-  { icon: BarChart3, title: "Financial Reports", desc: "5% VAT invoicing, cheque tracking, payment receipts, and ERP sync" },
+  { icon: Building2, title: "Property Management",  desc: "Complete building, unit, room & bed space hierarchy with floor plans" },
+  { icon: Users,     title: "Tenant Management",    desc: "Emirates ID, visa tracking, family registration with document expiry alerts" },
+  { icon: FileText,  title: "Ejari Integration",    desc: "Dubai REST API for contract registration & automated compliance verification" },
+  { icon: Brain,     title: "AI Insights",          desc: "Market rent pricing, occupancy forecasting, and tenant risk scoring" },
+  { icon: Shield,    title: "Enterprise Security",  desc: "RBAC with 8 role types, audit logs, encrypted data, and SOC2-ready" },
+  { icon: BarChart3, title: "Financial Reports",    desc: "5% VAT invoicing, cheque tracking, payment receipts, and ERP sync" },
 ];
 
 const benefits = [
-  { icon: Clock, title: "Save 10+ Hours/Week", desc: "Automate rent reminders, invoice generation, and lease renewals" },
-  { icon: Lock, title: "UAE Compliant", desc: "Built-in Ejari, RERA, and DLD compliance for all 7 emirates" },
-  { icon: CreditCard, title: "Reduce Late Payments", desc: "Automated PDC tracking, payment reminders, and late fee calculation" },
-  { icon: Headphones, title: "AI Support 24/7", desc: "Intelligent chatbot handles tenant queries and escalates when needed" },
+  { icon: Clock,      title: "Save 10+ Hours/Week",    desc: "Automate rent reminders, invoice generation, and lease renewals" },
+  { icon: Lock,       title: "UAE Compliant",          desc: "Built-in Ejari, RERA, and DLD compliance for all 7 emirates" },
+  { icon: CreditCard, title: "Reduce Late Payments",   desc: "Automated PDC tracking, payment reminders, and late fee calculation" },
+  { icon: Headphones, title: "AI Support 24/7",        desc: "Intelligent chatbot handles tenant queries and escalates when needed" },
 ];
 
 const testimonials = [
@@ -59,7 +59,7 @@ const trustedBy = ["Oracle NetSuite", "SAP", "Microsoft Dynamics", "Odoo", "Zoho
 
 const HomePage = () => (
   <WebsiteLayout>
-    {/* Hero */}
+    {/* ── Hero ──────────────────────────────────────────────── */}
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(153_54%_45%/0.08),transparent_60%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(153_54%_45%/0.04),transparent_40%)]" />
@@ -77,7 +77,8 @@ const HomePage = () => (
             The enterprise SaaS platform built for UAE real estate — from apartments and bed spaces to Ejari compliance, VAT invoicing, and AI-driven rent optimization.
           </motion.p>
           <motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link to="/auth">
+            {/* ⭐ FIX: Changed from /auth to /register */}
+            <Link to="/register">
               <Button size="lg" className="gap-2 text-base px-8">
                 Start Free Trial <ArrowRight className="h-4 w-4" />
               </Button>
@@ -95,7 +96,7 @@ const HomePage = () => (
       </div>
     </section>
 
-    {/* Stats */}
+    {/* ── Stats ─────────────────────────────────────────────── */}
     <section className="border-y border-border/40 bg-secondary/30">
       <div className="mx-auto max-w-7xl px-6 py-12">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid grid-cols-2 gap-8 md:grid-cols-4">
@@ -109,7 +110,7 @@ const HomePage = () => (
       </div>
     </section>
 
-    {/* Features Grid */}
+    {/* ── Features ──────────────────────────────────────────── */}
     <section className="mx-auto max-w-7xl px-6 py-24">
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
         <motion.h2 variants={fadeUp} className="text-3xl font-bold text-foreground md:text-4xl">Everything You Need to Manage Properties</motion.h2>
@@ -128,13 +129,13 @@ const HomePage = () => (
       </motion.div>
     </section>
 
-    {/* Benefits */}
+    {/* ── Benefits ──────────────────────────────────────────── */}
     <section className="border-y border-border/40 bg-secondary/20">
       <div className="mx-auto max-w-7xl px-6 py-24">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
           <motion.div variants={fadeUp} className="text-center mb-16">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs text-primary mb-4">
-              <Zap className="h-3 w-3" /> Why PropAI?
+              <Zap className="h-3 w-3" /> Why ZainBook AI?
             </div>
             <h2 className="text-3xl font-bold text-foreground md:text-4xl">Built for UAE Property Managers</h2>
           </motion.div>
@@ -153,7 +154,7 @@ const HomePage = () => (
       </div>
     </section>
 
-    {/* Testimonials */}
+    {/* ── Testimonials ──────────────────────────────────────── */}
     <section className="mx-auto max-w-7xl px-6 py-24">
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
         <motion.div variants={fadeUp} className="text-center mb-16">
@@ -179,7 +180,7 @@ const HomePage = () => (
       </motion.div>
     </section>
 
-    {/* ERP Integrations */}
+    {/* ── ERP Integrations ──────────────────────────────────── */}
     <section className="border-t border-border/40 bg-secondary/20">
       <div className="mx-auto max-w-7xl px-6 py-16 text-center">
         <div className="flex items-center justify-center gap-2 mb-4">
@@ -194,13 +195,14 @@ const HomePage = () => (
       </div>
     </section>
 
-    {/* CTA */}
+    {/* ── CTA ───────────────────────────────────────────────── */}
     <section className="mx-auto max-w-7xl px-6 py-24 text-center">
       <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="rounded-3xl border border-primary/20 bg-primary/5 p-12 md:p-16">
         <h2 className="text-3xl font-bold text-foreground md:text-4xl">Ready to Transform Your Property Management?</h2>
-        <p className="mx-auto mt-4 max-w-lg text-muted-foreground">Join hundreds of UAE property companies already using PropAI.</p>
+        <p className="mx-auto mt-4 max-w-lg text-muted-foreground">Join hundreds of UAE property companies already using ZainBook AI.</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <Link to="/auth">
+          {/* ⭐ FIX: Changed from /auth to /register */}
+          <Link to="/register">
             <Button size="lg" className="gap-2 text-base px-8">
               Get Started Free <ArrowRight className="h-4 w-4" />
             </Button>
