@@ -18,11 +18,13 @@ const Floors = () => {
     queryKey: ["floors-buildings", orgId],
     queryFn: async () => {
       if (!orgId) return [];
+      const { data: props } = await supabase.from("properties").select("id").eq("organization_id", orgId);
+      if (!props?.length) return [];
       const { data } = await supabase
         .from("buildings")
         .select("id, name, floors_count, properties(name, organization_id)")
-        .eq("properties.organization_id", orgId);
-      return (data || []).filter((b: any) => b.properties);
+        .in("property_id", props.map((p: any) => p.id));
+      return data || [];
     },
     enabled: !!orgId,
   });
@@ -31,10 +33,14 @@ const Floors = () => {
     queryKey: ["floors-units", orgId],
     queryFn: async () => {
       if (!orgId) return [];
+      const { data: props } = await supabase.from("properties").select("id").eq("organization_id", orgId);
+      if (!props?.length) return [];
+      const { data: blds } = await supabase.from("buildings").select("id").in("property_id", props.map((p: any) => p.id));
+      if (!blds?.length) return [];
       const { data } = await supabase
         .from("units")
-        .select("id, unit_number, floor_number, status, unit_type, monthly_rent, building_id, buildings!inner(property_id, properties!inner(organization_id))")
-        .eq("buildings.properties.organization_id", orgId)
+        .select("id, unit_number, floor_number, status, unit_type, monthly_rent, building_id, buildings(name)")
+        .in("building_id", blds.map((b: any) => b.id))
         .order("floor_number");
       return data || [];
     },

@@ -151,10 +151,16 @@ const AIInsights = () => {
     { month: "Dec", occupancy: null, projected: 97 },
   ];
 
-  // Simulated Tenant Risk
-  const tenantRiskScores = tenants.slice(0, 10).map((t: any, i: number) => {
-    // Determine a fake risk score based on some loose factors to simulate AI
-    const riskScore = 100 - (i * 7 + Math.floor(Math.random() * 20));
+  // Tenant risk: indicative score from overdue invoices and lease expiry (no random factor)
+  const tenantRiskScores = tenants.slice(0, 20).map((t: any) => {
+    const overdueCount = invoices.filter((i: any) => i.tenant_id === t.id && (i.status === "overdue" || i.status === "pending")).length;
+    const lease = leases.find((l: any) => l.tenant_id === t.id);
+    const daysToExpiry = lease?.end_date ? Math.ceil((new Date(lease.end_date).getTime() - Date.now()) / (24 * 60 * 60 * 1000)) : 999;
+    let score = 100;
+    if (overdueCount > 0) score -= Math.min(40, overdueCount * 15);
+    if (daysToExpiry <= 30 && daysToExpiry > 0) score -= 20;
+    if (daysToExpiry <= 0) score -= 30;
+    const riskScore = Math.max(0, Math.min(100, score));
     return {
       ...t,
       riskScore,

@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,36 +22,98 @@ export type WorkflowNode = {
   icon: any;
 };
 
-const INITIAL_WORKFLOWS = [
-  {
-    id: "wf-1",
-    name: "Overdue Rent Reminder",
-    status: "active",
-    lastRun: "2 hours ago",
-    nodes: [
-      { id: "n1", type: "trigger", title: "Invoice is Overdue", icon: Clock, config: { days: 3 } },
-      { id: "n2", type: "condition", title: "Balance > AED 0", icon: AlertTriangle, config: {} },
-      { id: "n3", type: "action", title: "Send WhatsApp Alert", icon: MessageSquare, config: { template: "overdue_notice" } }
-    ] as WorkflowNode[]
-  },
-  {
-    id: "wf-2",
-    name: "Lease Renewal Sequence",
-    status: "active",
-    lastRun: "Yesterday",
-    nodes: [
-      { id: "n1", type: "trigger", title: "Lease Ends in 60 Days", icon: Clock, config: { days_before: 60 } },
-      { id: "n2", type: "action", title: "Email Renewal Offer", icon: Mail, config: { template: "renewal_offer" } }
-    ] as WorkflowNode[]
-  }
-];
+const NODE_ICONS = { trigger: Zap, condition: AlertTriangle, action: Play } as const;
+
+function nodesFromDb(nodesJson: { id: string; type: string; title: string; config?: Record<string, unknown> }[]): WorkflowNode[] {
+  if (!Array.isArray(nodesJson)) return [];
+  return nodesJson.map((n) => ({
+    id: n.id,
+    type: (n.type === "trigger" || n.type === "condition" || n.type === "action" ? n.type : "action") as WorkflowNode["type"],
+    title: n.title || "Untitled",
+    config: n.config || {},
+    icon: NODE_ICONS[n.type as keyof typeof NODE_ICONS] || Play,
+  }));
+}
+
+function nodesToDb(nodes: WorkflowNode[]): { id: string; type: string; title: string; config: Record<string, unknown> }[] {
+  return nodes.map((n) => ({ id: n.id, type: n.type, title: n.title, config: n.config || {} }));
+}
+
+function formatLastRun(lastRunAt: string | null): string {
+  if (!lastRunAt) return "Never";
+  const d = new Date(lastRunAt);
+  const now = new Date();
+  const ms = now.getTime() - d.getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return mins <= 1 ? "Just now" : `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "Yesterday" : `${days}d ago`;
+}
 
 export default function WorkflowBuilder() {
-  const [workflows, setWorkflows] = useState(INITIAL_WORKFLOWS);
+  const { currentOrg } = useOrganization();
+  const orgId = currentOrg?.id;
+  const queryClient = useQueryClient();
+
+  const { data: workflowsRows = [] } = useQuery({
+    queryKey: ["workflows", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await supabase.from("workflows").select("id, name, status, nodes, last_run_at").eq("organization_id", orgId).order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!orgId,
+  });
+
+  const workflows = workflowsRows.map((w: any) => ({
+    id: w.id,
+    name: w.name,
+    status: w.status,
+    lastRun: formatLastRun(w.last_run_at),
+    nodes: nodesFromDb(w.nodes || []),
+  }));
+
   const [editingWf, setEditingWf] = useState<string | null>(null);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [activeNodes, setActiveNodes] = useState<WorkflowNode[]>([]);
   const [wfName, setWfName] = useState("New Automation");
+
+  const saveMutation = useMutation({
+    mutationFn: async ({ id, name, nodes }: { id?: string; name: string; nodes: WorkflowNode[] }) => {
+      if (!orgId) throw new Error("Select an organization first");
+      const payload = { name: name.trim(), nodes: nodesToDb(nodes), updated_at: new Date().toISOString() };
+      if (id) {
+        const { error } = await supabase.from("workflows").update(payload).eq("id", id).eq("organization_id", orgId);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("workflows").insert({ organization_id: orgId, ...payload });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflows", orgId] });
+      setIsBuilderOpen(false);
+      setEditingWf(null);
+      toast.success("Workflow saved");
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save workflow"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!orgId) throw new Error("Select an organization first");
+      const { error } = await supabase.from("workflows").delete().eq("id", id).eq("organization_id", orgId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflows", orgId] });
+      toast.success("Workflow deleted");
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete workflow"),
+  });
 
   const openBuilder = (wfId?: string) => {
     if (wfId) {
@@ -71,27 +136,13 @@ export default function WorkflowBuilder() {
       toast.error("Workflow must have at least one node.");
       return;
     }
-    
-    if (editingWf) {
-      setWorkflows(prev => prev.map(w => w.id === editingWf ? { ...w, name: wfName, nodes: activeNodes } : w));
-      toast.success("Workflow updated");
-    } else {
-      setWorkflows(prev => [...prev, {
-        id: `wf-${Date.now()}`,
-        name: wfName,
-        status: "active",
-        lastRun: "Never",
-        nodes: activeNodes
-      }]);
-      toast.success("Workflow created");
-    }
-    setIsBuilderOpen(false);
+    const name = wfName.trim() || "Unnamed Workflow";
+    saveMutation.mutate({ id: editingWf || undefined, name, nodes: activeNodes });
   };
 
   const deleteWorkflow = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setWorkflows(prev => prev.filter(w => w.id !== id));
-    toast.success("Workflow deleted");
+    deleteMutation.mutate(id);
   };
 
   const addNode = (type: 'trigger' | 'condition' | 'action') => {
@@ -118,6 +169,16 @@ export default function WorkflowBuilder() {
     }
   };
 
+  if (!orgId) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Please select an organization first.</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -136,7 +197,17 @@ export default function WorkflowBuilder() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workflows.map(wf => (
+          {workflows.length === 0 ? (
+            <Card className="glass-card col-span-full p-12 text-center">
+              <Zap className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">Create triggers, conditions, and actions to automate rent reminders, lease renewals, and more.</p>
+              <Button className="btn-premium" onClick={() => openBuilder()}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Workflow
+              </Button>
+            </Card>
+          ) : workflows.map(wf => (
             <Card key={wf.id} className="glass-card cursor-pointer hover:border-primary/30 transition-all group" onClick={() => openBuilder(wf.id)}>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
@@ -189,7 +260,7 @@ export default function WorkflowBuilder() {
                     placeholder="Workflow Name"
                   />
                   <Button variant="outline" onClick={() => setIsBuilderOpen(false)}>Cancel</Button>
-                  <Button className="btn-premium" onClick={saveWorkflow}><Save className="w-4 h-4 mr-2" /> Save</Button>
+                  <Button className="btn-premium" onClick={saveWorkflow} disabled={saveMutation.isPending}><Save className="w-4 h-4 mr-2" /> Save</Button>
                 </div>
               </div>
             </DialogHeader>
@@ -236,7 +307,7 @@ export default function WorkflowBuilder() {
                                 </Button>
                               </div>
 
-                              {/* Config Area - Simplified for UI mockup */}
+                              {/* Config area for selected node */}
                               <div className="mt-4 p-3 bg-secondary/30 rounded-lg border border-border/50">
                                 {isTrigger ? (
                                   <div className="space-y-3">
