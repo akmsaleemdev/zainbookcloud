@@ -39,6 +39,10 @@ export default function Register() {
     setLoading(true);
     try {
       // 1. Create auth user
+      const postConfirmRedirect = isMasterAdminEmail(email.trim().toLowerCase())
+        ? `${window.location.origin}/admin/dashboard`
+        : `${window.location.origin}/onboarding`;
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email:    email.trim().toLowerCase(),
         password: password,
@@ -47,7 +51,7 @@ export default function Register() {
             full_name:    `${firstName.trim()} ${lastName.trim()}`,
             company_name: companyName.trim() || null,
           },
-          emailRedirectTo: `${window.location.origin}/onboarding`,
+          emailRedirectTo: postConfirmRedirect,
         },
       });
 
@@ -295,10 +299,14 @@ export default function Register() {
                   <button
                     className="text-xs text-muted-foreground hover:text-primary transition-colors"
                     onClick={async () => {
+                      const normalizedEmail = email.trim().toLowerCase();
+                      const redirectUrl = isMasterAdminEmail(normalizedEmail)
+                        ? `${window.location.origin}/admin/dashboard`
+                        : `${window.location.origin}/onboarding`;
                       const { error } = await supabase.auth.resend({
                         type: "signup",
-                        email: email,
-                        options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+                        email: normalizedEmail,
+                        options: { emailRedirectTo: redirectUrl },
                       });
                       if (error) toast.error(error.message);
                       else toast.success("Verification email resent!");
