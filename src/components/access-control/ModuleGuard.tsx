@@ -49,11 +49,17 @@ export const ModuleGuard = ({ module, children }: ModuleGuardProps) => {
 
   // Subscription plan check
   if (!hasModuleAccess(module)) {
+    if (typeof console !== "undefined" && console.warn) {
+      console.warn("[ModuleGuard] Module access denied (subscription)", { module });
+    }
     return <UpgradePrompt module={module} reason="subscription" />;
   }
 
   // Role permission check
   if (!canAccessModule(module)) {
+    if (typeof console !== "undefined" && console.warn) {
+      console.warn("[ModuleGuard] Module access denied (permission)", { module });
+    }
     return <UpgradePrompt module={module} reason="permission" />;
   }
 

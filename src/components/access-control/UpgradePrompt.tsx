@@ -12,6 +12,10 @@ interface UpgradePromptProps {
 export const UpgradePrompt = ({ module, reason, resourceName }: UpgradePromptProps) => {
   const navigate = useNavigate();
 
+  if (typeof console !== "undefined" && console.warn) {
+    console.warn("[UpgradePrompt] Access restricted", { module, reason, resourceName });
+  }
+
   const messages = {
     subscription: {
       icon: Crown,

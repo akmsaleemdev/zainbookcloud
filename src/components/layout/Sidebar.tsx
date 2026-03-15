@@ -196,10 +196,10 @@ export const Sidebar = () => {
     navigate("/auth", { replace: true });
   };
 
-  // Master admin: use admin nav, no filtering needed
+  // Master admin: full platform authority — show platform nav + all org modules
   // Org user: filter by role permissions
   const displayGroups = isMasterAdmin
-    ? masterAdminGroups
+    ? [...masterAdminGroups, ...orgNavGroups]
     : orgNavGroups
         .map((group) => ({
           ...group,
@@ -242,8 +242,8 @@ export const Sidebar = () => {
         </div>
       )}
 
-      {/* ── Org Switcher (org users only) ────────────────── */}
-      {!isMasterAdmin && !collapsed && organizations.length > 0 && (
+      {/* ── Org Switcher (all users with orgs; Master Admin can switch to view org data) ────────────────── */}
+      {!collapsed && organizations.length > 0 && (
         <div className="px-3 py-3 border-b border-sidebar-border">
           <Select
             value={currentOrg?.id || ""}
